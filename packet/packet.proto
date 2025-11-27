@@ -1,0 +1,51 @@
+syntax = "proto3";
+package packet;
+
+option go_package = "mypoker_new/framework/packet";
+
+// 框架核心协议，任何人不能修改
+message Address {
+  int32  NodeType = 1;
+  uint32 NodeId   = 2;
+}
+
+message Callback {
+  int32  NodeType  = 1;
+  uint32 NodeId    = 2;
+  uint32 ActorFunc = 3;
+  uint64 ActorId   = 4;
+}
+
+message Head {
+  int32    SendType  = 1;   // 发送类型
+  Address  Src       = 2;   // 源地址
+  Address  Dst       = 3;   // 目的地址
+  Callback Back      = 4;   // 回调信息
+  uint32   Cmd       = 5;   // 客户端请求
+  uint32   Seq       = 6;   // 请求序列号
+  uint64   Uid       = 7;   // uid
+  uint32   ActorFunc = 8;   // 调用的Actor
+  uint64   ActorId   = 9;   // actor id
+  uint32   Version   = 10;  // 版本号
+  uint32   Extra     = 11;  // 扩展字段
+  string   Reply     = 12;  // 是否同步请求
+  Router   Router    = 13;  // 路由
+}
+
+message Router {
+  uint32          IdType     = 1;  // 路由类型
+  uint64          Id         = 2;  // 路由ID
+  repeated uint32 List       = 3;  // 路由信息
+  int64           UpdateTime = 4;  // 更新时间
+}
+
+message Packet {
+  Head            Head   = 1;  // 包头
+  bytes           Body   = 2;  // 包体
+  repeated uint32 Router = 3;  // uid路由
+}
+
+message RspHead {
+  int32  Code = 1;
+  string Msg  = 2;
+}

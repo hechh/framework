@@ -12,6 +12,18 @@ import (
 	"time"
 )
 
+var (
+	timerObj = NewTimer(4, 5)
+)
+
+func Register(taskId *uint64, ttl time.Duration, times int32, f func()) error {
+	return timerObj.Register(taskId, ttl, times, f)
+}
+
+func Close() {
+	timerObj.Close()
+}
+
 type Task struct {
 	event  func()
 	id     *uint64

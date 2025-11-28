@@ -1,4 +1,4 @@
-package logger
+package mlog
 
 import (
 	"strings"
@@ -15,6 +15,14 @@ const (
 	LOG_FATAL = 6
 )
 
+var (
+	dataPool = sync.Pool{
+		New: func() any {
+			return NewData()
+		},
+	}
+)
+
 type Meta struct {
 	FileName string
 	Line     int
@@ -23,7 +31,6 @@ type Meta struct {
 	Msg      string
 }
 
-// 日志数据接口
 type IData interface {
 	Now() time.Time // 获取时间
 	Add(int32)      // 并发次数
@@ -32,19 +39,10 @@ type IData interface {
 	Read() []byte   // 读取数据
 }
 
-// 日志写入接口
 type IWriter interface {
 	Push(IData) // 推送日志
 	Close()     // 关闭
 }
-
-var (
-	dataPool = sync.Pool{
-		New: func() any {
-			return NewData()
-		},
-	}
-)
 
 func get(times int) IData {
 	obj := dataPool.Get().(IData)

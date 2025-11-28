@@ -1,11 +1,10 @@
-package discovery
+package entity
 
 import (
 	"context"
 	"framework/library/mlog"
 	"framework/library/safe"
 	"framework/library/util"
-
 	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"

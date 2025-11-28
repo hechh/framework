@@ -1,0 +1,68 @@
+package uerror
+
+import (
+	"fmt"
+	"path"
+	"runtime"
+)
+
+type UError struct {
+	file  string
+	fname string
+	line  int
+	code  int32
+	msg   string
+}
+
+func New(code int32, format string, args ...any) *UError {
+	pc, file, line, _ := runtime.Caller(1)
+	fname := runtime.FuncForPC(pc).Name()
+	return &UError{
+		file:  path.Base(file),
+		line:  line,
+		fname: path.Base(fname),
+		code:  code,
+		msg:   fmt.Sprintf(format, args...),
+	}
+}
+
+func Err(code int32, format string, args ...any) *UError {
+	return &UError{
+		code: code,
+		msg:  fmt.Sprintf(format, args...),
+	}
+}
+
+func ToUError(err error) *UError {
+	if vv, ok := err.(*UError); ok {
+		return vv
+	}
+	return &UError{code: -1, msg: err.Error()}
+}
+
+func (ue *UError) Error() string {
+	if len(ue.file) <= 0 {
+		return fmt.Sprintf("[%d]%s", ue.code, ue.msg)
+	}
+	return fmt.Sprintf("%s:%d\t%s\t[%d]%s", ue.file, ue.line, ue.fname, ue.code, ue.msg)
+}
+
+func (ue *UError) GetFile() string {
+	return ue.file
+}
+
+func (ue *UError) GetFunc() string {
+	return ue.fname
+}
+
+func (ue *UError) GetLine() int {
+	return ue.line
+}
+
+func (ue *UError) GetCode() int32 {
+	return ue.code
+}
+
+func (ue *UError) GetMsg() string {
+	return ue.msg
+}

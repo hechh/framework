@@ -47,10 +47,10 @@ func GetSelf() *packet.Node {
 	return self
 }
 
-func GetSelfNodeType() int32 {
+func GetSelfType() int32 {
 	return self.GetType()
 }
 
-func GetSelfNodeId() int32 {
+func GetSelfId() int32 {
 	return self.GetId()
 }

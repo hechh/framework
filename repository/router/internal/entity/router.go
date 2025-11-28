@@ -24,7 +24,7 @@ func NewRouter(idType int32, id uint64) define.IRouter {
 		data:       [define.MAX_NODE_TYPE_COUNT]int32{},
 		change:     true,
 	}
-	ret.Set(global.GetSelfNodeType(), global.GetSelfNodeId())
+	ret.Set(global.GetSelfType(), global.GetSelfId())
 	return ret
 }
 

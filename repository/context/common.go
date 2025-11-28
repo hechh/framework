@@ -3,21 +3,10 @@ package context
 import (
 	"fmt"
 	"framework/library/mlog"
+	"framework/packet"
 	"strings"
 	"sync/atomic"
 )
-
-type Router struct {
-	idType   int32
-	id       uint64
-	routerId uint64
-}
-
-type Address struct {
-	nodeType  int32
-	actorFunc string
-	actorId   uint64
-}
 
 type Common struct {
 	uid       uint64
@@ -25,9 +14,9 @@ type Common struct {
 	actorName string
 	funcName  string
 	depth     uint32
-	router    *Router
-	callback  *Address
-	dst       *Address
+	router    *packet.RpcRouter
+	callback  *packet.Rpc
+	dst       *packet.Rpc
 }
 
 func NewCommon(uid uint64, actorFunc string, actorId uint64) *Common {
@@ -64,7 +53,7 @@ func (d *Common) CompareAndSwapDepth(old, new uint32) bool {
 }
 
 func (d *Common) Router(idType int32, id uint64, routerId uint64) {
-	d.router = &Router{idType, id, routerId}
+	d.router = &packet.RpcRouter{IdType: idType, Id: id, RouterId: routerId}
 }
 
 func (d *Common) Rpc(nodeType int32, actorFunc string, actorId uint64) {

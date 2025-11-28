@@ -52,7 +52,7 @@ func RegisterRpc(hh define.IHandler) {
 // 获取全局Rpc
 func GetRpc(nodeType int32, id uint32) define.IHandler {
 	if nodeType == 0 {
-		nodeType = global.GetSelfNodeType()
+		nodeType = global.GetSelfType()
 	}
 	if items, ok := mapRpc[nodeType]; ok {
 		return items[id]

@@ -24,8 +24,8 @@ type IRegister interface {
 }
 
 // 消息总线接口
-type IMessage interface {
-	Read(topic string, handle func(any)) error                      // 读取消息
+type IBus interface {
+	Read(topic string, handle func(packet.Message)) error           // 读取消息
 	Write(topic string, body []byte) error                          // 发送消息
 	Request(topic string, body []byte, cb func([]byte) error) error // 发送同步消息
 	Response(topic string, body []byte) error                       // 回复同步消息
@@ -64,13 +64,12 @@ type IRouter interface {
 
 // 框架上下文接口
 type IContext interface {
-	GetUid() uint64                                  // 获取玩家uid
-	GetActorId() uint64                              // 获取actor id
-	GetActorName() string                            // 获取actor名字
-	GetFuncName() string                             // 获取函数名字
-	AddDepth(add uint32) uint32                      // 添加调用深度
-	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
-	GetHead() *packet.Head
+	GetUid() uint64                                       // 获取玩家uid
+	GetActorId() uint64                                   // 获取actor id
+	GetActorName() string                                 // 获取actor名字
+	GetFuncName() string                                  // 获取函数名字
+	AddDepth(add uint32) uint32                           // 添加调用深度
+	CompareAndSwapDepth(old uint32, new uint32) bool      // 原词操作
 	Router(idType int32, id uint64, routerId uint64)      // 远程调用---路由
 	Rpc(nodeType int32, actorFunc string, actorId uint64) // 远程调用---接口
 	Callback(actorFunc string, actorId uint64)            // 远程调用---回调

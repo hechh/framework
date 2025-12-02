@@ -5,21 +5,15 @@ import (
 	"framework/library/mlog"
 	"framework/packet"
 	"strings"
-	"sync/atomic"
 )
 
 type Remote struct {
-	*packet.Head
-	actorName string
-	funcName  string
-	depth     uint32
-	router    *Router
-	callback  *Address
-	dst       *Address
+	Common
+	head *packet.Head
 }
 
 func NewRemote(head *packet.Head, actorFunc string) *Remote {
-	ret := &Remote{Head: head}
+	ret := &Remote{head: head}
 	if pos := strings.Index(actorFunc, "."); pos >= 0 {
 		ret.actorName = actorFunc[:pos]
 		ret.actorName = actorFunc[pos+1:]
@@ -27,42 +21,23 @@ func NewRemote(head *packet.Head, actorFunc string) *Remote {
 	return ret
 }
 
-func (d *Remote) GetActorName() string {
-	return d.actorName
+func (d *Remote) GetUid() uint64 {
+	return d.head.Uid
 }
 
-func (d *Remote) GetFuncName() string {
-	return d.funcName
-}
-
-func (d *Remote) AddDepth(val uint32) uint32 {
-	return atomic.AddUint32(&d.depth, 1)
-}
-
-func (d *Remote) CompareAndSwapDepth(old, new uint32) bool {
-	return atomic.CompareAndSwapUint32(&d.depth, old, new)
-}
-
-func (d *Remote) Router(idType int32, id uint64, routerId uint64) {
-	d.router = &Router{idType, id, routerId}
-}
-
-func (d *Remote) Rpc(nodeType int32, actorFunc string, actorId uint64) {
-	d.dst = &Address{nodeType, actorFunc, actorId}
-}
-
-func (d *Remote) Callback(actorFunc string, actorId uint64) {
-	d.callback = &Address{
-		actorFunc: actorFunc,
-		actorId:   actorId,
+func (d *Remote) GetActorId() uint64 {
+	if d.head.ActorId <= 0 {
+		return d.head.Uid
 	}
+	return d.head.ActorId
 }
 
 func (d *Remote) getformat(str string) string {
-	if d.ActorId > 0 {
-		return fmt.Sprintf("[%d] Node(%d:%d) -> Node(%d:%d) %s.%s(%d)\t%s", d.Src.NodeType, d.Src.NodeId, d.Dst.NodeType, d.Dst.NodeId, d.Uid, d.actorName, d.funcName, d.ActorId, str)
+	src, dst := d.head.Src, d.head.Dst
+	if d.head.ActorId > 0 {
+		return fmt.Sprintf("[%d] Node(%d:%d) -> Node(%d:%d) %s.%s(%d)\t%s", src.NodeType, src.NodeId, dst.NodeType, dst.NodeId, d.head.Uid, d.actorName, d.funcName, d.head.ActorId, str)
 	} else {
-		return fmt.Sprintf("[%d] Node(%d:%d) -> Node(%d:%d) %s.%s(%d)\t%s", d.Uid, d.Src.NodeType, d.Src.NodeId, d.Dst.NodeType, d.Dst.NodeId, d.actorName, d.funcName, d.Uid, str)
+		return fmt.Sprintf("[%d] Node(%d:%d) -> Node(%d:%d) %s.%s(%d)\t%s", d.head.Uid, src.NodeType, src.NodeId, dst.NodeType, dst.NodeId, d.actorName, d.funcName, d.head.Uid, str)
 	}
 }
 

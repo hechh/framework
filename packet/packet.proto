@@ -62,19 +62,6 @@ message Message {
   bytes  Body  = 2;
 }
 
-message RpcRouter {
-  int32  IdType   = 5;
-  uint64 Id       = 6;
-  uint64 RouterId = 7;
-}
-
-message Rpc {
-  int32  NodeType  = 1;
-  int32  NodeId    = 2;
-  string ActorFunc = 3;
-  uint64 ActorId   = 4;
-}
-
 // redis全局路由表
 message RouterData {
   int32         IdType     = 1;

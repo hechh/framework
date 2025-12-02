@@ -1,14 +1,9 @@
 package service
 
 import (
-	"framework/define"
-	"framework/internal/cluster"
-	"framework/internal/global"
-	"framework/internal/handler"
-	"framework/internal/router"
-	"framework/library/uerror"
 	"framework/library/yaml"
-	"framework/repository/sender/internal/entity"
+	"framework/packet"
+	"framework/repository/bus/internal/entity"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -30,6 +25,7 @@ func Close() {
 	net.Close()
 }
 
+/*
 // 设置源地址
 func Source(head *pb.Head, idType pb.IdType, id uint64, actorFunc string, actorId uint64) error {
 	if len(actorFunc) > 0 {
@@ -96,8 +92,9 @@ func Destination(head *pb.Head, nodeType pb.NodeType, actorFunc string, actorId 
 	}
 	return nil
 }
+*/
 
-func SendResponse(head *pb.Head, rsps ...any) error {
+func SendResponse(head *packet.Head, rsps ...any) error {
 	// 回复同步请求
 	if len(head.Reply) > 0 {
 		return Response(head, rsps...)
@@ -107,7 +104,7 @@ func SendResponse(head *pb.Head, rsps ...any) error {
 		return SendToClient(head, rsps[0].(proto.Message))
 	}
 	// 自动回复
-	if head.Callback != nil {
+	if head.Back != nil {
 		return SendToCallback(head, rsps...)
 	}
 	return nil

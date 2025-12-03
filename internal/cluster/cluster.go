@@ -20,7 +20,7 @@ func Get(nodeType int32) define.ICluster {
 	return getFunc(nodeType)
 }
 
-func GetrNode(nodeType int32, nodeId int32) *packet.Node {
+func GetNode(nodeType int32, nodeId int32) *packet.Node {
 	if cls := Get(nodeType); cls != nil {
 		return cls.Get(nodeId)
 	}

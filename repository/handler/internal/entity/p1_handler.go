@@ -2,6 +2,7 @@ package entity
 
 import (
 	"framework/define"
+	"framework/internal/bus"
 	"framework/internal/sender"
 	"framework/library/uerror"
 	"framework/repository/handler/domain"
@@ -53,7 +54,7 @@ func (d *P1Handler[Actor, P1]) Call(obj any, head define.IContext, args ...any) 
 				uerr := uerror.ToUError(err)
 				rsp.SetRspHead(uerr.GetCode(), uerr.GetMsg())
 			}
-			err := sender.Response(head.GetHead(), req)
+			err := bus.Response(head.GetHead(), req)
 			if err != nil {
 				head.Errorf("自动回复失败\trsp:%v\terror:%v", *req, err)
 			} else {

@@ -1,4 +1,4 @@
-package sender
+package bus
 
 import (
 	"framework/packet"

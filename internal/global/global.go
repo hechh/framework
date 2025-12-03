@@ -1,7 +1,6 @@
 package global
 
 import (
-	"framework/library/uerror"
 	"framework/packet"
 	"reflect"
 	"strings"
@@ -11,19 +10,7 @@ import (
 var (
 	self             *packet.Node // 自身节点
 	actorIdGenerator = uint64(0)  // actorId生成器
-	rspFunc          func(*packet.Head, ...any) error
 )
-
-func SetRspFunc(f func(*packet.Head, ...any) error) {
-	rspFunc = f
-}
-
-func SendResponse(head *packet.Head, args ...any) error {
-	if rspFunc != nil {
-		return rspFunc(head, args...)
-	}
-	return uerror.New(-1, "未注册自动回复接口")
-}
 
 // 生成 actorId
 func GenerateActorId() uint64 {

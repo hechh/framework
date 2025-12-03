@@ -62,23 +62,30 @@ type IRouter interface {
 	IsExpire(now int64, expire int64) bool // 是否过期
 }
 
+type ILog interface {
+	Tracef(fmt string, args ...any) // 输出trace日志
+	Debugf(fmt string, args ...any) // 输出debug日志
+	Warnf(fmt string, args ...any)  // 输出warn日志
+	Infof(fmt string, args ...any)  // 输出info日志
+	Errorf(fmt string, args ...any) // 输出error日志
+	Fatalf(fmt string, args ...any) // 输出fatal日志
+}
+
+type IRpc interface {
+	Router(idType int32, id uint64, rid uint64)                                                               // 设置路由
+	Callback(actorFunc string, actorId uint64) error                                                          // 设置回调
+	Rpc(sendType int32, nodeType int32, actorFunc string, actorId uint64, args ...any) (packet.Packet, error) // 远程调用rpc
+}
+
 // 框架上下文接口
 type IContext interface {
-	GetUid() uint64                                       // 获取玩家uid
-	GetActorId() uint64                                   // 获取actor id
-	GetActorName() string                                 // 获取actor名字
-	GetFuncName() string                                  // 获取函数名字
-	AddDepth(add uint32) uint32                           // 添加调用深度
-	CompareAndSwapDepth(old uint32, new uint32) bool      // 原词操作
-	Router(idType int32, id uint64, routerId uint64)      // 远程调用---路由
-	Rpc(nodeType int32, actorFunc string, actorId uint64) // 远程调用---接口
-	Callback(actorFunc string, actorId uint64)            // 远程调用---回调
-	Tracef(fmt string, args ...any)                       // 输出trace日志
-	Debugf(fmt string, args ...any)                       // 输出debug日志
-	Warnf(fmt string, args ...any)                        // 输出warn日志
-	Infof(fmt string, args ...any)                        // 输出info日志
-	Errorf(fmt string, args ...any)                       // 输出error日志
-	Fatalf(fmt string, args ...any)                       // 输出fatal日志
+	ILog
+	GetUid() uint64                                  // 获取玩家uid
+	GetActorId() uint64                              // 获取actor id
+	GetActorName() string                            // 获取actor名字
+	GetFuncName() string                             // 获取函数名字
+	AddDepth(add uint32) uint32                      // 添加调用深度
+	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
 }
 
 // 开放接口

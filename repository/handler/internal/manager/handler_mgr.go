@@ -4,8 +4,6 @@ import (
 	"framework/define"
 	"framework/internal/global"
 	"framework/repository/handler/internal/entity"
-
-	"github.com/spf13/cast"
 )
 
 var (
@@ -17,19 +15,23 @@ var (
 )
 
 func Name2Id(str string) uint32 {
-	if _, ok := mapName[str]; !ok {
-		val := entity.StringToUint32(str)
-		mapValue[val] = str
-		mapName[str] = val
+	if val, ok := mapName[str]; ok {
+		return val
 	}
-	return mapName[str]
+	return 0
 }
 
 func Id2Name(val uint32) string {
 	if str, ok := mapValue[val]; ok {
 		return str
 	}
-	return cast.ToString(val)
+	return ""
+}
+
+func RegisgerName(str string) {
+	val := entity.StringToUint32(str)
+	mapValue[val] = str
+	mapName[str] = val
 }
 
 // 注册全局Rpc
@@ -46,7 +48,7 @@ func RegisterRpc(hh define.IHandler) {
 	}
 
 	// 设置name 映射 id
-	Name2Id(hh.GetName())
+	RegisgerName(hh.GetName())
 }
 
 // 获取全局Rpc
@@ -73,7 +75,7 @@ func Register(h define.IHandler) {
 	mapFunc[h.GetName()] = h
 
 	// 设置name 映射 id
-	Name2Id(h.GetName())
+	RegisgerName(h.GetName())
 }
 
 func Get(name string) define.IHandler {

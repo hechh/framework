@@ -45,12 +45,12 @@ func (d *Bus) ReadBroadcast(f func(packet.Packet)) error {
 	})
 }
 
-func (d *Bus) Broadcast(pac *packet.Packet) error {
-	buf, err := proto.Marshal(pac)
+func (d *Bus) Broadcast(pac packet.Packet) error {
+	buf, err := proto.Marshal(&pac)
 	if err != nil {
 		return err
 	}
-	return d.conn.Write(d.topicBroadcast(pac.Head.Dst.NodeType), buf)
+	return d.conn.Write(d.topicBroadcast(pac.Head.DstNodeType), buf)
 }
 
 func (d *Bus) Read(f func(packet.Packet)) error {
@@ -69,7 +69,7 @@ func (d *Bus) Write(pac *packet.Packet) error {
 	if err != nil {
 		return err
 	}
-	return d.conn.Write(d.topicPoint(pac.Head.Dst.NodeType, pac.Head.Dst.NodeId), buf)
+	return d.conn.Write(d.topicPoint(pac.Head.DstNodeType, pac.Head.DstNodeId), buf)
 }
 
 func (d *Bus) ReadReply(f func(packet.Packet)) error {
@@ -89,7 +89,7 @@ func (d *Bus) Request(pac *packet.Packet, cb func([]byte) error) error {
 	if err != nil {
 		return err
 	}
-	return d.conn.Request(d.topicReply(pac.Head.Dst.NodeType, pac.Head.Dst.NodeId), buf, cb)
+	return d.conn.Request(d.topicReply(pac.Head.DstNodeType, pac.Head.DstNodeId), buf, cb)
 }
 
 func (d *Bus) Response(topic string, body []byte) error {

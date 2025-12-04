@@ -86,6 +86,7 @@ type IContext interface {
 	GetFuncName() string                             // 获取函数名字
 	AddDepth(add uint32) uint32                      // 添加调用深度
 	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
+	NewRpc() IRpc                                    // 创建IRpc接口
 }
 
 // 开放接口

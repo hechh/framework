@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"framework/define"
 	"framework/library/mlog"
 	"framework/packet"
 	"sync/atomic"
@@ -35,6 +36,10 @@ func (d *Remote) AddDepth(val uint32) uint32 {
 
 func (d *Remote) CompareAndSwapDepth(old, new uint32) bool {
 	return atomic.CompareAndSwapUint32(&d.depth, old, new)
+}
+
+func (d *Remote) NewRpc() define.IRpc {
+	return NewRpc(d.Head)
 }
 
 func (d *Remote) getformat(str string) string {

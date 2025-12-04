@@ -33,8 +33,10 @@ func GetRouter(idType int32, id uint64) *packet.Router {
 	}
 }
 
-func SetRouter(data *packet.Router) {
-	if data != nil {
-		loadOrNewFunc(data.IdType, data.Id).SetRouter(data.List...)
+func SetRouter(rs ...*packet.Router) {
+	for _, data := range rs {
+		if data != nil {
+			loadOrNewFunc(data.IdType, data.Id).SetRouter(data.List...)
+		}
 	}
 }

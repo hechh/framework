@@ -18,9 +18,11 @@ type Rpc struct {
 	cb           *packet.Callback // 回调
 }
 
-func NewRpc(head *packet.Head) *Rpc {
+func NewRpc(head *packet.Head, isOrigin bool) *Rpc {
 	ret := &Rpc{Head: head}
-	ret.Router(head.IdType, head.Id, head.Id)
+	if isOrigin {
+		ret.Router(head.IdType, head.Id, head.Id)
+	}
 	return ret
 }
 

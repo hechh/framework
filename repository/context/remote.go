@@ -38,8 +38,9 @@ func (d *Remote) CompareAndSwapDepth(old, new uint32) bool {
 	return atomic.CompareAndSwapUint32(&d.depth, old, new)
 }
 
-func (d *Remote) NewRpc() define.IRpc {
-	return NewRpc(d.Head)
+func (d *Remote) NewRpc(isOrigin bool) define.IRpc {
+	d.AddDepth(1)
+	return NewRpc(d.Head, isOrigin)
 }
 
 func (d *Remote) getformat(str string) string {

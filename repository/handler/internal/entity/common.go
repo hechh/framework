@@ -3,6 +3,7 @@ package entity
 import (
 	"framework/library/crypto"
 	"framework/library/uerror"
+	"framework/repository/handler/domain"
 	"hash/crc32"
 	"reflect"
 	"runtime"
@@ -21,20 +22,22 @@ func ParseActorFunc(val reflect.Value) string {
 	return strings.ReplaceAll(strs[len(strs)-1], ")", "")
 }
 
-type Common struct {
-	nodeType int32
-	id       uint32
-	cmd      int32
-	name     string
-}
-
-func NewCommon(nodeType int32, cmd int32, name string) *Common {
+func NewCommon(nodeType int32, cmd int32, name string, rsp domain.RspFunc) *Common {
 	return &Common{
 		nodeType: nodeType,
 		name:     name,
 		cmd:      cmd,
 		id:       StringToUint32(name),
+		rspFunc:  rsp,
 	}
+}
+
+type Common struct {
+	nodeType int32
+	id       uint32
+	cmd      int32
+	name     string
+	rspFunc  domain.RspFunc
 }
 
 func (d *Common) GetType() int32 {

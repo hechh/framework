@@ -9,17 +9,18 @@ import (
 )
 
 var (
-	serviceObj = service.NewClusterService(define.MAX_NODE_TYPE_COUNT, entity.NewCluster)
+	obj *service.ClusterService
 )
 
-func init() {
-	cluster.Set(serviceObj.Get)
-}
-
 func Init(cfg *yaml.EtcdConfig) error {
-	return serviceObj.Init(cfg)
+	obj = service.NewClusterService(define.MAX_NODE_TYPE_COUNT, entity.NewCluster)
+	cluster.Set(obj.Get)
+	return obj.Init(cfg)
 }
 
 func Close() {
-	serviceObj.Close()
+	if obj != nil {
+
+		obj.Close()
+	}
 }

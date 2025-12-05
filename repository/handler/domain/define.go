@@ -1,6 +1,11 @@
 package domain
 
-import "framework/define"
+import (
+	"framework/define"
+	"framework/packet"
+)
+
+type RspFunc func(*packet.Head, ...any) error
 
 // 本地
 type L0Func[Actor any] func(*Actor) error

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	routerObj = service.NewRouterService(entity.NewRouter, filter)
+	obj *service.RouterService
 )
 
 func filter(r define.IRouter) bool {
@@ -17,13 +17,11 @@ func filter(r define.IRouter) bool {
 }
 
 func Init(cfg *yaml.NodeConfig, client define.IRedis) {
-	routerObj.Init(cfg, client)
+	obj = service.NewRouterService(entity.NewRouter, filter)
+	obj.Init(cfg, client)
+	router.Set(obj.Load, obj.LoadOrNew)
 }
 
 func Close() {
-	routerObj.Close()
-}
-
-func init() {
-	router.Set(routerObj.Load, routerObj.LoadOrNew)
+	obj.Close()
 }

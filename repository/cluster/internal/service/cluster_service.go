@@ -8,6 +8,7 @@ import (
 	"framework/library/mlog"
 	"framework/library/yaml"
 	"framework/packet"
+	"framework/repository/cluster/domain"
 	"framework/repository/cluster/internal/entity"
 	"path"
 
@@ -20,7 +21,7 @@ type ClusterService struct {
 	clusters map[int32]define.ICluster
 }
 
-func NewClusterService(max int32, f func(int32) define.ICluster) *ClusterService {
+func NewClusterService(max int32, f domain.NewFunc) *ClusterService {
 	ret := &ClusterService{clusters: make(map[int32]define.ICluster)}
 	for i := int32(1); i <= max; i++ {
 		ret.clusters[i] = f(i)
@@ -57,6 +58,7 @@ func (d *ClusterService) Close() {
 	d.watcher.Close()
 	d.register.Close()
 }
+
 func (d *ClusterService) Get(nodeType int32) define.ICluster {
 	if cls, ok := d.clusters[nodeType]; ok {
 		return cls

@@ -58,15 +58,6 @@ type IRegister interface {
 	Close()                                  // 关闭服务注册服务
 }
 
-// 消息队列接口
-type IMsgQueue interface {
-	Read(topic string, handle func(packet.Message)) error           // 读取消息
-	Write(topic string, body []byte) error                          // 发送消息
-	Request(topic string, body []byte, cb func([]byte) error) error // 发送同步消息
-	Response(topic string, body []byte) error                       // 回复同步消息
-	Close()                                                         // 关闭消息总线服务
-}
-
 // 集群接口
 type ICluster interface {
 	Size() int                       // 集群节点数量
@@ -74,6 +65,15 @@ type ICluster interface {
 	Get(nodeId int32) *packet.Node   // 获取节点
 	Del(nodeId int32) *packet.Node   // 删除节点
 	Random(seed uint64) *packet.Node // 路由一个节点
+}
+
+// 消息队列接口
+type IMsgQueue interface {
+	Read(topic string, handle func(packet.Message)) error           // 读取消息
+	Write(topic string, body []byte) error                          // 发送消息
+	Request(topic string, body []byte, cb func([]byte) error) error // 发送同步消息
+	Response(topic string, body []byte) error                       // 回复同步消息
+	Close()                                                         // 关闭消息总线服务
 }
 
 // 路由接口

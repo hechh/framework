@@ -16,9 +16,9 @@ type P1Handler[Actor any, P1 any] struct {
 	method domain.P1Func[Actor, P1]
 }
 
-func NewP1Handler[Actor any, P1 any](nodeType int32, cmd int32, method domain.P1Func[Actor, P1]) *P1Handler[Actor, P1] {
+func NewP1Handler[Actor any, P1 any](nodeType int32, cmd int32, method domain.P1Func[Actor, P1], rsp domain.RspFunc) *P1Handler[Actor, P1] {
 	return &P1Handler[Actor, P1]{
-		Common: NewCommon(nodeType, cmd, ParseActorFunc(reflect.ValueOf(method))),
+		Common: NewCommon(nodeType, cmd, ParseActorFunc(reflect.ValueOf(method)), rsp),
 		method: method,
 	}
 }

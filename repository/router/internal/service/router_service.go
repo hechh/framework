@@ -9,31 +9,30 @@ import (
 	"framework/library/safe"
 	"framework/library/yaml"
 	"framework/packet"
+	"framework/repository/router/domain"
 	"sync"
 	"time"
 )
 
 type RouterService struct {
-	idType  int32
-	mutex   sync.RWMutex
-	client  define.IRedis
-	newFunc func(int32, uint64) define.IRouter
-	routers mapstruct.Map2[int32, uint64, define.IRouter]
-	exit    chan struct{}
+	client     define.IRedis                                 // 路由表落地数据库
+	newFunc    domain.NewFunc                                // 创建函数
+	filterFunc domain.FilterFunc                             // 过滤函数
+	mutex      sync.RWMutex                                  // 锁
+	routers    mapstruct.Map2[int32, uint64, define.IRouter] // 路由表
+	exit       chan struct{}                                 // 退出通知
 }
 
-func NewRouterService(f func(int32, uint64) define.IRouter) *RouterService {
+func NewRouterService(n domain.NewFunc, f domain.FilterFunc) *RouterService {
 	return &RouterService{
-		newFunc: f,
+		newFunc: n,
 		routers: make(mapstruct.Map2[int32, uint64, define.IRouter]),
 		exit:    make(chan struct{}),
 	}
 }
 
-func (d *RouterService) Init(cfg *yaml.NodeConfig, client define.IRedis, idType int32) {
+func (d *RouterService) Init(cfg *yaml.NodeConfig, client define.IRedis) {
 	d.client = client
-	d.idType = idType
-
 	safe.Go(func() {
 		tt := time.NewTicker(12 * time.Second)
 		defer tt.Stop()
@@ -85,7 +84,7 @@ func (d *RouterService) refresh(now int64, expire int64) {
 	for _, item := range d.routers {
 		if item.IsExpire(now, expire) {
 			dels = append(dels, item)
-		} else if item.IsChange() && d.idType == item.GetType() {
+		} else if item.IsChange() && !d.filterFunc(item) {
 			saves = append(saves, item)
 		}
 	}

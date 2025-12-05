@@ -9,11 +9,15 @@ import (
 )
 
 var (
-	routerObj = service.NewRouterService(entity.NewRouter)
+	routerObj = service.NewRouterService(entity.NewRouter, filter)
 )
 
-func Init(cfg *yaml.NodeConfig, client define.IRedis, idType int32) {
-	routerObj.Init(cfg, client, idType)
+func filter(r define.IRouter) bool {
+	return r.GetType() != 0
+}
+
+func Init(cfg *yaml.NodeConfig, client define.IRedis) {
+	routerObj.Init(cfg, client)
 }
 
 func Close() {

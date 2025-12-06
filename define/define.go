@@ -30,16 +30,6 @@ type IRedis interface {
 	HMSet(string, ...any) error
 }
 
-// 日志接口
-type ILog interface {
-	Tracef(fmt string, args ...any) // 输出trace日志
-	Debugf(fmt string, args ...any) // 输出debug日志
-	Warnf(fmt string, args ...any)  // 输出warn日志
-	Infof(fmt string, args ...any)  // 输出info日志
-	Errorf(fmt string, args ...any) // 输出error日志
-	Fatalf(fmt string, args ...any) // 输出fatal日志
-}
-
 // 数据包编码和解码
 type IFrame interface {
 	Encode(packet.Packet) []byte
@@ -111,7 +101,6 @@ type IRpc interface {
 
 // 框架上下文接口
 type IContext interface {
-	ILog
 	GetUid() uint64                                  // 获取玩家uid
 	GetActorId() uint64                              // 获取actor id
 	GetActorName() string                            // 获取actor名字
@@ -119,18 +108,12 @@ type IContext interface {
 	AddDepth(add uint32) uint32                      // 添加调用深度
 	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
 	NewRpc(isOrigin bool) IRpc                       // 创建IRpc接口
-}
-
-// 开放接口
-type IHandler interface {
-	GetType() int32                    // handler类型，即节点类型
-	GetId() uint32                     // 唯一id
-	GetName() string                   // handler名字
-	GetCmd() int32                     // 对应命令字
-	Marshal(...any) ([]byte, error)    // 参数序列化
-	Unmarshal([]byte, ...any) error    // 参数反序列化
-	Rpc(any, IContext, []byte) func()  // 调用封装
-	Call(any, IContext, ...any) func() // 调用封装
+	Tracef(fmt string, args ...any)                  // 输出trace日志
+	Debugf(fmt string, args ...any)                  // 输出debug日志
+	Warnf(fmt string, args ...any)                   // 输出warn日志
+	Infof(fmt string, args ...any)                   // 输出info日志
+	Errorf(fmt string, args ...any)                  // 输出error日志
+	Fatalf(fmt string, args ...any)                  // 输出fatal日志
 }
 
 // Actor接口

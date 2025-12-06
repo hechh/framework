@@ -2,7 +2,7 @@ package mlog
 
 import (
 	"fmt"
-	"framework/library/queue"
+	"framework/library/async"
 	"os"
 	"path"
 	"sync"
@@ -28,7 +28,7 @@ type LogWriter struct {
 	lpath  string
 	lname  string
 	cache  *Cache
-	datas  *queue.Queue[IData]
+	datas  *async.Queue[IData]
 	notify chan struct{}
 	exit   chan struct{}
 }
@@ -38,7 +38,7 @@ func NewLogWriter(lpath, lname string) *LogWriter {
 		lpath:  lpath,
 		lname:  lname,
 		cache:  NewCache(1024 * 1024),
-		datas:  queue.NewQueue[IData](),
+		datas:  async.NewQueue[IData](),
 		notify: make(chan struct{}, 1),
 		exit:   make(chan struct{}),
 	}

@@ -2,8 +2,7 @@ package timer
 
 import (
 	"fmt"
-	"framework/library/queue"
-	"framework/library/safe"
+	"framework/library/async"
 	"framework/library/uerror"
 	"framework/library/util"
 
@@ -47,7 +46,7 @@ type Timer struct {
 	wheels    []*Wheel
 	head      *Wheel
 	tail      *Wheel
-	tasks     *queue.Queue[*Task]
+	tasks     *async.Queue[*Task]
 	notify    chan struct{}
 	exit      chan struct{}
 }
@@ -66,7 +65,7 @@ func NewTimer(tick int64, size int) *Timer {
 		wheels:    wls,
 		head:      wls[0],
 		tail:      wls[size-1],
-		tasks:     queue.NewQueue[*Task](),
+		tasks:     async.NewQueue[*Task](),
 		notify:    make(chan struct{}, 1),
 		exit:      make(chan struct{}),
 	}
@@ -207,7 +206,7 @@ func (d *Task) IsEnable() bool {
 // 执行任务
 func (d *Task) Handle(nowMs int64) {
 	if d.IsEnable() {
-		safe.Recover(d.event)
+		async.Recover(d.event)
 		if d.times > 0 {
 			d.times--
 		}

@@ -42,9 +42,11 @@ func ToUError(err error) *UError {
 
 func (ue *UError) Error() string {
 	if len(ue.file) <= 0 {
-		return fmt.Sprintf("[%d]%s", ue.code, ue.msg)
+		return fmt.Sprintf("%s", ue.msg)
+		//return fmt.Sprintf("[%d] %s", ue.code, ue.msg)
 	}
-	return fmt.Sprintf("%s:%d\t%s\t[%d]%s", ue.file, ue.line, ue.fname, ue.code, ue.msg)
+	return fmt.Sprintf("%s:%d %s %s", ue.file, ue.line, ue.fname, ue.msg)
+	//return fmt.Sprintf("%s:%d %s [%d] %s", ue.file, ue.line, ue.fname, ue.code, ue.msg)
 }
 
 func (ue *UError) GetFile() string {

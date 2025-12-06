@@ -36,6 +36,7 @@ type NatsConfig struct {
 
 // 游戏配置
 type TableConfig struct {
+	IsRemote  bool     `yaml:"is_remote"`
 	Ext       string   `yaml:"ext"`
 	Path      string   `yaml:"path"`
 	Endpoints []string `yaml:"endpoints"`

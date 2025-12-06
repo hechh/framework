@@ -7,14 +7,14 @@ import (
 )
 
 var (
-	encPool = sync.Pool{
+	gobEncoder = sync.Pool{
 		New: func() interface{} {
 			buf := bytes.NewBuffer(make([]byte, 0, 1024))
 			enc := gob.NewEncoder(buf)
 			return &GobEncoder{buf: buf, enc: enc}
 		},
 	}
-	decPool = sync.Pool{
+	gobDecoder = sync.Pool{
 		New: func() interface{} {
 			buf := bytes.NewBuffer(make([]byte, 0, 1024))
 			dec := gob.NewDecoder(buf)
@@ -34,9 +34,9 @@ type GobDecoder struct {
 }
 
 // 编码
-func Encode(args ...any) ([]byte, error) {
-	item := encPool.Get().(*GobEncoder)
-	defer encPool.Put(item)
+func GobEncrypto(args ...any) ([]byte, error) {
+	item := gobEncoder.Get().(*GobEncoder)
+	defer gobEncoder.Put(item)
 	item.buf.Reset()
 	for _, arg := range args {
 		if err := item.enc.Encode(arg); err != nil {
@@ -49,9 +49,9 @@ func Encode(args ...any) ([]byte, error) {
 }
 
 // 解码
-func Decode(data []byte, args ...any) error {
-	item := decPool.Get().(*GobDecoder)
-	defer decPool.Put(item)
+func GobDecrypto(data []byte, args ...any) error {
+	item := gobDecoder.Get().(*GobDecoder)
+	defer gobDecoder.Put(item)
 	item.buf.Reset()
 	item.buf.Write(data)
 	for _, arg := range args {

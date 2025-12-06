@@ -2,14 +2,14 @@ package timer
 
 import (
 	"fmt"
+	"framework/library/async"
 	"framework/library/mlog"
-	"framework/library/safe"
 	"testing"
 	"time"
 )
 
 func TestTimer(t *testing.T) {
-	safe.SetExcept(mlog.Infof)
+	async.SetExcept(mlog.Infof)
 	timer := NewTimer(4, 5)
 	taskId := uint64(123)
 	for i := 0; i < 2; i++ {

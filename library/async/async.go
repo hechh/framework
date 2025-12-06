@@ -1,24 +1,22 @@
 package async
 
 import (
-	"framework/library/queue"
-	"framework/library/safe"
 	"sync"
 	"sync/atomic"
 )
 
 type Async struct {
 	sync.WaitGroup
-	queue  *queue.Queue[func()] // 任务队列
-	notify chan struct{}        // 通知
-	exit   chan struct{}        // 退出
-	id     uint64               // 唯一id
-	status int32                // 状态
+	queue  *Queue[func()] // 任务队列
+	notify chan struct{}  // 通知
+	exit   chan struct{}  // 退出
+	id     uint64         // 唯一id
+	status int32          // 状态
 }
 
 func NewAsync() *Async {
 	return &Async{
-		queue:  queue.NewQueue[func()](),
+		queue:  NewQueue[func()](),
 		notify: make(chan struct{}, 1),
 		exit:   make(chan struct{}),
 	}
@@ -62,7 +60,7 @@ func (d *Async) Push(f func()) {
 func (d *Async) run() {
 	defer func() {
 		for f := d.queue.Pop(); f != nil; f = d.queue.Pop() {
-			safe.Recover(f)
+			Recover(f)
 		}
 		d.Done()
 	}()
@@ -70,7 +68,7 @@ func (d *Async) run() {
 		select {
 		case <-d.notify:
 			for f := d.queue.Pop(); f != nil; f = d.queue.Pop() {
-				safe.Recover(f)
+				Recover(f)
 			}
 		case <-d.exit:
 			return

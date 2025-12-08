@@ -17,7 +17,7 @@ type IBus interface {
 	SubscribeUnicast(func(*packet.Head, []byte)) error                         // 接受请求
 	SubscribeReply(func(*packet.Head, []byte)) error                           // 接受同步请求
 	Broadcast(*packet.Head, []byte, ...*packet.Router) error                   // 发送广播
-	Write(*packet.Head, []byte, ...*packet.Router) error                       // 发送请求
+	Send(*packet.Head, []byte, ...*packet.Router) error                        // 发送请求
 	Request(func([]byte) error, *packet.Head, []byte, ...*packet.Router) error // 发送同步请求
 	Response(*packet.Head, []byte) error                                       // 应答
 }

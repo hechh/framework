@@ -23,7 +23,9 @@ type IContext interface {
 }
 
 type IRpc interface {
-	Router(idType int32, id uint64, rid uint64)                                                               // 设置路由
-	Callback(actorFunc string, actorId uint64) error                                                          // 设置回调
-	Rpc(sendType int32, nodeType int32, actorFunc string, actorId uint64, args ...any) (packet.Packet, error) // 远程调用rpc
+	Router(idType int32, id uint64)                                   // 设置路由
+	Callback(nodeType uint32, actorFunc string, actorId uint64) error // 设置回调
+	GetHead() *packet.Head
+	GetRouterId() uint64
+	GetRouters() []*packet.Router
 }

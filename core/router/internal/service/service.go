@@ -6,10 +6,12 @@ import (
 	"framework/library/mapstruct"
 	"framework/library/mlog"
 	"framework/library/yaml"
+	"framework/packet"
 	"time"
 )
 
 type Service struct {
+	self       *packet.Node
 	newFunc    domain.NewFunc                                   // 创建函数
 	filterFunc domain.FilterFunc                                // 过滤函数
 	routers    *mapstruct.Map2S[uint32, uint64, domain.IRouter] // 路由表
@@ -24,7 +26,7 @@ func NewService(n domain.NewFunc) *Service {
 	}
 }
 
-func (d *Service) Init(cfg *yaml.NodeConfig, filter domain.FilterFunc) {
+func (d *Service) Init(cfg *yaml.NodeConfig, nn *packet.Node, filter domain.FilterFunc) {
 	d.filterFunc = filter
 	async.Go(func() {
 		tt := time.NewTicker(12 * time.Second)
@@ -56,6 +58,7 @@ func (d *Service) GetOrNew(idType uint32, id uint64) domain.IRouter {
 		return val
 	}
 	item := d.newFunc(idType, id)
+	item.Set(d.self.Type, d.self.Id)
 	d.routers.Set(idType, id, item)
 	return item
 }

@@ -108,7 +108,6 @@ func (d *Service) Broadcast(head *packet.Head, body []byte, rs ...*packet.Router
 func (d *Service) Send(head *packet.Head, body []byte, rs ...*packet.Router) error {
 	head.SrcNodeType = d.self.Type
 	head.SrcNodeId = d.self.Id
-
 	buf, err := proto.Marshal(&packet.Packet{Head: head, Body: body, List: rs})
 	if err != nil {
 		return err

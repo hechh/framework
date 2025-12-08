@@ -1,35 +1,41 @@
 package context
 
-/*
 import (
 	"framework/core/handler"
 	"framework/library/uerror"
-	"framework/old/define"
-	"framework/old/internal/cluster"
-	"framework/old/internal/global"
-	"framework/old/internal/router"
 	"framework/packet"
 )
 
 type Rpc struct {
-	*packet.Head                  // 原始头
-	routerId     uint64           // 路由id
-	origin       *packet.Router   // 源路由
-	current      *packet.Router   // 当前路由
-	cb           *packet.Callback // 回调
+	*packet.Head                // 原始头
+	routerId     uint64         // 路由id
+	origin       *packet.Router // 源路由
+	current      *packet.Router // 当前路由
 }
 
-func NewRpc(head *packet.Head, isOrigin bool) *Rpc {
-	ret := &Rpc{Head: head}
-	if isOrigin {
-		ret.Router(head.IdType, head.Id, head.Id)
+func NewRpc(head *packet.Head, routerId uint64, idType uint32, id uint64) *Rpc {
+	newHead := *head
+	ret := &Rpc{
+		Head:     &newHead,
+		routerId: routerId,
+	}
+	if id > 0 {
+		ret.origin = &packet.Router{
+			IdType: idType,
+			Id:     id,
+		}
+		ret.IdType = idType
+		ret.Id = id
 	}
 	return ret
 }
 
+func (d *Rpc) GetHead() *packet.Head {
+	return d.Head
+}
+
 // 设置路由
-func (d *Rpc) Router(idType int32, id uint64, routerId uint64) {
-	d.routerId = routerId
+func (d *Rpc) SetRouter(idType uint32, id uint64) {
 	if d.origin.IdType != idType || d.origin.Id != id {
 		d.current = &packet.Router{
 			IdType: idType,
@@ -39,49 +45,54 @@ func (d *Rpc) Router(idType int32, id uint64, routerId uint64) {
 }
 
 // 设置回调
-func (d *Rpc) Callback(actorFunc string, actorId uint64) error {
-	if len(actorFunc) <= 0 {
-		return nil
-	}
+func (d *Rpc) Callback(nodeType uint32, actorFunc string, actorId uint64) error {
 	hh := handler.Get(actorFunc)
 	if hh == nil {
-		return uerror.New(-1, "回调接口(%s)未注册", actorFunc)
+		return uerror.New(-1, "远程接口(%s)未注册", actorFunc)
 	}
-	d.cb = &packet.Callback{
-		NodeType:  global.GetSelfType(),
-		NodeId:    global.GetSelfId(),
+	d.Back = &packet.Callback{
+		NodeType:  nodeType,
 		ActorFunc: hh.GetId(),
 		ActorId:   actorId,
 	}
 	return nil
 }
 
+func (d *Rpc) GetRouterId() uint64 {
+	return d.routerId
+}
+
+func (d *Rpc) GetRouters() (rets []*packet.Router) {
+	if d.current != nil {
+		rets = append(rets, d.current)
+	}
+	if d.origin != nil {
+		rets = append(rets, d.origin)
+	}
+	return
+}
+
 // 设置远程调用
-func (d *Rpc) Rpc(sendType int32, nodeType int32, actorFunc string, actorId uint64, args ...any) (ret packet.Packet, err error) {
-	if global.GetSelfType() == nodeType {
-		err = uerror.New(-1, "禁止同一集群节点之间相互转发")
-		return
-	}
+/*
+func (d *Rpc) Rpc(nodeType uint32, actorFunc string, actorId uint64, args ...any) (*packet.Head, []byte, []*packet.Router, error) {
 	// 获取注册接口
-	hh := handler.Get(nodeType, actorFunc)
+	hh := handler.GetByRpc(nodeType, actorFunc)
 	if hh == nil {
-		err = uerror.New(-1, "Rpc接口(%s)未注册", actorFunc)
-		return
+		return nil, nil, nil, uerror.New(-1, "远程接口(%s)未注册", actorFunc)
 	}
+
 	// 序列化参数
-	if ret.Body, err = hh.Marshal(args...); err != nil {
-		return
+	body, err := hh.Marshal(args...)
+	if err != nil {
+		return nil, nil, nil, err
 	}
+
 	// 获取集群管理接口
 	cls := cluster.Get(nodeType)
-	if cls == nil {
-		err = uerror.New(-1, "节点类型(%d)不支持", nodeType)
-		return
+	if cls == nil || cls.Size() <= 0 {
+		return nil, nil, nil, uerror.New(-1, "集群(%d)不存在", nodeType)
 	}
-	if cls.Size() <= 0 {
-		err = uerror.New(-1, "集群(%d)中不存在任何服务节点", nodeType)
-		return
-	}
+
 	// 获取服务节点
 	var rr define.IRouter
 	if d.current != nil {

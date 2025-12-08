@@ -3,7 +3,9 @@ package bus
 import (
 	"framework/core/bus/internal/service"
 	"framework/core/cluster"
+	"framework/core/define"
 	"framework/core/handler"
+	"framework/core/router"
 	"framework/library/uerror"
 	"framework/library/util"
 	"framework/library/yaml"
@@ -34,8 +36,7 @@ func SubscribeReply(f func(head *packet.Head, body []byte)) error {
 	return serviceObj.SubscribeReply(f)
 }
 
-// 发送广播
-func Broadcast(idType uint32, id uint64, actorId uint64, nodeType uint32, api string, args ...any) error {
+func Broadcast(idType uint32, id uint64, nodeType uint32, api string, actorId uint64, args ...any) error {
 	cls := cluster.Get(nodeType)
 	if cls == nil || cls.Size() <= 0 {
 		return uerror.New(-1, "集群(%d)不存在", nodeType)
@@ -59,4 +60,51 @@ func Broadcast(idType uint32, id uint64, actorId uint64, nodeType uint32, api st
 		ActorFunc:   hh.GetId(),
 		ActorId:     util.Or(actorId > 0, actorId, id),
 	}, buf)
+}
+
+func Send(rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) error {
+	// 获取远程rpc
+	hh := handler.GetByRpc(nodeType, api)
+	if hh == nil {
+		return uerror.New(-1, "远程接口%s未注册", api)
+	}
+	body, err := hh.Marshal(args...)
+	if err != nil {
+		return err
+	}
+
+	// 获取集群s
+	cls := cluster.Get(nodeType)
+	if cls == nil || cls.Size() <= 0 {
+		return uerror.New(-1, "集群(%d)不存在", nodeType)
+	}
+
+	// 获取路由
+	routers := rpc.GetRouters()
+	rr := router.GetOrNew(routers[0].IdType, routers[0].Id)
+
+	// 获取发送节点
+	node := cls.Get(rr.Get(nodeType))
+	if node == nil {
+		node = cls.Random(rpc.GetRouterId())
+	}
+
+	// 更新路由
+	rr.Set(node.Type, node.Id)
+	rr.Update()
+	routers[0].List = rr.GetRouter()
+	if len(routers) > 1 {
+		for _, item := range routers[1:] {
+			itemRouter := router.GetOrNew(item.IdType, item.Id)
+			item.List = itemRouter.GetRouter()
+			itemRouter.Update()
+		}
+	}
+
+	head := rpc.GetHead()
+	head.DstNodeType = nodeType
+	head.DstNodeId = node.Id
+	head.ActorId = util.Or(actorId > 0, actorId, head.Id)
+	head.ActorFunc = hh.GetId()
+	return serviceObj.Send(head, body, routers...)
 }

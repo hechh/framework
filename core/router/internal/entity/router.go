@@ -3,6 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
+	"framework/core/define"
 	"framework/core/router/domain"
 	"strings"
 	"sync/atomic"
@@ -14,7 +15,7 @@ import (
 type Router struct {
 	idType     uint32
 	id         uint64
-	data       [domain.MAX_NODE_TYPE_COUNT]uint32
+	data       [define.MAX_NODE_TYPE_COUNT]uint32
 	updateTime int64
 	change     bool
 }
@@ -24,7 +25,7 @@ func NewRouter(idType uint32, id uint64) domain.IRouter {
 		idType:     idType,
 		id:         id,
 		updateTime: time.Now().Unix(),
-		data:       [domain.MAX_NODE_TYPE_COUNT]uint32{},
+		data:       [define.MAX_NODE_TYPE_COUNT]uint32{},
 	}
 }
 

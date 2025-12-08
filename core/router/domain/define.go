@@ -1,9 +1,5 @@
 package domain
 
-const (
-	MAX_NODE_TYPE_COUNT = 32 // 节点类型数量
-)
-
 type IData interface {
 	GetStatus() bool          // 设置变更标记位
 	SetStatus(bool)           // 是否需要保存

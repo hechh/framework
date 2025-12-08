@@ -2,6 +2,10 @@ package define
 
 import "framework/packet"
 
+const (
+	MAX_NODE_TYPE_COUNT = 32 // 节点类型数量
+)
+
 type IContext interface {
 	GetUid() uint64                                  // 获取玩家uid
 	GetActorId() uint64                              // 获取actor id

@@ -5,8 +5,8 @@ option go_package = "mypoker_new/framework/packet";
 
 // 框架核心协议，任何人不能修改
 message Node {
-  int32  Type = 1;
-  int32  Id   = 2;
+  uint32 Type = 1;
+  uint32 Id   = 2;
   string Name = 3;
   string Ip   = 4;
   int32  Port = 5;
@@ -14,11 +14,11 @@ message Node {
 
 message Head {
   int32    SendType    = 1;   // 发送类型
-  int32    SrcNodeType = 2;   // 源地址
-  int32    SrcNodeId   = 3;   // 源地址
-  int32    DstNodeType = 4;   // 目的地址
-  int32    DstNodeId   = 5;   // 目的地址
-  int32    IdType      = 6;   // id类型
+  uint32   SrcNodeType = 2;   // 源地址
+  uint32   SrcNodeId   = 3;   // 源地址
+  uint32   DstNodeType = 4;   // 目的地址
+  uint32   DstNodeId   = 5;   // 目的地址
+  uint32   IdType      = 6;   // id类型
   uint64   Id          = 7;   // id
   uint32   Cmd         = 8;   // 客户端请求
   uint32   Seq         = 9;   // 请求序列号
@@ -31,8 +31,8 @@ message Head {
 }
 
 message Callback {
-  int32  NodeType  = 1;
-  int32  NodeId    = 2;
+  uint32 NodeType  = 1;
+  uint32 NodeId    = 2;
   uint32 ActorFunc = 3;
   uint64 ActorId   = 4;
 }
@@ -44,7 +44,7 @@ message Packet {
 }
 
 message Router {
-  int32           IdType = 1;  // 路由类型
+  uint32          IdType = 1;  // 路由类型
   uint64          Id     = 2;  // 路由ID
   repeated uint32 List   = 3;  // 路由信息
 }
@@ -61,7 +61,7 @@ message Message {
 
 // redis全局路由表
 message RouterData {
-  int32         IdType     = 1;
+  uint32        IdType     = 1;
   uint64        Id         = 2;
   int64         UpdateTime = 3;
   repeated Node Routers    = 4;

@@ -27,7 +27,7 @@ func GetByCmd(cmd uint32) domain.IHandler {
 	return serviceObj.GetByCmd(cmd)
 }
 
-func GetByRpc(nodeType uint32, id uint32) domain.IHandler {
+func GetByRpc(nodeType uint32, id any) domain.IHandler {
 	return serviceObj.GetByRpc(nodeType, id)
 }
 

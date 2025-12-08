@@ -62,10 +62,18 @@ func (d *Service) GetByCmd(cmd uint32) domain.IHandler {
 	return nil
 }
 
-func (d *Service) GetByRpc(nodeType uint32, id uint32) domain.IHandler {
+func (d *Service) GetByRpc(nodeType uint32, id any) domain.IHandler {
 	if vals, ok := d.rpcs[nodeType]; ok {
-		if val, ok := vals[id]; ok {
-			return val
+		switch vv := id.(type) {
+		case uint32:
+			if val, ok := vals[vv]; ok {
+				return val
+			}
+		case string:
+			vid, _ := d.names[vv]
+			if val, ok := vals[vid]; ok {
+				return val
+			}
 		}
 	}
 	return nil

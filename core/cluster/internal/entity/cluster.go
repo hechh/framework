@@ -53,7 +53,7 @@ func (c *Cluster) Del(nodeId uint32) (nn *packet.Node) {
 		for _, item := range c.data {
 			count := 0
 			for ; pos < domain.CLUSTER_BUCKET_SIZE; pos++ {
-				if uint32(c.buckets[pos].Id) == nodeId {
+				if c.buckets[pos].Id == nodeId {
 					c.buckets[pos] = item
 					count++
 					if count == diff {
@@ -76,7 +76,7 @@ func (c *Cluster) Add(node *packet.Node) {
 	diff := int(newVal - oldVal)
 
 	// 在buckets中添加
-	tmps := map[int32]int{}
+	tmps := map[uint32]int{}
 	for pos := 0; pos < domain.CLUSTER_BUCKET_SIZE; pos++ {
 		item := c.buckets[pos]
 		val, ok := tmps[item.Id]
@@ -86,7 +86,7 @@ func (c *Cluster) Add(node *packet.Node) {
 		tmps[item.Id]++
 		c.buckets[pos] = node
 	}
-	c.data[uint32(node.Id)] = node
+	c.data[node.Id] = node
 }
 
 func (c *Cluster) Random(seed uint64) *packet.Node {

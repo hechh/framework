@@ -79,3 +79,13 @@ func (d *Map2S[T1, T2, V]) Del(t1 T1, t2 T2) (V, bool) {
 	}
 	return value, ok
 }
+
+func (d *Map2S[T1, T2, V]) Walk(f func(V) bool) {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	for _, item := range d.data {
+		if !f(item) {
+			return
+		}
+	}
+}

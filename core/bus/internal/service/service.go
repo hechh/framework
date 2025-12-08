@@ -95,6 +95,8 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 
 // 发送广播
 func (d *Service) Broadcast(head *packet.Head, body []byte, rs ...*packet.Router) error {
+	head.SrcNodeType = d.self.Type
+	head.SrcNodeId = d.self.Id
 	buf, err := proto.Marshal(&packet.Packet{Head: head, Body: body, List: rs})
 	if err != nil {
 		return err
@@ -104,6 +106,9 @@ func (d *Service) Broadcast(head *packet.Head, body []byte, rs ...*packet.Router
 
 // 发送请求
 func (d *Service) Send(head *packet.Head, body []byte, rs ...*packet.Router) error {
+	head.SrcNodeType = d.self.Type
+	head.SrcNodeId = d.self.Id
+
 	buf, err := proto.Marshal(&packet.Packet{Head: head, Body: body, List: rs})
 	if err != nil {
 		return err
@@ -113,6 +118,9 @@ func (d *Service) Send(head *packet.Head, body []byte, rs ...*packet.Router) err
 
 // 同步请求
 func (d *Service) Request(cb func([]byte) error, head *packet.Head, body []byte, rs ...*packet.Router) error {
+	head.SrcNodeType = d.self.Type
+	head.SrcNodeId = d.self.Id
+
 	buf, err := proto.Marshal(&packet.Packet{Head: head, Body: body, List: rs})
 	if err != nil {
 		return err

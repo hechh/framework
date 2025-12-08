@@ -5,6 +5,7 @@ import (
 	"framework/core/cluster"
 	"framework/core/handler"
 	"framework/library/uerror"
+	"framework/library/util"
 	"framework/library/yaml"
 	"framework/packet"
 )
@@ -34,23 +35,28 @@ func SubscribeReply(f func(head *packet.Head, body []byte)) error {
 }
 
 // 发送广播
-func Broadcast(head *packet.Head, nodeType uint32, api string, args ...any) error {
+func Broadcast(idType uint32, id uint64, actorId uint64, nodeType uint32, api string, args ...any) error {
 	cls := cluster.Get(nodeType)
 	if cls == nil || cls.Size() <= 0 {
 		return uerror.New(-1, "集群(%d)不存在", nodeType)
 	}
-
 	// 获取远程rpc
 	hh := handler.GetByRpc(nodeType, api)
 	if hh == nil {
 		return uerror.New(-1, "远程接口%s未注册", api)
 	}
-
 	// 序列化
 	buf, err := hh.Marshal(args...)
 	if err != nil {
 		return err
 	}
-
-	return nil
+	// 发送
+	return serviceObj.Broadcast(&packet.Head{
+		SendType:    1,
+		DstNodeType: nodeType,
+		IdType:      idType,
+		Id:          id,
+		ActorFunc:   hh.GetId(),
+		ActorId:     util.Or(actorId > 0, actorId, id),
+	}, buf)
 }

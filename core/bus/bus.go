@@ -63,48 +63,59 @@ func Broadcast(idType uint32, id uint64, nodeType uint32, api string, actorId ui
 }
 
 func Send(rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) error {
-	// 获取远程rpc
-	hh := handler.GetByRpc(nodeType, api)
-	if hh == nil {
-		return uerror.New(-1, "远程接口%s未注册", api)
-	}
-	body, err := hh.Marshal(args...)
+	pack, err := dispatcher(rpc, nodeType, api, actorId, args...)
 	if err != nil {
 		return err
 	}
+	return serviceObj.Send(pack)
+}
 
-	// 获取集群s
+func Request(cb func([]byte) error, rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) error {
+	pack, err := dispatcher(rpc, nodeType, api, actorId, args...)
+	if err != nil {
+		return err
+	}
+	return serviceObj.Request(pack, cb)
+}
+
+func dispatcher(rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) (*packet.Packet, error) {
+	// 获取远程rpc
+	hh := handler.GetByRpc(nodeType, api)
+	if hh == nil {
+		return nil, uerror.New(-1, "远程接口%s未注册", api)
+	}
+	// 获取集群
 	cls := cluster.Get(nodeType)
 	if cls == nil || cls.Size() <= 0 {
-		return uerror.New(-1, "集群(%d)不存在", nodeType)
+		return nil, uerror.New(-1, "集群(%d)不存在", nodeType)
 	}
-
-	// 获取路由
-	routers := rpc.GetRouters()
-	rr := router.GetOrNew(routers[0].IdType, routers[0].Id)
-
-	// 获取发送节点
-	node := cls.Get(rr.Get(nodeType))
-	if node == nil {
-		node = cls.Random(rpc.GetRouterId())
+	// 序列化
+	body, err := hh.Marshal(args...)
+	if err != nil {
+		return nil, err
 	}
-
+	pack := &packet.Packet{
+		Head: rpc.GetHead(),
+		List: rpc.GetRouters(),
+		Body: body,
+	}
 	// 更新路由
-	rr.Set(node.Type, node.Id)
-	rr.Update()
-	routers[0].List = rr.GetRouter()
-	if len(routers) > 1 {
-		for _, item := range routers[1:] {
-			itemRouter := router.GetOrNew(item.IdType, item.Id)
-			item.List = itemRouter.GetRouter()
-			itemRouter.Update()
+	var node *packet.Node
+	for i, item := range pack.List {
+		rr := router.GetOrNew(item.IdType, item.Id)
+		if i == 0 {
+			if node = cls.Get(rr.Get(nodeType)); node == nil {
+				node = cls.Random(rpc.GetRouterId())
+			}
+			rr.Set(node.Type, node.Id)
 		}
+		item.List = rr.GetRouter()
+		rr.Update()
 	}
-
-	head := rpc.GetHead()
-	head.DstNodeType = nodeType
-	head.DstNodeId = node.Id
-	head.ActorId = util.Or(actorId > 0, actorId, head.Id)
-	head.ActorFunc = hh.GetId()
-	return serviceObj.Send(head, body, routers...)
+	// 设置值
+	pack.Head.DstNodeType = nodeType
+	pack.Head.DstNodeId = node.Id
+	pack.Head.ActorFunc = hh.GetId()
+	pack.Head.ActorId = actorId
+	return pack, nil
 }

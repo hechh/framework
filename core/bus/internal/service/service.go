@@ -9,7 +9,7 @@ import (
 	"framework/library/yaml"
 	"framework/packet"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 type Service struct {
@@ -67,11 +67,9 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
 		}
-
 		for _, rr := range pack.List {
 			router.GetOrNew(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
-
 		f(pack.Head, pack.Body)
 	})
 }
@@ -84,11 +82,9 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
 		}
-
 		for _, rr := range pack.List {
 			router.GetOrNew(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
-
 		f(pack.Head, pack.Body)
 	})
 }
@@ -105,26 +101,33 @@ func (d *Service) Broadcast(head *packet.Head, body []byte, rs ...*packet.Router
 }
 
 // 发送请求
-func (d *Service) Send(head *packet.Head, body []byte, rs ...*packet.Router) error {
-	head.SrcNodeType = d.self.Type
-	head.SrcNodeId = d.self.Id
-	buf, err := proto.Marshal(&packet.Packet{Head: head, Body: body, List: rs})
+func (d *Service) Send(pack *packet.Packet) error {
+	pack.Head.SrcNodeType = d.self.Type
+	pack.Head.SrcNodeId = d.self.Id
+	if pack.Head.Back != nil {
+		pack.Head.Back.NodeType = d.self.Type
+		pack.Head.Back.NodeId = d.self.Id
+	}
+	buf, err := proto.Marshal(pack)
 	if err != nil {
 		return err
 	}
-	return d.conn.Send(d.readTopic(head.DstNodeType, head.DstNodeId), buf)
+	return d.conn.Send(d.readTopic(pack.Head.DstNodeType, pack.Head.DstNodeId), buf)
 }
 
 // 同步请求
-func (d *Service) Request(cb func([]byte) error, head *packet.Head, body []byte, rs ...*packet.Router) error {
-	head.SrcNodeType = d.self.Type
-	head.SrcNodeId = d.self.Id
-
-	buf, err := proto.Marshal(&packet.Packet{Head: head, Body: body, List: rs})
+func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
+	pack.Head.SrcNodeType = d.self.Type
+	pack.Head.SrcNodeId = d.self.Id
+	if pack.Head.Back != nil {
+		pack.Head.Back.NodeType = d.self.Type
+		pack.Head.Back.NodeId = d.self.Id
+	}
+	buf, err := proto.Marshal(pack)
 	if err != nil {
 		return err
 	}
-	return d.conn.Request(d.replyTopic(head.DstNodeType, head.DstNodeId), buf, cb)
+	return d.conn.Request(d.replyTopic(pack.Head.DstNodeType, pack.Head.DstNodeId), buf, cb)
 }
 
 // 同步应答

@@ -90,14 +90,14 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 }
 
 // 发送广播
-func (d *Service) Broadcast(head *packet.Head, body []byte, rs ...*packet.Router) error {
-	head.SrcNodeType = d.self.Type
-	head.SrcNodeId = d.self.Id
-	buf, err := proto.Marshal(&packet.Packet{Head: head, Body: body, List: rs})
+func (d *Service) Broadcast(pack *packet.Packet) error {
+	pack.Head.SrcNodeType = d.self.Type
+	pack.Head.SrcNodeId = d.self.Id
+	buf, err := proto.Marshal(pack)
 	if err != nil {
 		return err
 	}
-	return d.conn.Send(d.broadcastTopic(head.DstNodeType), buf)
+	return d.conn.Send(d.broadcastTopic(pack.Head.DstNodeType), buf)
 }
 
 // 发送请求

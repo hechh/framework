@@ -52,14 +52,17 @@ func Broadcast(idType uint32, id uint64, nodeType uint32, api string, actorId ui
 		return err
 	}
 	// 发送
-	return serviceObj.Broadcast(&packet.Head{
-		SendType:    1,
-		DstNodeType: nodeType,
-		IdType:      idType,
-		Id:          id,
-		ActorFunc:   hh.GetId(),
-		ActorId:     util.Or(actorId > 0, actorId, id),
-	}, buf)
+	return serviceObj.Broadcast(&packet.Packet{
+		Head: &packet.Head{
+			SendType:    1,
+			DstNodeType: nodeType,
+			IdType:      idType,
+			Id:          id,
+			ActorFunc:   hh.GetId(),
+			ActorId:     util.Or(actorId > 0, actorId, id),
+		},
+		Body: buf,
+	})
 }
 
 func Send(rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) error {
@@ -84,11 +87,13 @@ func dispatcher(rpc define.IRpc, nodeType uint32, api string, actorId uint64, ar
 	if hh == nil {
 		return nil, uerror.New(-1, "远程接口%s未注册", api)
 	}
+
 	// 获取集群
 	cls := cluster.Get(nodeType)
 	if cls == nil || cls.Size() <= 0 {
 		return nil, uerror.New(-1, "集群(%d)不存在", nodeType)
 	}
+
 	// 序列化
 	body, err := hh.Marshal(args...)
 	if err != nil {
@@ -99,6 +104,7 @@ func dispatcher(rpc define.IRpc, nodeType uint32, api string, actorId uint64, ar
 		List: rpc.GetRouters(),
 		Body: body,
 	}
+
 	// 更新路由
 	var node *packet.Node
 	for i, item := range pack.List {
@@ -112,6 +118,7 @@ func dispatcher(rpc define.IRpc, nodeType uint32, api string, actorId uint64, ar
 		item.List = rr.GetRouter()
 		rr.Update()
 	}
+
 	// 设置值
 	pack.Head.DstNodeType = nodeType
 	pack.Head.DstNodeId = node.Id

@@ -3,9 +3,7 @@ package bus
 import (
 	"framework/core/bus/internal/service"
 	"framework/core/cluster"
-	"framework/core/define"
 	"framework/core/handler"
-	"framework/core/router"
 	"framework/library/uerror"
 	"framework/library/util"
 	"framework/library/yaml"
@@ -65,64 +63,14 @@ func Broadcast(idType uint32, id uint64, nodeType uint32, api string, actorId ui
 	})
 }
 
-func Send(rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) error {
-	pack, err := dispatcher(rpc, nodeType, api, actorId, args...)
-	if err != nil {
-		return err
-	}
+func Send(pack *packet.Packet) error {
 	return serviceObj.Send(pack)
 }
 
-func Request(cb func([]byte) error, rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) error {
-	pack, err := dispatcher(rpc, nodeType, api, actorId, args...)
-	if err != nil {
-		return err
-	}
+func Request(pack *packet.Packet, cb func([]byte) error) error {
 	return serviceObj.Request(pack, cb)
 }
 
-func dispatcher(rpc define.IRpc, nodeType uint32, api string, actorId uint64, args ...any) (*packet.Packet, error) {
-	// 获取远程rpc
-	hh := handler.GetByRpc(nodeType, api)
-	if hh == nil {
-		return nil, uerror.New(-1, "远程接口%s未注册", api)
-	}
-
-	// 获取集群
-	cls := cluster.Get(nodeType)
-	if cls == nil || cls.Size() <= 0 {
-		return nil, uerror.New(-1, "集群(%d)不存在", nodeType)
-	}
-
-	// 序列化
-	body, err := hh.Marshal(args...)
-	if err != nil {
-		return nil, err
-	}
-	pack := &packet.Packet{
-		Head: rpc.GetHead(),
-		List: rpc.GetRouters(),
-		Body: body,
-	}
-
-	// 更新路由
-	var node *packet.Node
-	for i, item := range pack.List {
-		rr := router.GetOrNew(item.IdType, item.Id)
-		if i == 0 {
-			if node = cls.Get(rr.Get(nodeType)); node == nil {
-				node = cls.Random(rpc.GetRouterId())
-			}
-			rr.Set(node.Type, node.Id)
-		}
-		item.List = rr.GetRouter()
-		rr.Update()
-	}
-
-	// 设置值
-	pack.Head.DstNodeType = nodeType
-	pack.Head.DstNodeId = node.Id
-	pack.Head.ActorFunc = hh.GetId()
-	pack.Head.ActorId = actorId
-	return pack, nil
+func Response(pack *packet.Head, buf []byte) error {
+	return serviceObj.Response(pack, buf)
 }

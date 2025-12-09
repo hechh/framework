@@ -6,7 +6,6 @@ import (
 	"framework/library/async"
 	"framework/library/mlog"
 	"framework/library/util"
-	"framework/old/define"
 
 	"path/filepath"
 	"sync"
@@ -79,7 +78,7 @@ func (d *EtcdRegister) Register(key string, val []byte) error {
 
 	d.Add(1)
 	async.Go(func() {
-		tt := time.NewTicker((define.ETCD_GRANT_TTL / 2) * time.Second)
+		tt := time.NewTicker((domain.ETCD_GRANT_TTL / 2) * time.Second)
 		defer func() {
 			d.Done()
 			tt.Stop()

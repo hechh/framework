@@ -1,7 +1,5 @@
 package define
 
-import "framework/packet"
-
 const (
 	MAX_NODE_TYPE_COUNT = 32 // 节点类型数量
 )
@@ -13,19 +11,16 @@ type IContext interface {
 	GetFuncName() string                             // 获取函数名字
 	AddDepth(add uint32) uint32                      // 添加调用深度
 	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
-	//	NewRpc(isOrigin bool) IRpc                       // 创建IRpc接口
-	Tracef(fmt string, args ...any) // 输出trace日志
-	Debugf(fmt string, args ...any) // 输出debug日志
-	Warnf(fmt string, args ...any)  // 输出warn日志
-	Infof(fmt string, args ...any)  // 输出info日志
-	Errorf(fmt string, args ...any) // 输出error日志
-	Fatalf(fmt string, args ...any) // 输出fatal日志
+	Tracef(fmt string, args ...any)                  // 输出trace日志
+	Debugf(fmt string, args ...any)                  // 输出debug日志
+	Warnf(fmt string, args ...any)                   // 输出warn日志
+	Infof(fmt string, args ...any)                   // 输出info日志
+	Errorf(fmt string, args ...any)                  // 输出error日志
+	Fatalf(fmt string, args ...any)                  // 输出fatal日志
 }
 
 type IRpc interface {
-	Router(idType int32, id uint64)                                   // 设置路由
-	Callback(nodeType uint32, actorFunc string, actorId uint64) error // 设置回调
-	GetHead() *packet.Head
-	GetRouterId() uint64
-	GetRouters() []*packet.Router
+	SetRouter(idType uint32, id uint64, routerId uint64, isOrigin bool)
+	SetCallback(actorFunc string, actorId uint64) error
+	Rpc(nodeType uint32, actorId uint64, api string, args ...any) error
 }

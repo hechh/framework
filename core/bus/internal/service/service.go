@@ -49,7 +49,7 @@ func (d *Service) replyTopic(nodeType uint32, nodeId uint32) string {
 
 // 监听广播
 func (d *Service) SubscribeBroadcast(f func(head *packet.Head, body []byte)) error {
-	return d.conn.Subscribe(d.broadcastTopic(d.self.Type), func(msg packet.Message) {
+	return d.conn.Subscribe(d.broadcastTopic(d.self.Type), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析广播数据包错误:%v", err)
@@ -61,7 +61,7 @@ func (d *Service) SubscribeBroadcast(f func(head *packet.Head, body []byte)) err
 
 // 监听单播
 func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error {
-	return d.conn.Subscribe(d.readTopic(d.self.Type, d.self.Id), func(msg packet.Message) {
+	return d.conn.Subscribe(d.readTopic(d.self.Type, d.self.Id), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
@@ -76,7 +76,7 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 
 // 监听同步请求
 func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
-	return d.conn.Subscribe(d.replyTopic(d.self.Type, d.self.Id), func(msg packet.Message) {
+	return d.conn.Subscribe(d.replyTopic(d.self.Type, d.self.Id), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)

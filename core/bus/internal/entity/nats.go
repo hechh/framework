@@ -37,9 +37,9 @@ func NewNatsBus(prefix string, endpoints string) (ret *NatsBus, err error) {
 	return
 }
 
-func (d *NatsBus) Subscribe(topic string, f func(packet.Message)) error {
+func (d *NatsBus) Subscribe(topic string, f func(*packet.Message)) error {
 	_, err := d.client.Subscribe(filepath.Join(d.prefix, topic), func(msg *nats.Msg) {
-		f(packet.Message{Reply: msg.Reply, Body: msg.Data})
+		f(&packet.Message{Reply: msg.Reply, Body: msg.Data})
 	})
 	return err
 }

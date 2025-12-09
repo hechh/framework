@@ -3,6 +3,7 @@ package context
 import (
 	"fmt"
 	"framework/library/mlog"
+	"framework/library/util"
 	"framework/packet"
 	"sync/atomic"
 )
@@ -37,19 +38,17 @@ func (d *Defualt) CompareAndSwapDepth(old, new uint32) bool {
 	return atomic.CompareAndSwapUint32(&d.depth, old, new)
 }
 
-/*
-func (d *Defualt) NewRpc(isOrigin bool) define.IRpc {
-	d.AddDepth(1)
-	return NewRpc(d.Head, isOrigin)
-}
-*/
-
 func (d *Defualt) getformat(str string) string {
-	if d.ActorId > 0 {
-		return fmt.Sprintf("[%d] Node(%d:%d) -> Node(%d:%d) %s.%s(%d)\t%s", d.SrcNodeType, d.SrcNodeId, d.DstNodeType, d.DstNodeId, d.Id, d.actorName, d.funcName, d.ActorId, str)
-	} else {
-		return fmt.Sprintf("[%d] Node(%d:%d) -> Node(%d:%d) %s.%s(%d)\t%s", d.Id, d.SrcNodeType, d.SrcNodeId, d.DstNodeType, d.DstNodeId, d.actorName, d.funcName, d.Id, str)
-	}
+	return fmt.Sprintf("[%d:%d->%d:%d] [%d] %s.%s(%d) %s",
+		d.SrcNodeType,
+		d.SrcNodeId,
+		d.DstNodeType,
+		d.DstNodeId,
+		d.Id,
+		d.actorName,
+		d.funcName,
+		util.Or(d.ActorId > 0, d.ActorId, d.Id),
+		str)
 }
 
 func (d *Defualt) Tracef(format string, args ...any) {

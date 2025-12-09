@@ -4,7 +4,7 @@ import "framework/packet"
 
 // 消息队列接口
 type IMsgQueue interface {
-	Subscribe(topic string, handle func(packet.Message)) error      // 读取消息
+	Subscribe(topic string, handle func(*packet.Message)) error     // 读取消息
 	Send(topic string, body []byte) error                           // 发送消息
 	Request(topic string, body []byte, cb func([]byte) error) error // 发送同步消息
 	Response(topic string, body []byte) error                       // 回复同步消息

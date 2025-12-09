@@ -10,15 +10,15 @@ import (
 
 type V1Handler[Actor any, V1 any] struct {
 	*base.Base
-	define.IEncoder
+	define.ISerialize
 	method domain.V1Func[Actor, V1]
 }
 
-func NewV1Handler[Actor any, V1 any](en define.IEncoder, nodeType uint32, cmd uint32, f domain.V1Func[Actor, V1]) *V1Handler[Actor, V1] {
+func NewV1Handler[Actor any, V1 any](en define.ISerialize, nodeType uint32, cmd uint32, f domain.V1Func[Actor, V1]) *V1Handler[Actor, V1] {
 	return &V1Handler[Actor, V1]{
-		Base:     base.NewBase(nodeType, cmd, reflect.ValueOf(f)),
-		IEncoder: en,
-		method:   f,
+		Base:       base.NewBase(nodeType, cmd, reflect.ValueOf(f)),
+		ISerialize: en,
+		method:     f,
 	}
 }
 

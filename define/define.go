@@ -10,6 +10,12 @@ const (
 	ETCD_GRANT_TTL      = 15
 )
 
+// 序列化
+type ISerialize interface {
+	Marshal(...any) ([]byte, error)
+	Unmarshal([]byte, ...any) error
+}
+
 // 通用上下文接口
 type IContext interface {
 	GetHead() *packet.Head
@@ -27,24 +33,19 @@ type IContext interface {
 	Fatalf(fmt string, args ...any)                  // 输出fatal日志
 }
 
-type IData interface {
-	GetStatus() bool          // 设置变更标记位
-	SetStatus(bool)           // 是否需要保存
-	Marshal() (string, error) // 序列化
-	Unmarshal(string) error   // 反序列化
-}
-
 // 路由接口
 type IRouter interface {
-	IData
-	GetIdType() uint32                     // 获取路由类型
-	GetId() uint64                         // 获取路由id
-	Get(uint32) uint32                     // 获取路由
-	Set(uint32, uint32)                    // 设置路由
-	GetRouter() []uint32                   // 获取路由
-	SetRouter(...uint32)                   // 设置路由
-	Update()                               // 更新路由有效时间
-	IsExpire(now int64, expire int64) bool // 是否过期
+	ISerialize               // 序列化
+	GetStatus() bool         // 设置变更标记位
+	SetStatus(bool)          // 是否需要保存
+	GetIdType() uint32       // 获取路由类型
+	GetId() uint64           // 获取路由id
+	Get(uint32) uint32       // 获取路由
+	Set(uint32, uint32)      // 设置路由
+	GetRouter() []uint32     // 获取路由
+	SetRouter(...uint32)     // 设置路由
+	Update()                 // 更新路由有效时间
+	IsExpire(now int64) bool // 是否过期
 }
 
 // 服务发现接口
@@ -68,15 +69,9 @@ type ICluster interface {
 	Random(seed uint64) *packet.Node // 路由一个节点
 }
 
-// 编码器
-type IEncoder interface {
-	Marshal(...any) ([]byte, error)
-	Unmarshal([]byte, ...any) error
-}
-
 // 开放接口
 type IHandler interface {
-	IEncoder
+	ISerialize
 	GetType() uint32                   // 节点类型
 	GetId() uint32                     // 唯一id
 	GetCmd() uint32                    // 对应命令字

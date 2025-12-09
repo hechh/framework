@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"framework/define"
+	"framework/library/util"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -16,14 +17,16 @@ type Router struct {
 	id         uint64
 	data       [define.MAX_NODE_TYPE_COUNT]uint32
 	updateTime int64
+	ttl        int64
 	change     bool
 }
 
-func NewRouter(idType uint32, id uint64) define.IRouter {
+func NewRouter(idType uint32, id uint64, ttl int64) define.IRouter {
 	return &Router{
 		idType:     idType,
 		id:         id,
 		updateTime: time.Now().Unix(),
+		ttl:        ttl,
 		data:       [define.MAX_NODE_TYPE_COUNT]uint32{},
 	}
 }
@@ -36,8 +39,8 @@ func (d *Router) GetId() uint64 {
 	return d.id
 }
 
-func (d *Router) IsExpire(now int64, expire int64) bool {
-	return now-atomic.LoadInt64(&d.updateTime) >= expire
+func (d *Router) IsExpire(now int64) bool {
+	return now-atomic.LoadInt64(&d.updateTime) >= d.ttl
 }
 
 func (d *Router) Update() {
@@ -76,7 +79,7 @@ func (d *Router) SetStatus(val bool) {
 	d.change = val
 }
 
-func (d *Router) Marshal() (string, error) {
+func (d *Router) Marshal(args ...any) ([]byte, error) {
 	tmps := map[uint32]uint32{}
 	for i := 0; i < len(d.data); i++ {
 		if val := atomic.LoadUint32(&d.data[i]); val > 0 {
@@ -85,24 +88,31 @@ func (d *Router) Marshal() (string, error) {
 	}
 	buf, err := json.Marshal(&tmps)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return fmt.Sprintf("%d|%d|%d|%s", d.idType, d.id, d.updateTime, string(buf)), nil
+	return util.StringToBytes(fmt.Sprintf("%d|%d|%d|%s", d.idType, d.id, d.updateTime, string(buf))), nil
 }
 
-func (d *Router) Unmarshal(str string) error {
-	vals := strings.Split(str, "|")
+func (d *Router) Unmarshal(str []byte, args ...any) error {
+	vals := strings.Split(util.BytesToString(str), "|")
 
+	// 判断是否过期
+	updateTime := cast.ToInt64(vals[2])
+	if time.Now().Unix()-updateTime >= d.ttl {
+		return nil
+	}
+
+	// 设置数据
+	d.idType = cast.ToUint32(vals[0])
+	d.id = cast.ToUint64(vals[1])
+	d.updateTime = updateTime
+	d.change = false
+
+	// 解析节点信息
 	tmps := map[uint32]uint32{}
 	if err := json.Unmarshal([]byte(vals[3]), &tmps); err != nil {
 		return err
 	}
-
-	d.idType = cast.ToUint32(vals[0])
-	d.id = cast.ToUint64(vals[1])
-	d.updateTime = cast.ToInt64(vals[2])
-	d.change = false
-
 	for nodeType, nodeId := range tmps {
 		atomic.StoreUint32(&d.data[nodeType-1], nodeId)
 	}

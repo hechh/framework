@@ -10,15 +10,15 @@ import (
 
 type P2Handler[Actor any, V1 any, V2 any] struct {
 	*base.Base
-	define.IEncoder
+	define.ISerialize
 	method domain.P2Func[Actor, V1, V2]
 }
 
-func NewP2Handler[Actor any, V1 any, V2 any](en define.IEncoder, nodeType uint32, cmd uint32, f domain.P2Func[Actor, V1, V2]) *P2Handler[Actor, V1, V2] {
+func NewP2Handler[Actor any, V1 any, V2 any](en define.ISerialize, nodeType uint32, cmd uint32, f domain.P2Func[Actor, V1, V2]) *P2Handler[Actor, V1, V2] {
 	return &P2Handler[Actor, V1, V2]{
-		Base:     base.NewBase(nodeType, cmd, reflect.ValueOf(f)),
-		IEncoder: en,
-		method:   f,
+		Base:       base.NewBase(nodeType, cmd, reflect.ValueOf(f)),
+		ISerialize: en,
+		method:     f,
 	}
 }
 

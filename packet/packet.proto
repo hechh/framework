@@ -25,9 +25,9 @@ message Head {
   uint32   ActorFunc   = 10;  // 调用的Actor
   uint64   ActorId     = 11;  // actor id
   uint32   Version     = 12;  // 版本号
-  uint32   Extra       = 13;  // 扩展字段
-  string   Reply       = 14;  // 是否同步请求
-  Callback Back        = 15;  // 回调信息
+  uint32   SocketId    = 13;  // socketId
+  string   Reply       = 15;  // 是否同步请求
+  Callback Back        = 16;  // 回调信息
 }
 
 message Callback {

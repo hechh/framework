@@ -21,7 +21,7 @@ func CopyTo(dst *packet.Head, src *packet.Head) {
 	dst.ActorFunc = src.ActorFunc
 	dst.ActorId = src.ActorId
 	dst.Version = src.Version
-	dst.Extra = src.Extra
+	dst.SocketId = src.SocketId
 	dst.Reply = src.Reply
 }
 

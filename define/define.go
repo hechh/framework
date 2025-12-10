@@ -9,6 +9,8 @@ const (
 	MAX_NODE_TYPE_COUNT = 32  // 节点类型数量
 	CLUSTER_BUCKET_SIZE = 256 // 集群桶的数量
 	ETCD_GRANT_TTL      = 15
+	STATUS_STOPPED      = 0
+	STATUS_RUNNING      = 1
 )
 
 // 服务发现接口
@@ -130,4 +132,19 @@ type IActor interface {
 	RegisterTimer(IContext, time.Duration, int32) error // 注册定时器
 	SendMsg(IContext, ...any) error                     // 异步调用派生类成员函数
 	Send(IContext, []byte) error                        // 异步调用派生类成员函数
+}
+
+// 数据包编码or解码
+type IFrame interface {
+	Encode(*packet.Packet) []byte
+	Decode([]byte) *packet.Packet
+}
+
+// socket接口
+type ISocket interface {
+	GetId() uint32
+	Read(func(*packet.Packet) error)
+	Write(*packet.Packet) error
+	Close()
+	Stop()
 }

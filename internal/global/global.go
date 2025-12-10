@@ -6,8 +6,9 @@ import (
 )
 
 var (
-	self             *packet.Node
-	actorIdGenerator = uint64(0) // actorId生成器
+	self              *packet.Node
+	actorIdGenerator  = uint64(0) // actorId生成器
+	socketIdGenerator = uint32(0)
 )
 
 func SetSelf(nn *packet.Node) {
@@ -29,4 +30,8 @@ func GetSelfId() uint32 {
 // 生成 actorId
 func GenerateActorId() uint64 {
 	return atomic.AddUint64(&actorIdGenerator, 1)
+}
+
+func GenerateSocketId() uint32 {
+	return atomic.AddUint32(&socketIdGenerator, 1)
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"framework/define"
-	"framework/repository/handler/domain"
 	"framework/repository/handler/internal/base"
 	"reflect"
 	"time"
@@ -11,10 +10,10 @@ import (
 type V0Handler[Actor any] struct {
 	*base.Base
 	base.EmptyEncoder
-	method domain.V0Func[Actor]
+	method define.V0Func[Actor]
 }
 
-func NewV0Handler[Actor any](nodeType uint32, cmd uint32, f domain.V0Func[Actor]) *V0Handler[Actor] {
+func NewV0Handler[Actor any](nodeType uint32, cmd uint32, f define.V0Func[Actor]) *V0Handler[Actor] {
 	return &V0Handler[Actor]{
 		Base:   base.NewBase(nodeType, cmd, reflect.ValueOf(f)),
 		method: f,

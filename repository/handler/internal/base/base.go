@@ -1,10 +1,8 @@
 package base
 
 import (
-	"hash/crc32"
+	"framework/internal/common"
 	"reflect"
-	"runtime"
-	"strings"
 )
 
 type Base struct {
@@ -15,12 +13,10 @@ type Base struct {
 }
 
 func NewBase(nodeType uint32, cmd uint32, fun reflect.Value) *Base {
-	runName := runtime.FuncForPC(fun.Pointer()).Name()
-	strs := strings.Split(runName, "(*")
-	name := strings.ReplaceAll(strs[len(strs)-1], ")", "")
+	name := common.ParseActorFunc(fun)
 	return &Base{
 		nodeType: nodeType,
-		id:       crc32.ChecksumIEEE([]byte(name)),
+		id:       common.GetCrc32(name),
 		cmd:      cmd,
 		name:     name,
 	}

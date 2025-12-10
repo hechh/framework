@@ -1,6 +1,7 @@
 package bus
 
 import (
+	"framework/define"
 	"framework/library/uerror"
 	"framework/library/util"
 	"framework/library/yaml"
@@ -14,8 +15,8 @@ var (
 	serviceObj = service.NewService()
 )
 
-func Init(cfg *yaml.NatsConfig, nn *packet.Node) error {
-	return serviceObj.Init(cfg, nn)
+func Init(cfg *yaml.NatsConfig) error {
+	return serviceObj.Init(cfg)
 }
 
 func Close() {
@@ -34,7 +35,7 @@ func SubscribeReply(f func(head *packet.Head, body []byte)) error {
 	return serviceObj.SubscribeReply(f)
 }
 
-func Broadcast(idType uint32, id uint64, nodeType uint32, api string, actorId uint64, args ...any) error {
+func Broadcast(idType uint32, id uint64, nodeType uint32, actorId uint64, api string, args ...any) error {
 	cls := cluster.Get(nodeType)
 	if cls == nil || cls.Size() <= 0 {
 		return uerror.New(-1, "集群(%d)不存在", nodeType)
@@ -73,4 +74,20 @@ func Request(pack *packet.Packet, cb func([]byte) error) error {
 
 func Response(pack *packet.Head, buf []byte) error {
 	return serviceObj.Response(pack, buf)
+}
+
+func SendIPacket(pack define.IPacket) error {
+	pac, err := pack.GetPacket()
+	if err != nil {
+		return err
+	}
+	return serviceObj.Send(pac)
+}
+
+func RequestIPacket(pack define.IPacket, cb func([]byte) error) error {
+	pac, err := pack.GetPacket()
+	if err != nil {
+		return err
+	}
+	return serviceObj.Request(pac, cb)
 }

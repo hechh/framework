@@ -1,6 +1,8 @@
 package service
 
-import "framework/define"
+import (
+	"framework/define"
+)
 
 type Service struct {
 	names  map[string]uint32                     // name to value

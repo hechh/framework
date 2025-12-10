@@ -2,7 +2,6 @@ package handler
 
 import (
 	"framework/define"
-	"framework/repository/handler/domain"
 	"framework/repository/handler/internal/base"
 	"reflect"
 	"time"
@@ -11,10 +10,10 @@ import (
 type V2Handler[Actor any, V1 any, V2 any] struct {
 	*base.Base
 	define.ISerialize
-	method domain.V2Func[Actor, V1, V2]
+	method define.V2Func[Actor, V1, V2]
 }
 
-func NewV2Handler[Actor any, V1 any, V2 any](en define.ISerialize, nodeType uint32, cmd uint32, f domain.V2Func[Actor, V1, V2]) *V2Handler[Actor, V1, V2] {
+func NewV2Handler[Actor any, V1 any, V2 any](en define.ISerialize, nodeType uint32, cmd uint32, f define.V2Func[Actor, V1, V2]) *V2Handler[Actor, V1, V2] {
 	return &V2Handler[Actor, V1, V2]{
 		Base:       base.NewBase(nodeType, cmd, reflect.ValueOf(f)),
 		ISerialize: en,

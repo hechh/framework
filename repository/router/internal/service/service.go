@@ -2,33 +2,32 @@ package service
 
 import (
 	"framework/define"
+	"framework/internal/global"
 	"framework/library/async"
-	"framework/library/mapstruct"
 	"framework/library/mlog"
+	"framework/library/structure"
 	"framework/library/yaml"
-	"framework/packet"
 	"framework/repository/router/domain"
 	"time"
 )
 
 type Service struct {
-	self       *packet.Node
 	ttl        int64
 	newFunc    domain.NewFunc                                   // 创建函数
 	filterFunc domain.FilterFunc                                // 过滤函数
-	routers    *mapstruct.Map2S[uint32, uint64, define.IRouter] // 路由表
+	routers    *structure.Map2S[uint32, uint64, define.IRouter] // 路由表
 	exit       chan struct{}                                    // 退出通知
 }
 
 func NewService(n domain.NewFunc) *Service {
 	return &Service{
 		newFunc: n,
-		routers: mapstruct.NewMap2S[uint32, uint64, define.IRouter](),
+		routers: structure.NewMap2S[uint32, uint64, define.IRouter](),
 		exit:    make(chan struct{}),
 	}
 }
 
-func (d *Service) Init(cfg *yaml.NodeConfig, nn *packet.Node, filter domain.FilterFunc) {
+func (d *Service) Init(cfg *yaml.NodeConfig, filter domain.FilterFunc) {
 	d.filterFunc = filter
 	d.ttl = cfg.RouterExpire
 	async.Go(func() {
@@ -61,7 +60,7 @@ func (d *Service) GetOrNew(idType uint32, id uint64) define.IRouter {
 		return val
 	}
 	item := d.newFunc(idType, id, d.ttl)
-	item.Set(d.self.Type, d.self.Id)
+	item.Set(global.GetSelf().Type, global.GetSelf().Id)
 	d.routers.Set(idType, id, item)
 	return item
 }

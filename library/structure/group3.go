@@ -1,8 +1,8 @@
-package mapstruct
+package structure
 
 import "sync"
 
-type Group3[T1 comparable, T2 comparable, T3 comparable, V any] map[three[T1, T2, T3]][]V
+type Group3[T1 comparable, T2 comparable, T3 comparable, V any] map[Triple[T1, T2, T3]][]V
 
 // 大小
 func (d Group3[T1, T2, T3, V]) Size() int {
@@ -11,20 +11,20 @@ func (d Group3[T1, T2, T3, V]) Size() int {
 
 // 设置
 func (d Group3[T1, T2, T3, V]) Put(t1 T1, t2 T2, t3 T3, value V) {
-	key := three[T1, T2, T3]{t1, t2, t3}
+	key := Triple[T1, T2, T3]{t1, t2, t3}
 	d[key] = append(d[key], value)
 }
 
 // 读取
 func (d Group3[T1, T2, T3, V]) Get(t1 T1, t2 T2, t3 T3) ([]V, bool) {
-	key := three[T1, T2, T3]{t1, t2, t3}
+	key := Triple[T1, T2, T3]{t1, t2, t3}
 	value, ok := d[key]
 	return value, ok
 }
 
 // 删除
 func (d Group3[T1, T2, T3, V]) Del(t1 T1, t2 T2, t3 T3) ([]V, bool) {
-	key := three[T1, T2, T3]{t1, t2, t3}
+	key := Triple[T1, T2, T3]{t1, t2, t3}
 	value, ok := d[key]
 	if ok {
 		delete(d, key)
@@ -34,11 +34,11 @@ func (d Group3[T1, T2, T3, V]) Del(t1 T1, t2 T2, t3 T3) ([]V, bool) {
 
 type Group3S[T1 comparable, T2 comparable, T3 comparable, V any] struct {
 	mutex sync.RWMutex
-	data  map[three[T1, T2, T3]][]V
+	data  map[Triple[T1, T2, T3]][]V
 }
 
 func NewGroup3S[T1 comparable, T2 comparable, T3 comparable, V any]() *Group3S[T1, T2, T3, V] {
-	return &Group3S[T1, T2, T3, V]{data: make(map[three[T1, T2, T3]][]V)}
+	return &Group3S[T1, T2, T3, V]{data: make(map[Triple[T1, T2, T3]][]V)}
 }
 
 // 大小
@@ -48,7 +48,7 @@ func (d *Group3S[T1, T2, T3, V]) Size() int {
 
 // 设置
 func (d *Group3S[T1, T2, T3, V]) Put(t1 T1, t2 T2, t3 T3, value V) {
-	key := three[T1, T2, T3]{t1, t2, t3}
+	key := Triple[T1, T2, T3]{t1, t2, t3}
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	d.data[key] = append(d.data[key], value)
@@ -56,7 +56,7 @@ func (d *Group3S[T1, T2, T3, V]) Put(t1 T1, t2 T2, t3 T3, value V) {
 
 // 读取
 func (d *Group3S[T1, T2, T3, V]) Get(t1 T1, t2 T2, t3 T3) ([]V, bool) {
-	key := three[T1, T2, T3]{t1, t2, t3}
+	key := Triple[T1, T2, T3]{t1, t2, t3}
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 	values, ok := d.data[key]
@@ -65,7 +65,7 @@ func (d *Group3S[T1, T2, T3, V]) Get(t1 T1, t2 T2, t3 T3) ([]V, bool) {
 
 // 删除
 func (d *Group3S[T1, T2, T3, V]) Del(t1 T1, t2 T2, t3 T3) ([]V, bool) {
-	key := three[T1, T2, T3]{t1, t2, t3}
+	key := Triple[T1, T2, T3]{t1, t2, t3}
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	values, ok := d.data[key]

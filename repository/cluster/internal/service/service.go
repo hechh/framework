@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"framework/define"
+	"framework/internal/global"
 	"framework/library/mlog"
 	"framework/library/yaml"
 	"framework/packet"
@@ -14,7 +15,6 @@ import (
 )
 
 type ClusterService struct {
-	//	self     *packet.Node
 	register define.IRegister
 	watcher  define.IWatcher
 	clusters map[uint32]define.ICluster
@@ -28,12 +28,13 @@ func NewService(max uint32) *ClusterService {
 	return ret
 }
 
-func (d *ClusterService) Init(cfg *yaml.EtcdConfig, nn *packet.Node) (err error) {
+func (d *ClusterService) Init(cfg *yaml.EtcdConfig) (err error) {
 	// 服务注册
 	if d.register, err = entity.NewEtcdRegister(cfg.Topic, cfg.Endpoints); err != nil {
 		return
 	}
 
+	nn := global.GetSelf()
 	buf, err := json.Marshal(nn)
 	if err != nil {
 		return err

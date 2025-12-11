@@ -2,6 +2,7 @@ package define
 
 import (
 	"framework/packet"
+	"net"
 	"time"
 )
 
@@ -142,9 +143,10 @@ type IFrame interface {
 
 // socket接口
 type ISocket interface {
+	Init(net.Conn, IFrame)
+	Close()
+	Stop()
 	GetId() uint32
 	Read(func(*packet.Packet) error)
 	Write(*packet.Packet) error
-	Close()
-	Stop()
 }

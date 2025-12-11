@@ -76,7 +76,8 @@ func (d *Websocket) Init(ip string, port int) error {
 
 func (d *Websocket) accept(conn *websocket.Conn) {
 	// 创建连接
-	cli := entity.NewClient(entity.NewWebsocketWrapper(conn), d.frame, d.close)
+	cli := entity.NewClient(d.close)
+	cli.Init(entity.NewWebsocketWrapper(conn), d.frame)
 	d.mutex.Lock()
 	d.sockets[cli.GetId()] = cli
 	d.mutex.Unlock()

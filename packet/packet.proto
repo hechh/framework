@@ -58,11 +58,3 @@ message Message {
   string Reply = 1;
   bytes  Body  = 2;
 }
-
-// redis全局路由表
-message RouterData {
-  uint32        IdType     = 1;
-  uint64        Id         = 2;
-  int64         UpdateTime = 3;
-  repeated Node Routers    = 4;
-}

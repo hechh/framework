@@ -10,8 +10,6 @@ const (
 	MAX_NODE_TYPE_COUNT = 32  // 节点类型数量
 	CLUSTER_BUCKET_SIZE = 256 // 集群桶的数量
 	ETCD_GRANT_TTL      = 15
-	STATUS_STOPPED      = 0
-	STATUS_RUNNING      = 1
 )
 
 // 服务发现接口

@@ -150,3 +150,13 @@ func (d *Map4S[T1, T2, T3, T4, V]) Del(t1 T1, t2 T2, t3 T3, t4 T4) (V, bool) {
 	}
 	return value, ok
 }
+
+func (d *Map4S[T1, T2, T3, T4, V]) Walk(f func(V) bool) {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	for _, item := range d.data {
+		if !f(item) {
+			return
+		}
+	}
+}

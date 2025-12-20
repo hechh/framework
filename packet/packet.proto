@@ -13,7 +13,7 @@ message Node {
 }
 
 message Head {
-  int32    SendType    = 1;   // 发送类型
+  uint32   SendType    = 1;   // 发送类型
   uint32   SrcNodeType = 2;   // 源地址
   uint32   SrcNodeId   = 3;   // 源地址
   uint32   DstNodeType = 4;   // 目的地址

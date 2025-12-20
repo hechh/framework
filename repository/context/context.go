@@ -2,7 +2,6 @@ package context
 
 import (
 	"fmt"
-	"framework/define"
 	"framework/library/mlog"
 	"framework/library/util"
 	"framework/packet"
@@ -91,8 +90,4 @@ func (d *Context) Errorf(format string, args ...any) {
 
 func (d *Context) Fatalf(format string, args ...any) {
 	mlog.Fatal(1, d.getformat(format), args...)
-}
-
-func (d *Context) NewIPacket() define.IPacket {
-	return NewPakcet(d.head)
 }

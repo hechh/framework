@@ -71,12 +71,8 @@ type IBus interface {
 	Response(*packet.Head, []byte) error              // 应答
 }
 
-// 远程请求接口
 type IPacket interface {
-	Router(isOrigin bool, routerId uint64, args ...any) IPacket
-	Callback(actorFunc string, actorId uint64) IPacket
-	Rpc(nodeType uint32, actorId uint64, api string, args ...any) IPacket
-	GetPacket() (*packet.Packet, error)
+	Get() (*packet.Packet, error)
 }
 
 // 通用上下文接口
@@ -113,7 +109,6 @@ type V0Func[Actor any] func(*Actor, IContext) error
 type V1Func[Actor any, V1 any] func(*Actor, IContext, V1) error
 type V2Func[Actor any, V1 any, V2 any] func(*Actor, IContext, V1, V2) error
 type V3Func[Actor any, V1 any, V2 any, V3 any] func(*Actor, IContext, V1, V2, V3) error
-
 type P1Func[Actor any, V1 any] func(*Actor, IContext, *V1) error
 type P2Func[Actor any, V1 any, V2 any] func(*Actor, IContext, *V1, *V2) error
 type P3Func[Actor any, V1 any, V2 any, V3 any] func(*Actor, IContext, *V1, *V2, *V3) error

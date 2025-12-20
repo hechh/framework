@@ -1,8 +1,6 @@
 package context
 
 import (
-	"framework/define"
-	"framework/library/structure"
 	"framework/library/uerror"
 	"framework/packet"
 	"framework/repository/cluster"
@@ -11,116 +9,132 @@ import (
 )
 
 type Packet struct {
-	err      error
-	routerId uint64
-	head     *packet.Head
-	body     []byte
-	list     []*packet.Router
+	packet.Packet
+	err error
 }
 
-func NewPakcet(head *packet.Head) *Packet {
-	return &Packet{head: head}
+func (d *Packet) Get() (*packet.Packet, error) {
+	return &d.Packet, d.err
 }
 
-func (d *Packet) Router(isOrigin bool, routerId uint64, args ...any) define.IPacket {
-	d.routerId = routerId
-	for _, arg := range args {
-		switch vv := arg.(type) {
-		case *packet.Router:
-			d.list = append(d.list, vv)
-		case *structure.Pair[uint32, uint64]:
-			d.list = append(d.list, &packet.Router{
-				IdType: vv.First,
-				Id:     vv.Second,
-			})
-		case uint32:
-			d.list = append(d.list, &packet.Router{
-				IdType: vv,
-			})
-		case uint64:
-			d.list[len(d.list)-1].Id = vv
-		}
+func (d *Packet) Header(head *packet.Head) *Packet {
+	if d.err != nil {
+		return d
 	}
-	if isOrigin && d.list[0].IdType != d.head.IdType && d.list[0].Id != d.head.Id {
-		d.list = append(d.list, &packet.Router{
-			IdType: d.head.IdType,
-			Id:     d.head.Id,
-		})
+	d.Head.SendType = head.SendType
+	d.Head.IdType = head.IdType
+	d.Head.Id = head.Id
+	d.Head.Cmd = head.Cmd
+	d.Head.Seq = head.Seq
+	d.Head.Version = head.Version
+	d.Head.SocketId = head.SocketId
+	d.Head.Reply = head.Reply
+	return d
+}
+
+func (d *Packet) SendType(val uint32) *Packet {
+	if d.err == nil {
+		d.Head.SendType = val
 	}
 	return d
 }
 
-func (d *Packet) Callback(actorFunc string, actorId uint64) define.IPacket {
+func (d *Packet) ID(idType uint32, id uint64) *Packet {
+	if d.err == nil {
+		d.Head.IdType = idType
+		d.Head.Id = id
+	}
+	return d
+}
+
+func (d *Packet) SocketId(socketId uint32) *Packet {
+	if d.err == nil {
+		d.Head.SocketId = socketId
+	}
+	return d
+}
+
+func (d *Packet) Router(idType uint32, id uint64) *Packet {
+	if d.err == nil {
+		d.List = append(d.List, &packet.Router{IdType: idType, Id: id})
+	}
+	return d
+}
+
+func (d *Packet) Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...any) *Packet {
+	if d.err != nil {
+		return d
+	}
+	hh := handler.GetByRpc(nodeType, actorFunc)
+	if hh == nil {
+		d.err = uerror.New(-1, "远程接口(%s)未注册", actorFunc)
+		return d
+	}
+	d.Head.DstNodeType = nodeType
+	d.Head.ActorFunc = hh.GetId()
+	d.Head.ActorId = actorId
+	d.Body, d.err = hh.Marshal(args...)
+	return d
+}
+
+func (d *Packet) Cmd(cmd uint32, actorId uint64, args ...any) *Packet {
+	if d.err != nil {
+		return d
+	}
+	hh := handler.GetByCmd(cmd)
+	if hh == nil {
+		d.err = uerror.New(-1, "命令字(%d)未注册", cmd)
+		return d
+	}
+	d.Head.Cmd = cmd
+	d.Head.DstNodeType = hh.GetType()
+	d.Head.ActorFunc = hh.GetId()
+	d.Head.ActorId = actorId
+	d.Body, d.err = hh.Marshal(args...)
+	return d
+}
+
+func (d *Packet) Callback(actorFunc string, actorId uint64) *Packet {
+	if d.err != nil {
+		return d
+	}
 	hh := handler.Get(actorFunc)
 	if hh == nil {
 		d.err = uerror.New(-1, "远程接口(%s)未注册", actorFunc)
 		return d
 	}
-	d.head.Back = &packet.Callback{
-		NodeType:  d.head.SrcNodeType,
-		NodeId:    d.head.SrcNodeId,
+	d.Head.Back = &packet.Callback{
 		ActorFunc: hh.GetId(),
 		ActorId:   actorId,
 	}
 	return d
 }
 
-func (d *Packet) Rpc(nodeType uint32, actorId uint64, api string, args ...any) define.IPacket {
+func (d *Packet) Dispatch(routerId uint64) *Packet {
 	if d.err != nil {
 		return d
 	}
-	// 获取远程rpc
-	hh := handler.GetByRpc(nodeType, api)
-	if hh == nil {
-		d.err = uerror.New(-1, "远程接口%s未注册", api)
-		return d
-	}
-
-	// 序列化
-	if d.body, d.err = hh.Marshal(args...); d.err != nil {
-		return d
-	}
-
-	d.head.DstNodeType = nodeType
-	d.head.ActorFunc = hh.GetId()
-	d.head.ActorId = actorId
-
-	// 获取集群
-	cls := cluster.Get(nodeType)
+	cls := cluster.Get(d.Head.DstNodeType)
 	if cls == nil {
-		d.err = uerror.New(-1, "集群(%d)不支持", nodeType)
+		d.err = uerror.Err(-1, "集群(%d)不支持", d.Head.DstNodeType)
 		return d
 	}
-
-	// 更新路由
-	for i, item := range d.list {
+	for i, item := range d.List {
 		rr := router.GetOrNew(item.IdType, item.Id)
 		if i == 0 {
-			node := cls.Get(rr.Get(nodeType))
+			node := cls.Get(rr.Get(d.Head.DstNodeType))
 			if node == nil {
-				node = cls.Random(d.routerId)
+				node = cls.Random(routerId)
 			}
 			if node == nil {
-				d.err = uerror.New(-1, "集群(%d)不存在任何服务节点", nodeType)
+				d.err = uerror.Err(-1, "集群(%d)不存在任何服务节点", d.Head.DstNodeType)
 				return d
-			} else {
-				d.head.DstNodeId = node.Id
 			}
+			d.Head.DstNodeId = node.Id
 		}
-		rr.Set(d.head.DstNodeType, d.head.DstNodeId)
+		rr.Set(d.Head.DstNodeType, d.Head.DstNodeId)
 		rr.Update()
 		item.List = rr.GetRouter()
 	}
 	return d
-}
-
-func (d *Packet) GetPacket() (*packet.Packet, error) {
-	if d.err != nil {
-		return nil, d.err
-	}
-	return &packet.Packet{
-		Head: d.head,
-		Body: d.body,
-		List: d.list,
-	}, nil
 }

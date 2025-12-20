@@ -33,16 +33,13 @@ func Err(code int32, format string, args ...any) *UError {
 	}
 }
 
-func ToUError(err error) *UError {
-	if vv, ok := err.(*UError); ok {
-		return vv
-	}
-	return &UError{code: -1, msg: err.Error()}
+func Wrap(code int32, err error) *UError {
+	return &UError{code: code, msg: err.Error()}
 }
 
 func (ue *UError) Error() string {
 	if len(ue.file) <= 0 {
-		return fmt.Sprintf("%s", ue.msg)
+		return ue.msg
 		//return fmt.Sprintf("[%d] %s", ue.code, ue.msg)
 	}
 	return fmt.Sprintf("%s:%d %s %s", ue.file, ue.line, ue.fname, ue.msg)

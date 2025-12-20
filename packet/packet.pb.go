@@ -7,10 +7,11 @@
 package packet
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -105,7 +106,7 @@ type Head struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SendType    int32     `protobuf:"varint,1,opt,name=SendType,proto3" json:"SendType,omitempty"`       // 发送类型
+	SendType    uint32    `protobuf:"varint,1,opt,name=SendType,proto3" json:"SendType,omitempty"`       // 发送类型
 	SrcNodeType uint32    `protobuf:"varint,2,opt,name=SrcNodeType,proto3" json:"SrcNodeType,omitempty"` // 源地址
 	SrcNodeId   uint32    `protobuf:"varint,3,opt,name=SrcNodeId,proto3" json:"SrcNodeId,omitempty"`     // 源地址
 	DstNodeType uint32    `protobuf:"varint,4,opt,name=DstNodeType,proto3" json:"DstNodeType,omitempty"` // 目的地址
@@ -154,7 +155,7 @@ func (*Head) Descriptor() ([]byte, []int) {
 	return file_packet_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Head) GetSendType() int32 {
+func (x *Head) GetSendType() uint32 {
 	if x != nil {
 		return x.SendType
 	}
@@ -566,78 +567,6 @@ func (x *Message) GetBody() []byte {
 	return nil
 }
 
-// redis全局路由表
-type RouterData struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	IdType     uint32  `protobuf:"varint,1,opt,name=IdType,proto3" json:"IdType,omitempty"`
-	Id         uint64  `protobuf:"varint,2,opt,name=Id,proto3" json:"Id,omitempty"`
-	UpdateTime int64   `protobuf:"varint,3,opt,name=UpdateTime,proto3" json:"UpdateTime,omitempty"`
-	Routers    []*Node `protobuf:"bytes,4,rep,name=Routers,proto3" json:"Routers,omitempty"`
-}
-
-func (x *RouterData) Reset() {
-	*x = RouterData{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_packet_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RouterData) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RouterData) ProtoMessage() {}
-
-func (x *RouterData) ProtoReflect() protoreflect.Message {
-	mi := &file_packet_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RouterData.ProtoReflect.Descriptor instead.
-func (*RouterData) Descriptor() ([]byte, []int) {
-	return file_packet_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *RouterData) GetIdType() uint32 {
-	if x != nil {
-		return x.IdType
-	}
-	return 0
-}
-
-func (x *RouterData) GetId() uint64 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *RouterData) GetUpdateTime() int64 {
-	if x != nil {
-		return x.UpdateTime
-	}
-	return 0
-}
-
-func (x *RouterData) GetRouters() []*Node {
-	if x != nil {
-		return x.Routers
-	}
-	return nil
-}
-
 var File_packet_proto protoreflect.FileDescriptor
 
 var file_packet_proto_rawDesc = []byte{
@@ -650,7 +579,7 @@ var file_packet_proto_rawDesc = []byte{
 	0x28, 0x09, 0x52, 0x02, 0x49, 0x70, 0x12, 0x12, 0x0a, 0x04, 0x50, 0x6f, 0x72, 0x74, 0x18, 0x05,
 	0x20, 0x01, 0x28, 0x05, 0x52, 0x04, 0x50, 0x6f, 0x72, 0x74, 0x22, 0x98, 0x03, 0x0a, 0x04, 0x48,
 	0x65, 0x61, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x53, 0x65, 0x6e, 0x64, 0x54, 0x79, 0x70, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x53, 0x65, 0x6e, 0x64, 0x54, 0x79, 0x70, 0x65, 0x12,
+	0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x08, 0x53, 0x65, 0x6e, 0x64, 0x54, 0x79, 0x70, 0x65, 0x12,
 	0x20, 0x0a, 0x0b, 0x53, 0x72, 0x63, 0x4e, 0x6f, 0x64, 0x65, 0x54, 0x79, 0x70, 0x65, 0x18, 0x02,
 	0x20, 0x01, 0x28, 0x0d, 0x52, 0x0b, 0x53, 0x72, 0x63, 0x4e, 0x6f, 0x64, 0x65, 0x54, 0x79, 0x70,
 	0x65, 0x12, 0x1c, 0x0a, 0x09, 0x53, 0x72, 0x63, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x03,
@@ -698,18 +627,10 @@ var file_packet_proto_rawDesc = []byte{
 	0x01, 0x28, 0x09, 0x52, 0x03, 0x4d, 0x73, 0x67, 0x22, 0x33, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73,
 	0x61, 0x67, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x05, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x42, 0x6f, 0x64,
-	0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x42, 0x6f, 0x64, 0x79, 0x22, 0x7c, 0x0a,
-	0x0a, 0x52, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x44, 0x61, 0x74, 0x61, 0x12, 0x16, 0x0a, 0x06, 0x49,
-	0x64, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x06, 0x49, 0x64, 0x54,
-	0x79, 0x70, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52,
-	0x02, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54, 0x69, 0x6d,
-	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x54,
-	0x69, 0x6d, 0x65, 0x12, 0x26, 0x0a, 0x07, 0x52, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x73, 0x18, 0x04,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x2e, 0x4e, 0x6f,
-	0x64, 0x65, 0x52, 0x07, 0x52, 0x6f, 0x75, 0x74, 0x65, 0x72, 0x73, 0x42, 0x1e, 0x5a, 0x1c, 0x6d,
-	0x79, 0x70, 0x6f, 0x6b, 0x65, 0x72, 0x5f, 0x6e, 0x65, 0x77, 0x2f, 0x66, 0x72, 0x61, 0x6d, 0x65,
-	0x77, 0x6f, 0x72, 0x6b, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x42, 0x6f, 0x64, 0x79, 0x42, 0x1e, 0x5a,
+	0x1c, 0x6d, 0x79, 0x70, 0x6f, 0x6b, 0x65, 0x72, 0x5f, 0x6e, 0x65, 0x77, 0x2f, 0x66, 0x72, 0x61,
+	0x6d, 0x65, 0x77, 0x6f, 0x72, 0x6b, 0x2f, 0x70, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -724,27 +645,25 @@ func file_packet_proto_rawDescGZIP() []byte {
 	return file_packet_proto_rawDescData
 }
 
-var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_packet_proto_goTypes = []interface{}{
-	(*Node)(nil),       // 0: packet.Node
-	(*Head)(nil),       // 1: packet.Head
-	(*Callback)(nil),   // 2: packet.Callback
-	(*Packet)(nil),     // 3: packet.Packet
-	(*Router)(nil),     // 4: packet.Router
-	(*RspHead)(nil),    // 5: packet.RspHead
-	(*Message)(nil),    // 6: packet.Message
-	(*RouterData)(nil), // 7: packet.RouterData
+	(*Node)(nil),     // 0: packet.Node
+	(*Head)(nil),     // 1: packet.Head
+	(*Callback)(nil), // 2: packet.Callback
+	(*Packet)(nil),   // 3: packet.Packet
+	(*Router)(nil),   // 4: packet.Router
+	(*RspHead)(nil),  // 5: packet.RspHead
+	(*Message)(nil),  // 6: packet.Message
 }
 var file_packet_proto_depIdxs = []int32{
 	2, // 0: packet.Head.Back:type_name -> packet.Callback
 	1, // 1: packet.Packet.Head:type_name -> packet.Head
 	4, // 2: packet.Packet.List:type_name -> packet.Router
-	0, // 3: packet.RouterData.Routers:type_name -> packet.Node
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_packet_proto_init() }
@@ -837,18 +756,6 @@ func file_packet_proto_init() {
 				return nil
 			}
 		}
-		file_packet_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RouterData); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -856,7 +763,7 @@ func file_packet_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_packet_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

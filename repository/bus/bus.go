@@ -64,30 +64,34 @@ func Broadcast(idType uint32, id uint64, nodeType uint32, actorId uint64, api st
 	})
 }
 
-func Send(pack *packet.Packet) error {
-	return serviceObj.Send(pack)
-}
-
-func Request(pack *packet.Packet, cb func([]byte) error) error {
-	return serviceObj.Request(pack, cb)
-}
-
-func Response(pack *packet.Head, buf []byte) error {
-	return serviceObj.Response(pack, buf)
-}
-
-func SendIPacket(pack define.IPacket) error {
-	pac, err := pack.GetPacket()
-	if err != nil {
-		return err
+func Send(vv any) error {
+	switch pack := vv.(type) {
+	case *packet.Packet:
+		return serviceObj.Send(pack)
+	case define.IPacket:
+		if pac, err := pack.Get(); err != nil {
+			return err
+		} else {
+			return serviceObj.Send(pac)
+		}
 	}
-	return serviceObj.Send(pac)
+	return uerror.New(-1, "参数类型错误")
 }
 
-func RequestIPacket(pack define.IPacket, cb func([]byte) error) error {
-	pac, err := pack.GetPacket()
-	if err != nil {
-		return err
+func Request(vv any, cb func([]byte) error) error {
+	switch pack := vv.(type) {
+	case *packet.Packet:
+		return serviceObj.Request(pack, cb)
+	case define.IPacket:
+		if pac, err := pack.Get(); err != nil {
+			return err
+		} else {
+			return serviceObj.Request(pac, cb)
+		}
 	}
-	return serviceObj.Request(pac, cb)
+	return uerror.New(-1, "参数类型错误")
+}
+
+func Response(head *packet.Head, buf []byte) error {
+	return serviceObj.Response(head, buf)
 }

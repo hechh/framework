@@ -4,36 +4,10 @@ import (
 	"bytes"
 	"flag"
 	"framework/library/util"
+	"framework/tools/cfgtool/domain"
+	"framework/tools/cfgtool/internal/parse"
 	"path/filepath"
 )
-
-const (
-	header = `
-/*
-* 本代码由cfgtool工具生成，请勿手动修改
-*/
-
-syntax = "proto3";
-
-package bit_casino_golang;
-
-option  go_package = "./pb";
-
-`
-)
-
-var (
-	converts = map[string]string{
-		"timestamp": "int64",
-	}
-)
-
-func Convert(str string) string {
-	if val, ok := converts[str]; ok {
-		return val
-	}
-	return str
-}
 
 func main() {
 	var src, dst string
@@ -53,24 +27,27 @@ func main() {
 	}
 
 	// 解析文件
-	parse := NewParseDescriptor()
+	p := parse.NewParser()
 	for _, filename := range files {
-		if err := parse.ParseFile(filename); err != nil {
+		if err := p.ParseFile(filename); err != nil {
 			panic(err)
 		}
 	}
 
 	// 生成enum.gen.proto文件
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString(header)
-	if err := parse.GenEnum(buf, dst, "enum.gen.proto"); err != nil {
+	buf.WriteString(domain.Header)
+	if err := p.GenEnum(buf, dst, "enum.gen.proto"); err != nil {
 		panic(err)
 	}
 
 	// 生成table.gen.proto文件
 	buf.Reset()
-	buf.WriteString(header)
-	if err := parse.GenTable(buf, dst, "enum.gen.proto"); err != nil {
+	buf.WriteString(domain.Header)
+	if p.HasEnum() {
+		buf.WriteString("import \"enum.gen.proto\";\n\n")
+	}
+	if err := p.GenTable(buf, dst, "table.gen.proto"); err != nil {
 		panic(err)
 	}
 }

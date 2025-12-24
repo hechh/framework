@@ -1,7 +1,7 @@
 syntax = "proto3";
 package packet;
 
-option go_package = "mypoker_new/framework/packet";
+option go_package = "framework/packet";
 
 // 框架核心协议，任何人不能修改
 message Node {

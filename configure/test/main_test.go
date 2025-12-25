@@ -1,14 +1,13 @@
-package main
+package test
 
 import (
-	"flag"
-	"path/filepath"
-	"strings"
-
-	_ "framework/configure/pb"
 	"framework/library/convertor"
 	"framework/library/uerror"
 	"framework/library/util"
+	"strings"
+	"testing"
+
+	_ "framework/configure/pb"
 
 	"github.com/spf13/cast"
 	"github.com/xuri/excelize/v2"
@@ -18,16 +17,9 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
-func main() {
-	var src, dst string
-	flag.StringVar(&src, "src", ".", "源目录")
-	flag.StringVar(&dst, "dst", ".", "目的目录")
-	flag.Parse()
-
-	// 输出
-	if ext := filepath.Ext(dst); len(ext) > 0 {
-		dst = filepath.Dir(dst)
-	}
+func TestTool(t *testing.T) {
+	src := "../table"
+	dst := "../data"
 
 	// 加载所有xlsx文件
 	files, err := util.Glob(src, ".*\\.xlsx", true)
@@ -138,9 +130,7 @@ func (d *StructDescriptor) Marshal() ([]byte, error) {
 		}
 		list.Append(protoreflect.ValueOf(cfg))
 	}
-
-	marshaler := prototext.MarshalOptions{Multiline: true}
-	return marshaler.Marshal(ary)
+	return prototext.Marshal(ary)
 }
 
 func convert(field *Field, val string) protoreflect.Value {

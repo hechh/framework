@@ -53,6 +53,7 @@ func init() {
 	Register(Wrapper(cast.ToInt64), "int64", "int64")
 	Register(Wrapper(cast.ToFloat32), "float32", "float")
 	Register(Wrapper(cast.ToFloat64), "float64", "double")
+	Register(Wrapper(cast.ToBool), "bool", "bool")
 
 	// 特殊类型转换
 	Register(timestampToInt64, "int64", "timestamp")

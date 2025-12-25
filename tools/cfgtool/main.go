@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"framework/library/util"
-	"framework/tools/cfgtool/domain"
 	"framework/tools/cfgtool/internal/parse"
 	"path/filepath"
 )
@@ -27,27 +25,18 @@ func main() {
 	}
 
 	// 解析文件
-	p := parse.NewParser()
+	p := parse.NewMsgParser()
 	for _, filename := range files {
 		if err := p.ParseFile(filename); err != nil {
 			panic(err)
 		}
 	}
 
-	// 生成enum.gen.proto文件
-	buf := bytes.NewBuffer(nil)
-	buf.WriteString(domain.Header)
-	if err := p.GenEnum(buf, dst, "enum.gen.proto"); err != nil {
-		panic(err)
-	}
+	// 解析完成
+	p.Complete()
 
-	// 生成table.gen.proto文件
-	buf.Reset()
-	buf.WriteString(domain.Header)
-	if p.HasEnum() {
-		buf.WriteString("import \"enum.gen.proto\";\n\n")
-	}
-	if err := p.GenTable(buf, dst, "table.gen.proto"); err != nil {
+	// 生成文件
+	if err := p.Gen(dst); err != nil {
 		panic(err)
 	}
 }

@@ -7,35 +7,35 @@ import (
 	"strings"
 )
 
-type Value struct {
+type MsgValue struct {
 	Typename string
 	Name     string
 	Value    int32
 	Desc     string
 }
 
-type EnumDescriptor struct {
+type EnumMsgDescriptor struct {
 	Type domain.Kind
 	Name string
-	List []*Value
-	Data map[string]*Value
+	List []*MsgValue
+	Data map[string]*MsgValue
 }
 
-func NewEnumDescriptor(name string) *EnumDescriptor {
-	return &EnumDescriptor{
+func NewEnumMsgDescriptor(name string) *EnumMsgDescriptor {
+	return &EnumMsgDescriptor{
 		Type: domain.ENUM,
 		Name: name,
-		Data: make(map[string]*Value),
+		Data: make(map[string]*MsgValue),
 	}
 }
 
-func (d *EnumDescriptor) Kind() domain.Kind {
+func (d *EnumMsgDescriptor) Kind() domain.Kind {
 	return d.Type
 }
 
 // E|游戏类型-德州NORMAL|GameType|Normal|1
-func (d *EnumDescriptor) Put(val int32, name string, gameType string, desc string) {
-	item := &Value{
+func (d *EnumMsgDescriptor) Put(val int32, name string, gameType string, desc string) {
+	item := &MsgValue{
 		Typename: gameType,
 		Name:     name,
 		Value:    val,
@@ -45,7 +45,7 @@ func (d *EnumDescriptor) Put(val int32, name string, gameType string, desc strin
 	d.Data[item.Desc] = item
 }
 
-func (d *EnumDescriptor) String() string {
+func (d *EnumMsgDescriptor) String() string {
 	sort.Slice(d.List, func(i int, j int) bool {
 		return d.List[i].Value < d.List[j].Value
 	})

@@ -13,31 +13,21 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type Parser struct {
-	data    map[string]domain.Descriptor
-	enums   []*typespec.EnumDescriptor
-	configs []*typespec.StructDescriptor
+type MsgParser struct {
+	data    map[string]domain.IMsgDescriptor
+	enums   []*typespec.EnumMsgDescriptor
+	configs []*typespec.StructMsgDescriptor
 	rows    map[string][][]string
 }
 
-func NewParser() *Parser {
-	return &Parser{
-		data: make(map[string]domain.Descriptor),
+func NewMsgParser() *MsgParser {
+	return &MsgParser{
+		data: make(map[string]domain.IMsgDescriptor),
 		rows: make(map[string][][]string),
 	}
 }
 
-func (d *Parser) Complete() {
-	// 排序
-	sort.Slice(d.enums, func(i, j int) bool {
-		return strings.Compare(d.enums[i].Name, d.enums[j].Name) <= 0
-	})
-	sort.Slice(d.configs, func(i, j int) bool {
-		return strings.Compare(d.configs[i].Name, d.configs[j].Name) <= 0
-	})
-}
-
-func (d *Parser) ParseFile(filename string) error {
+func (d *MsgParser) ParseFile(filename string) error {
 	// 打开文件
 	fp, err := excelize.OpenFile(filename)
 	if err != nil {
@@ -87,8 +77,8 @@ func (d *Parser) ParseFile(filename string) error {
 	return nil
 }
 
-func (d *Parser) parseStruct(sheet, name string, rows [][]string) {
-	st := typespec.NewStructDescriptor(sheet, name)
+func (d *MsgParser) parseStruct(sheet, name string, rows [][]string) {
+	st := typespec.NewStructMsgDescriptor(sheet, name)
 	for i, item := range rows[1] {
 		if len(item) <= 0 {
 			continue
@@ -100,7 +90,7 @@ func (d *Parser) parseStruct(sheet, name string, rows [][]string) {
 	d.rows[name] = rows[3:]
 }
 
-func (d *Parser) parseEnum(sheet string, rows [][]string) {
+func (d *MsgParser) parseEnum(sheet string, rows [][]string) {
 	for _, items := range rows {
 		for _, val := range items {
 			if !strings.HasPrefix(val, "E|") && !strings.HasPrefix(val, "e|") {
@@ -110,7 +100,7 @@ func (d *Parser) parseEnum(sheet string, rows [][]string) {
 			strs := strings.Split(val, "|")
 			enum, ok := d.data[strs[2]]
 			if !ok {
-				item := typespec.NewEnumDescriptor(strs[2])
+				item := typespec.NewEnumMsgDescriptor(strs[2])
 				d.enums = append(d.enums, item)
 				d.data[strs[2]] = item
 				enum = item
@@ -120,27 +110,17 @@ func (d *Parser) parseEnum(sheet string, rows [][]string) {
 	}
 }
 
-func (d *Parser) GenEnum(buf *bytes.Buffer, dst string, filename string) error {
-	if len(d.enums) <= 0 {
-		return nil
-	}
-	for _, item := range d.enums {
-		buf.WriteString(item.String())
-	}
-	return util.Save(dst, filename, buf.Bytes())
+func (d *MsgParser) Complete() {
+	// 排序
+	sort.Slice(d.enums, func(i, j int) bool {
+		return strings.Compare(d.enums[i].Name, d.enums[j].Name) <= 0
+	})
+	sort.Slice(d.configs, func(i, j int) bool {
+		return strings.Compare(d.configs[i].Name, d.configs[j].Name) <= 0
+	})
 }
 
-func (d *Parser) GenTable(buf *bytes.Buffer, dst string, filename string) error {
-	if len(d.configs) <= 0 {
-		return nil
-	}
-	for _, item := range d.configs {
-		buf.WriteString(item.String())
-	}
-	return util.Save(dst, filename, buf.Bytes())
-}
-
-func (d *Parser) HasEnum() bool {
+func (d *MsgParser) hasEnum() bool {
 	for _, item := range d.configs {
 		for _, field := range item.List {
 			aa, ok := d.data[field.Typename]
@@ -152,8 +132,45 @@ func (d *Parser) HasEnum() bool {
 	return false
 }
 
+func (d *MsgParser) Gen(dst string) error {
+	buf := bytes.NewBuffer(nil)
+	pos, _ := buf.WriteString(`
 /*
-func (d *Parser) GenData(buf *bytes.Buffer, dst string) error {
+* 本代码由cfgtool工具生成，请勿手动修改
+*/
+
+syntax = "proto3";
+
+package bit_casino_golang;
+
+option  go_package = "./pb";
+
+	`)
+
+	if len(d.enums) > 0 {
+		for _, item := range d.enums {
+			buf.WriteString(item.String())
+		}
+		if err := util.Save(dst, "enum.gen.proto", buf.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	if len(d.configs) > 0 {
+		buf.Truncate(pos)
+		if d.hasEnum() {
+			buf.WriteString("import \"enum.gen.proto\";\n\n")
+		}
+		for _, item := range d.configs {
+			buf.WriteString(item.String())
+		}
+		return util.Save(dst, "table.gen.proto", buf.Bytes())
+	}
+	return nil
+}
+
+/*
+func (d *MsgParser) GenData(buf *bytes.Buffer, dst string) error {
 	for name, rows := range d.rows {
 		aryType, cfgType, err := FindMessageByName(name)
 		if err != nil {
@@ -166,7 +183,7 @@ func (d *Parser) GenData(buf *bytes.Buffer, dst string) error {
 	return nil
 }
 
-func (d *Parser) parse(aryType, cfgType protoreflect.MessageType, item domain.IDescriptor, rows [][]string) error {
+func (d *MsgParser) parse(aryType, cfgType protoreflect.MessageType, item domain.IDescriptor, rows [][]string) error {
 	ary := dynamicpb.NewMessage(aryType.Descriptor())
 	fields := item.Members()
 	for _, line := range rows {

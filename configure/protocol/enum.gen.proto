@@ -1,0 +1,94 @@
+
+/*
+* 本代码由cfgtool工具生成，请勿手动修改
+*/
+
+syntax = "proto3";
+
+package bit_casino_golang;
+
+option go_package = "./pb";
+
+enum Currency {
+  CurrencyNone = 0;      // 货币类型-空
+  USD          = 1;      // 货币类型-美元
+  CAD          = 2;      // 货币类型-加元
+  BTC          = 10000;  // 数字货币-比特币
+  USDT         = 10001;  // 数字货币-泰达币
+}
+
+enum DepositStatus {
+  DepositStatusDelete  = 0;  // 充值状态-已删除
+  DepositStatusWait    = 1;  // 充值状态-待支付
+  DepositStatusSuccess = 2;  // 充值状态-已支付
+}
+
+enum GameType {
+  GameTypeNone = 0;    // 游戏类型-空
+  Aviator      = 1;    // 游戏类型-Spribe-Aviator
+  Dice         = 2;    // 游戏类型-Spribe-Dice
+  Goal         = 3;    // 游戏类型-Spribe-Goal
+  Plinko       = 4;    // 游戏类型-Spribe-Plinko
+  Mines        = 5;    // 游戏类型-Spribe-Mines
+  HiLo         = 6;    // 游戏类型-Spribe-HiLo
+  Keno         = 7;    // 游戏类型-Spribe-Keno
+  MiniRoulette = 8;    // 游戏类型-Spribe-MiniRoulette
+  Hotline      = 9;    // 游戏类型-Spribe-Hotline
+  Balloon      = 10;   // 游戏类型-Spribe-Balloon
+  Keno80       = 11;   // 游戏类型-Spribe-Keno80
+  Trader       = 12;   // 游戏类型-Spribe-Trader
+  CrystalFall  = 13;   // 游戏类型-Spribe-CrystalFall
+  NeoVegas     = 14;   // 游戏类型-Spribe-NeoVegas
+  GatesOfEgypt = 15;   // 游戏类型-Spribe-GatesOfEgypt
+  Twist        = 100;  // 游戏类型-Inout-Twist
+  Inout_Plinko = 101;  // 游戏类型-Inout-Plinko
+}
+
+enum LangType {
+  LangTypeNone = 0;  // 语言类型-空
+  ZH           = 1;  // 语言类型-汉语
+  AZ           = 2;  // 语言类型-阿塞拜疆语
+}
+
+enum LoginType {
+  LoginTypeNone = 0;  // 登录类型-空
+  Guest         = 1;  // 登录类型-游客登录
+  Account       = 2;  // 登录类型-账号
+  Apple         = 3;  // 登录类型-苹果
+  Google        = 4;  // 登录类型-谷歌
+}
+
+enum OrderStatus {
+  Cancel = 0;  // 订单状态-撤单
+  Insert = 1;  // 订单状态-下单
+  Update = 2;  // 订单状态-改单
+}
+
+enum Platform {
+  PlatformTypeNone = 0;  // 平台类型-空
+  Mobile           = 1;  // 平台类型-Mobile
+  Desktop          = 2;  // 平台类型-Desktop
+  Web              = 3;  // 平台类型-Web
+  Ios              = 4;  // 平台类型-Ios
+  Android          = 5;  // 平台类型-Android
+}
+
+enum Provider {
+  ProviderNone = 0;  // 供应商-无
+  Spribe       = 1;  // 供应商-Spribe
+  Inout        = 2;  // 供应商-Inout
+}
+
+enum Reason {
+  ReasonNone = 0;  // 原因类型-空
+  Bet        = 1;  // 原因类型-下注
+  Result     = 2;  // 原因类型-结算
+  Revoke     = 3;  // 原因类型-撤单
+  Recharge   = 4;  // 原因类型-充值
+}
+
+enum WithdrawStatus {
+  WithdrawStatusDelete  = 0;  // 提现状态-已删除
+  WithdrawStatusWait    = 1;  // 提现状态-待支付
+  WithdrawStatusSuccess = 2;  // 提现状态-已支付
+}

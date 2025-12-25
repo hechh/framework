@@ -3,7 +3,7 @@ SYSTEM=$(shell go env GOOS)
 OUTPUT=./output
 
 
-.PHONY: msgtool pb
+.PHONY: pb xlsx_to_proto
 
 pb:
 	@echo "Building pb"
@@ -14,8 +14,8 @@ else
 	protoc -I./configure/protocol ./configure/protocol/*.proto paths=source_relative --go_out=./configure/pb
 endif 
 
-msgtool:
+xlsx_to_proto:
 	@echo "xlsx to proto"
 	@rm -rf ./configure/protocol/*.gen.proto
-	@go run ./tools/msgtool/main.go -src=./configure/table -dst=./configure/protocol
+	@go run ./tools/xlsx_to_proto/main.go -src=./configure/table -dst=./configure/protocol
 

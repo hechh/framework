@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"framework/library/uerror"
 	"framework/library/util"
-	"framework/tools/cfgtool/domain"
+	"framework/tools/xlsx_to_code/domain"
 	"framework/tools/xlsx_to_code/internal/typespec"
 	"path"
 	"strings"

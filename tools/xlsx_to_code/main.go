@@ -8,10 +8,10 @@ import (
 	"framework/library/convertor"
 	"framework/library/uerror"
 	"framework/library/util"
-	"html/template"
 	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/iancoleman/strcase"
 	"github.com/xuri/excelize/v2"
@@ -318,6 +318,17 @@ func parse(buf []byte) error {
 	}
 	obj.Store(data)
 	return nil
+}
+
+func SGet(pos int) *pb.{{$type}} {
+	if pos < 0 {
+		pos = 0	
+	}
+	list := obj.Load().list
+	if ll := len(list); ll-1 < pos {
+		pos = ll-1	
+	}
+	return list[pos]
 }
 
 func LGet() (rets []*pb.{{$type}}) {

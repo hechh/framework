@@ -2,6 +2,10 @@ package structure
 
 type Map4[T1 comparable, T2 comparable, T3 comparable, T4 comparable, V any] map[Quad[T1, T2, T3, T4]]V
 
+func NewMap4[T1 comparable, T2 comparable, T3 comparable, T4 comparable, V any]() Map4[T1, T2, T3, T4, V] {
+	return make(map[Quad[T1, T2, T3, T4]]V)
+}
+
 // 大小
 func (d Map4[T1, T2, T3, T4, V]) Size() int {
 	return len(d)
@@ -15,6 +19,14 @@ func (d Map4[T1, T2, T3, T4, V]) Set(t1 T1, t2 T2, t3 T3, t4 T4, value V) {
 // 读取
 func (d Map4[T1, T2, T3, T4, V]) Get(t1 T1, t2 T2, t3 T3, t4 T4) (V, bool) {
 	value, ok := d[Quad[T1, T2, T3, T4]{t1, t2, t3, t4}]
+	return value, ok
+}
+
+func (d Map4[T1, T2, T3, T4, V]) Copy(t1 T1, t2 T2, t3 T3, t4 T4, f func(V) V) (V, bool) {
+	value, ok := d[Quad[T1, T2, T3, T4]{t1, t2, t3, t4}]
+	if ok {
+		value = f(value)
+	}
 	return value, ok
 }
 

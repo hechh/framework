@@ -2,6 +2,10 @@ package structure
 
 type Group4[T1 comparable, T2 comparable, T3 comparable, T4 comparable, V any] map[Quad[T1, T2, T3, T4]][]V
 
+func NewGroup4[T1 comparable, T2 comparable, T3 comparable, T4 comparable, V any]() Group4[T1, T2, T3, T4, V] {
+	return make(map[Quad[T1, T2, T3, T4]][]V)
+}
+
 // 大小
 func (d Group4[T1, T2, T3, T4, V]) Size() int {
 	return len(d)
@@ -18,6 +22,17 @@ func (d Group4[T1, T2, T3, T4, V]) Get(t1 T1, t2 T2, t3 T3, t4 T4) ([]V, bool) {
 	key := Quad[T1, T2, T3, T4]{t1, t2, t3, t4}
 	value, ok := d[key]
 	return value, ok
+}
+
+func (d Group4[T1, T2, T3, T4, V]) Copy(t1 T1, t2 T2, t3 T3, t4 T4, f func(V) V) (rets []V, ok bool) {
+	key := Quad[T1, T2, T3, T4]{t1, t2, t3, t4}
+	if values, ok := d[key]; ok {
+		rets = make([]V, len(values))
+		for i, item := range values {
+			rets[i] = f(item)
+		}
+	}
+	return
 }
 
 // 删除

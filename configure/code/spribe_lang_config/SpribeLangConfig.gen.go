@@ -71,19 +71,3 @@ func Walk(f func(*pb.SpribeLangConfig) bool) {
 		}
 	}
 }
-
-func MGetLangType(LangType pb.LangType) *pb.SpribeLangConfig {
-	data := obj.Load().langType
-	if value, ok := data.Get(LangType); ok {
-		return value
-	}
-	return nil
-}
-
-func MGetCode(Code string) *pb.SpribeLangConfig {
-	data := obj.Load().code
-	if value, ok := data.Get(Code); ok {
-		return value
-	}
-	return nil
-}

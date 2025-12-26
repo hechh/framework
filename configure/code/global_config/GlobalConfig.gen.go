@@ -6,7 +6,6 @@ package global_config
 
 import (
 	"framework/configure/pb"
-	"framework/library/structure"
 	"sync/atomic"
 
 	"github.com/gogo/protobuf/proto"

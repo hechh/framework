@@ -71,19 +71,3 @@ func Walk(f func(*pb.SpribeCurrencyConfig) bool) {
 		}
 	}
 }
-
-func MGetCurrency(Currency pb.Currency) *pb.SpribeCurrencyConfig {
-	data := obj.Load().currency
-	if value, ok := data.Get(Currency); ok {
-		return value
-	}
-	return nil
-}
-
-func MGetCode(Code string) *pb.SpribeCurrencyConfig {
-	data := obj.Load().code
-	if value, ok := data.Get(Code); ok {
-		return value
-	}
-	return nil
-}

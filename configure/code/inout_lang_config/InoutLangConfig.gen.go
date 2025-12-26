@@ -71,19 +71,3 @@ func Walk(f func(*pb.InoutLangConfig) bool) {
 		}
 	}
 }
-
-func MGetLangType(LangType pb.LangType) *pb.InoutLangConfig {
-	data := obj.Load().langType
-	if value, ok := data.Get(LangType); ok {
-		return value
-	}
-	return nil
-}
-
-func MGetCode(Code string) *pb.InoutLangConfig {
-	data := obj.Load().code
-	if value, ok := data.Get(Code); ok {
-		return value
-	}
-	return nil
-}

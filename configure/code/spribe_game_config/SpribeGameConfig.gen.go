@@ -71,19 +71,3 @@ func Walk(f func(*pb.SpribeGameConfig) bool) {
 		}
 	}
 }
-
-func MGetGameType(GameType pb.GameType) *pb.SpribeGameConfig {
-	data := obj.Load().gameType
-	if value, ok := data.Get(GameType); ok {
-		return value
-	}
-	return nil
-}
-
-func MGetCode(Code string) *pb.SpribeGameConfig {
-	data := obj.Load().code
-	if value, ok := data.Get(Code); ok {
-		return value
-	}
-	return nil
-}

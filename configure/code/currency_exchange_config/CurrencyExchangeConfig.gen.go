@@ -68,11 +68,3 @@ func Walk(f func(*pb.CurrencyExchangeConfig) bool) {
 		}
 	}
 }
-
-func MGetCurrency(Currency pb.Currency) *pb.CurrencyExchangeConfig {
-	data := obj.Load().currency
-	if value, ok := data.Get(Currency); ok {
-		return value
-	}
-	return nil
-}

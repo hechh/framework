@@ -71,19 +71,3 @@ func Walk(f func(*pb.SpribePlatformConfig) bool) {
 		}
 	}
 }
-
-func MGetPlatform(Platform pb.Platform) *pb.SpribePlatformConfig {
-	data := obj.Load().platform
-	if value, ok := data.Get(Platform); ok {
-		return value
-	}
-	return nil
-}
-
-func MGetCode(Code string) *pb.SpribePlatformConfig {
-	data := obj.Load().code
-	if value, ok := data.Get(Code); ok {
-		return value
-	}
-	return nil
-}

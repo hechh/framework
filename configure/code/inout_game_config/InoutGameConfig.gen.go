@@ -71,19 +71,3 @@ func Walk(f func(*pb.InoutGameConfig) bool) {
 		}
 	}
 }
-
-func MGetGameType(GameType pb.GameType) *pb.InoutGameConfig {
-	data := obj.Load().gameType
-	if value, ok := data.Get(GameType); ok {
-		return value
-	}
-	return nil
-}
-
-func MGetCode(Code string) *pb.InoutGameConfig {
-	data := obj.Load().code
-	if value, ok := data.Get(Code); ok {
-		return value
-	}
-	return nil
-}

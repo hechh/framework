@@ -5,6 +5,7 @@ import (
 
 	_ "framework/configure/pb"
 
+	"github.com/iancoleman/strcase"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
@@ -37,4 +38,9 @@ func TestPb(t *testing.T) {
 
 	buf, err := protojson.Marshal(ary)
 	t.Log(err, "--->", string(buf))
+}
+
+func TestStrcase(t *testing.T) {
+	name := "Provider"
+	t.Log(strcase.ToLowerCamel(name))
 }

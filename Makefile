@@ -3,7 +3,7 @@ SYSTEM=$(shell go env GOOS)
 OUTPUT=./output
 
 
-.PHONY: pb msgtool datatool
+.PHONY: pb msgtool datatool codetool
 
 pb:
 	@echo "Building pb"
@@ -24,3 +24,8 @@ datatool:
 	@echo "xlsx to data"
 	@rm -rf ./configure/data/*
 	@go run ./tools/xlsx_to_data/main.go -src=./configure/table -dst=./configure/data
+
+codetool:
+	@echo "xlsx to code"
+	@rm -rf ./configure/code/*
+	@go run ./tools/xlsx_to_code/main.go -src=./configure/table -dst=./configure/code

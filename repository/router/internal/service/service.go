@@ -61,7 +61,7 @@ func (d *Service) GetOrNew(idType uint32, id uint64) define.IRouter {
 	}
 	item := d.newFunc(idType, id, d.ttl)
 	item.Set(global.GetSelf().Type, global.GetSelf().Id)
-	d.routers.Set(idType, id, item)
+	d.routers.Put(idType, id, item)
 	return item
 }
 

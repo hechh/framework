@@ -30,7 +30,7 @@ func main() {
 	}
 
 	// 加载所有xlsx文件
-	files, err := util.Glob(src, ".*\\.xlsx", true)
+	files, err := util.Glob(src, ".*\\.xlsx", false)
 	if err != nil {
 		panic(err)
 	}

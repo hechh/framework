@@ -15,14 +15,14 @@ type Service struct {
 	ttl        int64
 	newFunc    domain.NewFunc                                   // 创建函数
 	filterFunc domain.FilterFunc                                // 过滤函数
-	routers    *structure.Map2S[uint32, uint64, define.IRouter] // 路由表
+	routers    *structure.Map2s[uint32, uint64, define.IRouter] // 路由表
 	exit       chan struct{}                                    // 退出通知
 }
 
 func NewService(n domain.NewFunc) *Service {
 	return &Service{
 		newFunc: n,
-		routers: structure.NewMap2S[uint32, uint64, define.IRouter](),
+		routers: structure.NewMap2s[uint32, uint64, define.IRouter](),
 		exit:    make(chan struct{}),
 	}
 }

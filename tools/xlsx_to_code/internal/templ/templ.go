@@ -11,6 +11,7 @@ package {{ToSnake $type}}
 
 import (
 	"framework/configure/pb"
+	"google.golang.org/protobuf/encoding/prototext"
 {{if .List}}
 	"framework/library/structure"
 {{end}}
@@ -37,7 +38,7 @@ func DeepCopy(item *pb.{{$type}}) *pb.{{$type}} {
 
 func parse(buf []byte) error {
 	ary := &pb.{{$type}}Ary{}
-	if err := proto.UnmarshalText(string(buf), ary); err != nil {
+	if err := prototext.Unmarshal(buf, ary); err != nil {
 		return err	
 	}
 
@@ -110,6 +111,15 @@ func GWalk{{$index.Name}}({{$index.GetArg}}, f func(*pb.{{$type}})bool) {
 			}	
 		}
 	}
+}
+
+func GRange{{$index.Name}}(f func([]*pb.{{$type}})bool) {
+	data := obj.Load().{{ToLowerCamel $index.Name}}
+	for _, values := range data {
+		if !f(values) {
+			return	
+		}	
+	}	
 }
 {{end}}
 {{end}}

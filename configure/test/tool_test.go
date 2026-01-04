@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"testing"
 
 	_ "framework/configure/pb"
@@ -43,4 +44,7 @@ func TestPb(t *testing.T) {
 func TestStrcase(t *testing.T) {
 	name := "Provider"
 	t.Log(strcase.ToLowerCamel(name))
+
+	str := `test%d`
+	t.Log(fmt.Sprintf(str, 123))
 }

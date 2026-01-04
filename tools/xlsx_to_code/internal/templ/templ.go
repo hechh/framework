@@ -11,7 +11,9 @@ package {{ToSnake $type}}
 
 import (
 	"framework/configure/pb"
+{{if .List}}
 	"framework/library/structure"
+{{end}}
 	"sync/atomic"
 
 	"github.com/gogo/protobuf/proto"

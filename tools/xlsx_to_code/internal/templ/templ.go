@@ -83,7 +83,7 @@ func Walk(f func(*pb.{{$type}})bool) {
 }
 
 {{range $index := .List}}
-{{if eq $index.Kind 1}}		{{/* map类型 */}}
+{{if eq $index.Kind 3}}		{{/* map类型 */}}
 func MGet{{$index.Name}}({{$index.GetArg}}) *pb.{{$type}} {
 	data := obj.Load().{{ToLowerCamel $index.Name}}
 	if value, ok := data.Get({{$index.GetValue ""}}); ok {
@@ -92,7 +92,7 @@ func MGet{{$index.Name}}({{$index.GetArg}}) *pb.{{$type}} {
 	return nil
 }
 
-{{else if eq $index.Kind 2}}	{{/* group类型 */}}
+{{else if eq $index.Kind 4}}	{{/* group类型 */}}
 func GGet{{$index.Name}}({{$index.GetArg}}) []*pb.{{$type}} {
 	data := obj.Load().{{ToLowerCamel $index.Name}}
 	if value, ok := data.Get({{$index.GetValue ""}}); ok {

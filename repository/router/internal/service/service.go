@@ -87,8 +87,6 @@ func (d *Service) refresh(now int64) {
 		} else if item.GetStatus() {
 			if d.filterFunc != nil && !d.filterFunc(item) {
 				saves = append(saves, item)
-			} else {
-				saves = append(saves, item)
 			}
 		}
 	}

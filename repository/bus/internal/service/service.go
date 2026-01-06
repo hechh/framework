@@ -10,7 +10,7 @@ import (
 	"framework/repository/bus/internal/entity"
 	"framework/repository/router"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 )
 
 type Service struct {

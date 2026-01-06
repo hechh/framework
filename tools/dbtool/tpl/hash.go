@@ -10,7 +10,7 @@ package {{.Pkg}}
 import (
 	"fmt"
 	
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cast"
 )
 

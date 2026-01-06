@@ -13,7 +13,7 @@ import (
 	"mypoker/framework/library/uerror"
 	"mypoker/framework/repository/redis"
 	
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cast"
 )
 

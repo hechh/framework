@@ -37,6 +37,16 @@ func Wrap(code int32, err error) *UError {
 	return &UError{code: code, msg: err.Error()}
 }
 
+func Turn(code int32, err error) *UError {
+	if vv, ok := err.(*UError); ok {
+		return vv
+	}
+	return &UError{
+		code: code,
+		msg:  err.Error(),
+	}
+}
+
 func (ue *UError) Error() string {
 	if len(ue.file) <= 0 {
 		return ue.msg

@@ -2,11 +2,14 @@ package context
 
 import (
 	"framework/define"
+	"framework/internal/global"
 	"framework/library/uerror"
 	"framework/packet"
 	"framework/repository/cluster"
 	"framework/repository/handler"
 	"framework/repository/router"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 type Packet struct {
@@ -65,6 +68,23 @@ func (d *Packet) Callback(actorFunc string, actorId uint64) define.IPacket {
 		ActorFunc: hh.GetId(),
 		ActorId:   actorId,
 	}
+	return d
+}
+
+// 回复
+func (d *Packet) Client(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
+	if d.err != nil {
+		return d
+	}
+	if err != nil {
+		uerr := uerror.Turn(-1, err)
+		rsp.SetRspHead(&packet.RspHead{Code: uerr.GetCode(), Msg: uerr.Error()})
+	}
+	d.head.SrcNodeType = global.GetSelfType()
+	d.head.SrcNodeId = global.GetSelfId()
+	d.head.DstNodeType = nodeType
+	d.head.ActorFunc = 0
+	d.body, d.err = proto.Marshal(rsp)
 	return d
 }
 

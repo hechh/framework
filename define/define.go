@@ -4,6 +4,8 @@ import (
 	"framework/packet"
 	"net"
 	"time"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -71,12 +73,18 @@ type IBus interface {
 	Response(*packet.Head, []byte) error              // 应答
 }
 
+type IRspHead interface {
+	proto.Message
+	SetRspHead(*packet.RspHead)
+}
+
 type IPacket interface {
 	Head(*packet.Head) IPacket
 	SendType(uint32) IPacket
 	ID(uint32, uint64) IPacket
 	Router(idType uint32, id uint64) IPacket
 	Callback(string, uint64) IPacket
+	Client(uint32, error, IRspHead) IPacket
 	Rpc(uint32, uint64, string, ...any) IPacket
 	Cmd(uint32, uint64, ...any) IPacket
 	Dispatch(uint64) (*packet.Packet, error)

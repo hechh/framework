@@ -93,7 +93,13 @@ func (d *Client) Read(f func(*packet.Packet) error) {
 			}
 
 			// 解包
-			pac := d.Decode(d.readBytes[:size])
+			pac, err := d.Decode(d.readBytes[:size])
+			if err != nil {
+				mlog.Error(0, "Packet:%v, error:%v", pac, err)
+				continue
+			} else {
+				mlog.Trace(0, "Packet:%v", pac)
+			}
 			pac.Head.SocketId = d.socketId
 
 			// 处理请求

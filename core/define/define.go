@@ -15,6 +15,12 @@ const (
 	GATE                = 1
 )
 
+// 序列化
+type ISerialize interface {
+	Marshal(...any) ([]byte, error)
+	Unmarshal([]byte, ...any) error
+}
+
 // 服务发现接口
 type IWatcher interface {
 	Watch(func(string, []byte)) error // 监听k-v变更
@@ -34,12 +40,6 @@ type ICluster interface {
 	Get(nodeId uint32) *packet.Node  // 获取节点
 	Del(nodeId uint32) *packet.Node  // 删除节点
 	Random(seed uint64) *packet.Node // 路由一个节点
-}
-
-// 序列化
-type ISerialize interface {
-	Marshal(...any) ([]byte, error)
-	Unmarshal([]byte, ...any) error
 }
 
 // 路由接口
@@ -98,9 +98,9 @@ type IContext interface {
 	GetActorName() string                            // 获取actor名字
 	GetFuncName() string                             // 获取函数名字
 	IsRsp() bool                                     // 是否需要回复
+	To(string) IContext                              // 转发
 	AddDepth(add uint32) uint32                      // 添加调用深度
 	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
-	To(string) IContext                              // 转发
 	Tracef(fmt string, args ...any)                  // 输出trace日志
 	Debugf(fmt string, args ...any)                  // 输出debug日志
 	Warnf(fmt string, args ...any)                   // 输出warn日志
@@ -146,8 +146,8 @@ type IActor interface {
 
 // 数据包编码or解码
 type IFrame interface {
+	Decode([]byte) (*packet.Packet, error)
 	Encode(*packet.Packet) []byte
-	Decode([]byte) *packet.Packet
 }
 
 // socket接口

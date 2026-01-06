@@ -6,6 +6,7 @@ import (
 	"framework/library/mlog"
 	"framework/library/util"
 	"framework/packet"
+	"strings"
 	"sync/atomic"
 )
 
@@ -22,6 +23,17 @@ func NewContext(head *packet.Head, actorName, funcName string) *Context {
 		actorName: actorName,
 		funcName:  funcName,
 	}
+}
+
+func (d *Context) To(actorFunc string) define.IContext {
+	if pos := strings.Index(actorFunc, "."); pos > 0 {
+		d.actorName = actorFunc[:pos]
+		d.funcName = actorFunc[pos+1:]
+	} else {
+		d.actorName = ""
+		d.funcName = actorFunc
+	}
+	return d
 }
 
 func (d *Context) GetHead() *packet.Head {

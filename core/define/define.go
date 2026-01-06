@@ -92,6 +92,7 @@ type IPacket interface {
 
 // 通用上下文接口
 type IContext interface {
+	To(string) IContext                              // 转发
 	GetHead() *packet.Head                           // 获取包头
 	GetPacket() IPacket                              // 获取IPacket
 	GetIdType() uint32                               // 获取id类型

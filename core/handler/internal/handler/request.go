@@ -39,10 +39,8 @@ func (d *ReqHandler[Actor, V1, V2]) Call(obj any, ctx define.IContext, args ...a
 		err = d.method(obj.(*Actor), ctx, args[0].(*V1), args[1].(*V2))
 
 		// 应答
-		if ctx.CompareAndSwapDepth(ref, ref) {
-			if head := ctx.GetHead(); head.Back != nil || head.Cmd > 0 {
-				reterr = bus.Send(ctx.GetPacket().Rsp(define.GATE, err, args[1].(define.IRspHead)))
-			}
+		if ctx.CompareAndSwapDepth(ref, ref) && ctx.IsRsp() {
+			reterr = bus.Send(ctx.GetPacket().Rsp(define.GATE, err, args[1].(define.IRspHead)))
 		}
 	}
 }
@@ -73,10 +71,8 @@ func (d *ReqHandler[Actor, V1, V2]) Rpc(obj any, ctx define.IContext, body []byt
 		err = d.method(obj.(*Actor), ctx, req1, req2)
 
 		// 应答
-		if ctx.CompareAndSwapDepth(ref, ref) {
-			if head := ctx.GetHead(); head.Back != nil || head.Cmd > 0 {
-				reterr = bus.Send(ctx.GetPacket().Rsp(define.GATE, err, any(req2).(define.IRspHead)))
-			}
+		if ctx.CompareAndSwapDepth(ref, ref) && ctx.IsRsp() {
+			reterr = bus.Send(ctx.GetPacket().Rsp(define.GATE, err, any(req2).(define.IRspHead)))
 		}
 	}
 }

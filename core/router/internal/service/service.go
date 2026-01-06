@@ -13,12 +13,11 @@ import (
 )
 
 type Service struct {
-	ttl        int64
-	newFunc    domain.NewFunc    // 创建函数
-	filterFunc domain.FilterFunc // 过滤函数
-	mutex      sync.RWMutex
-	routers    structure.Map2[uint32, uint64, define.IRouter] // 路由表
-	exit       chan struct{}                                  // 退出通知
+	ttl     int64
+	newFunc domain.NewFunc // 创建函数
+	mutex   sync.RWMutex
+	routers structure.Map2[uint32, uint64, define.IRouter] // 路由表
+	exit    chan struct{}                                  // 退出通知
 }
 
 func NewService(n domain.NewFunc) *Service {
@@ -29,8 +28,7 @@ func NewService(n domain.NewFunc) *Service {
 	}
 }
 
-func (d *Service) Init(cfg *yaml.NodeConfig, filter domain.FilterFunc) {
-	d.filterFunc = filter
+func (d *Service) Init(cfg *yaml.NodeConfig) {
 	d.ttl = cfg.RouterExpire
 	async.Go(func() {
 		tt := time.NewTicker(12 * time.Second)
@@ -85,9 +83,7 @@ func (d *Service) refresh(now int64) {
 		if item.IsExpire(now) {
 			dels = append(dels, item)
 		} else if item.GetStatus() {
-			if d.filterFunc != nil && !d.filterFunc(item) {
-				saves = append(saves, item)
-			}
+			saves = append(saves, item)
 		}
 	}
 	d.mutex.RUnlock()

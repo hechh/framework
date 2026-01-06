@@ -3,6 +3,11 @@ package packet;
 
 option go_package = "framework/packet";
 
+enum SendType {
+  Point     = 0;  // 发送类型-点对点
+  Broadcast = 1;  // 发送类型-广播
+}
+
 // 框架核心协议，任何人不能修改
 message Node {
   uint32 Type = 1;
@@ -13,7 +18,7 @@ message Node {
 }
 
 message Head {
-  uint32   SendType    = 1;   // 发送类型
+  SendType SendType    = 1;   // 发送类型
   uint32   SrcNodeType = 2;   // 源地址
   uint32   SrcNodeId   = 3;   // 源地址
   uint32   DstNodeType = 4;   // 目的地址

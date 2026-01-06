@@ -103,7 +103,7 @@ func (d *Packet) Cmd(cmd uint32, actorId uint64, args ...any) define.IPacket {
 	return d
 }
 
-func (d *Packet) Dispatch(sendType uint32) (*packet.Packet, error) {
+func (d *Packet) Dispatch(sendType packet.SendType) (*packet.Packet, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
@@ -114,7 +114,7 @@ func (d *Packet) Dispatch(sendType uint32) (*packet.Packet, error) {
 	}
 
 	switch sendType {
-	case 0:
+	case packet.SendType_Point:
 		if len(d.list) <= 0 {
 			d.list = append(d.list, &packet.Router{IdType: d.head.IdType, Id: d.head.Id})
 		}
@@ -134,7 +134,7 @@ func (d *Packet) Dispatch(sendType uint32) (*packet.Packet, error) {
 			rr.Update()
 			item.List = rr.GetRouter()
 		}
-	case 1:
+	case packet.SendType_Broadcast:
 	}
 	return &packet.Packet{Head: d.head, Body: d.body, List: d.list}, nil
 }

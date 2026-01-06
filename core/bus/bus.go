@@ -32,7 +32,7 @@ func SubscribeReply(f func(head *packet.Head, body []byte)) error {
 }
 
 func Broadcast(pack define.IPacket) error {
-	msg, err := pack.Dispatch(1)
+	msg, err := pack.Dispatch(packet.SendType_Broadcast)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func Broadcast(pack define.IPacket) error {
 }
 
 func Send(pack define.IPacket) error {
-	msg, err := pack.Dispatch(0)
+	msg, err := pack.Dispatch(packet.SendType_Point)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func Send(pack define.IPacket) error {
 }
 
 func Request(vv define.IPacket, cb func([]byte) error) error {
-	msg, err := vv.Dispatch(0)
+	msg, err := vv.Dispatch(packet.SendType_Point)
 	if err != nil {
 		return err
 	}

@@ -85,7 +85,7 @@ type IPacket interface {
 	Rsp(nodeType uint32, err error, rsp IRspHead) IPacket
 	Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...any) IPacket
 	Cmd(cmd uint32, actorId uint64, args ...any) IPacket
-	Dispatch(uint32) (*packet.Packet, error)
+	Dispatch(packet.SendType) (*packet.Packet, error)
 }
 
 // 通用上下文接口
@@ -97,6 +97,7 @@ type IContext interface {
 	GetActorId() uint64                              // 获取actor id
 	GetActorName() string                            // 获取actor名字
 	GetFuncName() string                             // 获取函数名字
+	IsRsp() bool                                     // 是否需要回复
 	AddDepth(add uint32) uint32                      // 添加调用深度
 	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
 	To(string) IContext                              // 转发

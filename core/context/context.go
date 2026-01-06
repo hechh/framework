@@ -25,17 +25,6 @@ func NewContext(head *packet.Head, actorName, funcName string) *Context {
 	}
 }
 
-func (d *Context) To(actorFunc string) define.IContext {
-	if pos := strings.Index(actorFunc, "."); pos > 0 {
-		d.actorName = actorFunc[:pos]
-		d.funcName = actorFunc[pos+1:]
-	} else {
-		d.actorName = ""
-		d.funcName = actorFunc
-	}
-	return d
-}
-
 func (d *Context) GetHead() *packet.Head {
 	return d.head
 }
@@ -65,12 +54,27 @@ func (d *Context) GetFuncName() string {
 	return d.funcName
 }
 
+func (d *Context) IsRsp() bool {
+	return d.head.Back != nil || d.head.Cmd > 0
+}
+
 func (d *Context) AddDepth(val uint32) uint32 {
 	return atomic.AddUint32(&d.depth, 1)
 }
 
 func (d *Context) CompareAndSwapDepth(old, new uint32) bool {
 	return atomic.CompareAndSwapUint32(&d.depth, old, new)
+}
+
+func (d *Context) To(actorFunc string) define.IContext {
+	if pos := strings.Index(actorFunc, "."); pos > 0 {
+		d.actorName = actorFunc[:pos]
+		d.funcName = actorFunc[pos+1:]
+	} else {
+		d.actorName = ""
+		d.funcName = actorFunc
+	}
+	return d
 }
 
 func (d *Context) getformat(str string) string {

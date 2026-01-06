@@ -2,7 +2,6 @@ package router
 
 import (
 	"framework/core/define"
-	"framework/core/router/domain"
 	"framework/core/router/internal/entity"
 	"framework/core/router/internal/service"
 	"framework/library/yaml"
@@ -12,8 +11,8 @@ var (
 	serviceObj = service.NewService(entity.NewRouter)
 )
 
-func Init(cfg *yaml.NodeConfig, ff domain.FilterFunc) {
-	serviceObj.Init(cfg, ff)
+func Init(cfg *yaml.NodeConfig) {
+	serviceObj.Init(cfg)
 }
 
 func Close() {

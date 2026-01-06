@@ -108,14 +108,11 @@ func (d *Websocket) refresh() {
 }
 
 func (d *Websocket) Remove(socketId uint32) {
-	d.mutex.RLock()
-	cli, ok := d.sockets[socketId]
-	d.mutex.RUnlock()
-	if ok {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	if cli, ok := d.sockets[socketId]; ok {
 		cli.Close()
-		d.mutex.Lock()
 		delete(d.sockets, socketId)
-		d.mutex.Unlock()
 	}
 }
 

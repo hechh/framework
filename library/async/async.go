@@ -50,10 +50,12 @@ func (d *Async) Stop() {
 }
 
 func (d *Async) Push(f func()) {
-	d.queue.Push(f)
-	select {
-	case d.notify <- struct{}{}:
-	default:
+	if atomic.CompareAndSwapInt32(&d.status, 1, 1) {
+		d.queue.Push(f)
+		select {
+		case d.notify <- struct{}{}:
+		default:
+		}
 	}
 }
 

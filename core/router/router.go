@@ -2,6 +2,7 @@ package router
 
 import (
 	"framework/core/define"
+	"framework/core/global"
 	"framework/core/router/internal/entity"
 	"framework/core/router/internal/service"
 	"framework/library/yaml"
@@ -10,6 +11,11 @@ import (
 var (
 	serviceObj = service.NewService(entity.NewRouter)
 )
+
+func init() {
+	global.SetGetRouter(Get)
+	global.SetGetOrNewRouter(GetOrNew)
+}
 
 func Init(cfg *yaml.NodeConfig) {
 	serviceObj.Init(cfg)

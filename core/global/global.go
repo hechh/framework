@@ -1,6 +1,7 @@
 package global
 
 import (
+	"framework/core/define"
 	"framework/packet"
 	"hash/crc32"
 	"reflect"
@@ -13,6 +14,17 @@ var (
 	self              *packet.Node
 	actorIdGenerator  = uint64(0) // actorId生成器
 	socketIdGenerator = uint32(0)
+	// handler
+	getByName func(...string) define.IHandler
+	getByCmd  func(uint32) define.IHandler
+	getByRpc  func(uint32, any) define.IHandler
+	// bus
+	broadcast func(define.IPacket) error
+	send      func(define.IPacket) error
+	request   func(define.IPacket, func([]byte) error) error
+	// router
+	getRouter      func(uint32, uint64) define.IRouter
+	getOrNewRouter func(uint32, uint64) define.IRouter
 )
 
 func SetSelf(nn *packet.Node) {
@@ -73,4 +85,71 @@ func ParseActorName(rr reflect.Type) string {
 
 func GetCrc32(name string) uint32 {
 	return crc32.ChecksumIEEE([]byte(name))
+}
+
+// 解决循环引用
+func SetBroadcast(f func(define.IPacket) error) {
+	broadcast = f
+}
+
+func SetSend(f func(define.IPacket) error) {
+	send = f
+}
+
+func SetRequest(f func(define.IPacket, func([]byte) error) error) {
+	request = f
+}
+
+func Broadcast(pack define.IPacket) error {
+	return broadcast(pack)
+}
+
+func Send(pack define.IPacket) error {
+	return send(pack)
+}
+
+func Request(pack define.IPacket, cb func([]byte) error) error {
+	return request(pack, cb)
+}
+
+// ---------handler----------
+func SetGetHandler(fn func(...string) define.IHandler) {
+	getByName = fn
+}
+
+func SetGetHandlerByCmd(fn func(uint32) define.IHandler) {
+	getByCmd = fn
+}
+
+func SetGetHandlerByRpc(fn func(uint32, any) define.IHandler) {
+	getByRpc = fn
+}
+
+func GetHandler(names ...string) define.IHandler {
+	return getByName(names...)
+}
+
+func GetHandlerByCmd(cmd uint32) define.IHandler {
+	return getByCmd(cmd)
+}
+
+func GetHandlerByRpc(nodeType uint32, id any) define.IHandler {
+	return getByRpc(nodeType, id)
+}
+
+// ----------------router-------------
+func SetGetRouter(f func(uint32, uint64) define.IRouter) {
+	getRouter = f
+}
+
+func SetGetOrNewRouter(f func(uint32, uint64) define.IRouter) {
+	getOrNewRouter = f
+}
+
+func GetRouter(idType uint32, id uint64) define.IRouter {
+	return getRouter(idType, id)
+}
+
+func GetOrNewRouter(idType uint32, id uint64) define.IRouter {
+	return getOrNewRouter(idType, id)
 }

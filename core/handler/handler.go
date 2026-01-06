@@ -2,6 +2,7 @@ package handler
 
 import (
 	"framework/core/define"
+	"framework/core/global"
 	"framework/core/handler/internal/handler"
 	"framework/core/handler/internal/service"
 	"strings"
@@ -10,6 +11,12 @@ import (
 var (
 	serviceObj = service.NewService()
 )
+
+func init() {
+	global.SetGetHandler(Get)
+	global.SetGetHandlerByCmd(GetByCmd)
+	global.SetGetHandlerByRpc(GetByRpc)
+}
 
 func Name2Id(name string) (uint32, bool) {
 	return serviceObj.Name2Id(name)

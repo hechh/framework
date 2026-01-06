@@ -41,7 +41,8 @@ func (d *Context) GetHead() *packet.Head {
 }
 
 func (d *Context) GetPacket() define.IPacket {
-	return NewPacket(d)
+	d.AddDepth(1)
+	return NewPacket(d.head)
 }
 
 func (d *Context) GetIdType() uint32 {

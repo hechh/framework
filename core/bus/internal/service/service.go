@@ -90,6 +90,7 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 
 // 发送广播
 func (d *Service) Broadcast(pack *packet.Packet) error {
+	pack.Head.SendType = 1
 	pack.Head.SrcNodeType = global.GetSelfType()
 	pack.Head.SrcNodeId = global.GetSelfId()
 	if pack.Head.Back != nil {
@@ -105,6 +106,7 @@ func (d *Service) Broadcast(pack *packet.Packet) error {
 
 // 发送请求
 func (d *Service) Send(pack *packet.Packet) error {
+	pack.Head.SendType = 0
 	pack.Head.SrcNodeType = global.GetSelfType()
 	pack.Head.SrcNodeId = global.GetSelfId()
 	if pack.Head.Back != nil {
@@ -120,6 +122,7 @@ func (d *Service) Send(pack *packet.Packet) error {
 
 // 同步请求
 func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
+	pack.Head.SendType = 0
 	pack.Head.SrcNodeType = global.GetSelfType()
 	pack.Head.SrcNodeId = global.GetSelfId()
 	if pack.Head.Back != nil {

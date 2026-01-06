@@ -18,44 +18,10 @@ type Packet struct {
 	err  error
 }
 
-func NewPacket(ctx define.IContext) *Packet {
-	ctx.AddDepth(1)
-	head := ctx.GetHead()
+func NewPacket(head *packet.Head) *Packet {
 	return &Packet{
-		head: &packet.Head{
-			SendType: head.SendType,
-			IdType:   head.IdType,
-			Id:       head.Id,
-			Cmd:      head.Cmd,
-			Seq:      head.Seq,
-			Version:  head.Version,
-			SocketId: head.SocketId,
-			Reply:    head.Reply,
-			Back:     head.Back,
-		},
+		head: head,
 	}
-}
-
-func (d *Packet) Head(head *packet.Head) define.IPacket {
-	if d.err == nil {
-		d.head = head
-	}
-	return d
-}
-
-func (d *Packet) SendType(val uint32) define.IPacket {
-	if d.err == nil {
-		d.head.SendType = val
-	}
-	return d
-}
-
-func (d *Packet) ID(idType uint32, id uint64) define.IPacket {
-	if d.err == nil {
-		d.head.IdType = idType
-		d.head.Id = id
-	}
-	return d
 }
 
 func (d *Packet) Router(idType uint32, id uint64) define.IPacket {
@@ -81,33 +47,7 @@ func (d *Packet) Callback(actorId uint64, actorFunc string) define.IPacket {
 	return d
 }
 
-func (d *Packet) Rsp(err error, args ...any) define.IPacket {
-	if d.err != nil {
-		return d
-	}
-
-	if err != nil {
-		for _, arg := range args {
-			if rsp, ok := arg.(define.IRspHead); ok && rsp != nil {
-				uerr := uerror.Turn(-1, err)
-				rsp.SetRspHead(&packet.RspHead{Code: uerr.GetCode(), Msg: uerr.Error()})
-				break
-			}
-		}
-	}
-
-	hh := handler.GetByRpc(d.head.Back.NodeType, d.head.Back.ActorFunc)
-	d.body, d.err = hh.Marshal(args...)
-
-	d.head.DstNodeType = d.head.Back.NodeType
-	d.head.DstNodeId = d.head.Back.NodeId
-	d.head.ActorFunc = d.head.Back.ActorFunc
-	d.head.ActorId = d.head.Back.ActorId
-	d.head.Back = nil
-	return d
-}
-
-func (d *Packet) Client(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
+func (d *Packet) Rsp(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
 	if d.err != nil {
 		return d
 	}
@@ -115,8 +55,17 @@ func (d *Packet) Client(nodeType uint32, err error, rsp define.IRspHead) define.
 		uerr := uerror.Turn(-1, err)
 		rsp.SetRspHead(&packet.RspHead{Code: uerr.GetCode(), Msg: uerr.Error()})
 	}
-	d.head.DstNodeType = nodeType
-	d.head.ActorFunc = 0
+	if d.head.Back != nil {
+		d.head.DstNodeType = d.head.Back.NodeType
+		d.head.DstNodeId = d.head.Back.NodeId
+		d.head.ActorFunc = d.head.Back.ActorFunc
+		d.head.ActorId = d.head.Back.ActorId
+		d.head.Back = nil
+	} else {
+		d.head.DstNodeType = nodeType
+		d.head.ActorFunc = 0
+		d.head.ActorId = 0
+	}
 	d.body, d.err = proto.Marshal(rsp)
 	return d
 }
@@ -154,35 +103,38 @@ func (d *Packet) Cmd(cmd uint32, actorId uint64, args ...any) define.IPacket {
 	return d
 }
 
-func (d *Packet) Dispatch(routerId uint64) (*packet.Packet, error) {
+func (d *Packet) Dispatch(sendType uint32) (*packet.Packet, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
 
 	cls := cluster.Get(d.head.DstNodeType)
-	if cls == nil {
+	if cls == nil || cls.Size() <= 0 {
 		return nil, uerror.Err(-1, "集群(%d)不支持", d.head.DstNodeType)
 	}
 
-	if len(d.list) <= 0 {
-		d.list = append(d.list, &packet.Router{IdType: d.head.IdType, Id: d.head.Id})
-	}
-
-	for i, item := range d.list {
-		rr := router.GetOrNew(item.IdType, item.Id)
-		if i == 0 {
-			node := cls.Get(rr.Get(d.head.DstNodeType))
-			if node == nil {
-				node = cls.Random(routerId)
-			}
-			if node == nil {
-				return nil, uerror.Err(-1, "集群(%d)不存在任何服务节点", d.head.DstNodeType)
-			}
-			d.head.DstNodeId = node.Id
+	switch sendType {
+	case 0:
+		if len(d.list) <= 0 {
+			d.list = append(d.list, &packet.Router{IdType: d.head.IdType, Id: d.head.Id})
 		}
-		rr.Set(d.head.DstNodeType, d.head.DstNodeId)
-		rr.Update()
-		item.List = rr.GetRouter()
+		for i, item := range d.list {
+			rr := router.GetOrNew(item.IdType, item.Id)
+			if i == 0 {
+				node := cls.Get(rr.Get(d.head.DstNodeType))
+				if node == nil {
+					node = cls.Random(d.head.ActorId)
+				}
+				if node == nil {
+					return nil, uerror.Err(-1, "集群(%d)不存在任何服务节点", d.head.DstNodeType)
+				}
+				d.head.DstNodeId = node.Id
+			}
+			rr.Set(d.head.DstNodeType, d.head.DstNodeId)
+			rr.Update()
+			item.List = rr.GetRouter()
+		}
+	case 1:
 	}
 	return &packet.Packet{Head: d.head, Body: d.body, List: d.list}, nil
 }

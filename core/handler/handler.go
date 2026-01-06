@@ -32,11 +32,12 @@ func GetByRpc(nodeType uint32, id any) define.IHandler {
 }
 
 // 注册proto参数请求
-func RegisterPb1[Actor any, V1 any](nodeType uint32, cmd uint32, f define.P1Func[Actor, V1]) {
+func RegisterEvent[Actor any, V1 any](nodeType uint32, cmd uint32, f define.P1Func[Actor, V1]) {
 	serviceObj.Register(handler.NewP1Handler(&handler.ProtoEncoder{}, nodeType, cmd, f))
 }
-func RegisterPb2[Actor any, V1 any, V2 any](nodeType uint32, cmd uint32, f define.P2Func[Actor, V1, V2]) {
-	serviceObj.Register(handler.NewP2Handler(&handler.ProtoEncoder{}, nodeType, cmd, f))
+
+func RegisterCmd[Actor any, V1 any, V2 any](nodeType uint32, cmd uint32, f define.P2Func[Actor, V1, V2]) {
+	serviceObj.Register(handler.NewReqHandler(&handler.ProtoEncoder{}, nodeType, cmd, f))
 }
 
 // 注册指针参数请求

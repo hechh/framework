@@ -12,6 +12,7 @@ const (
 	MAX_NODE_TYPE_COUNT = 32  // 节点类型数量
 	CLUSTER_BUCKET_SIZE = 256 // 集群桶的数量
 	ETCD_GRANT_TTL      = 15
+	GATE                = 1
 )
 
 // 服务发现接口
@@ -79,16 +80,12 @@ type IRspHead interface {
 }
 
 type IPacket interface {
-	Head(*packet.Head) IPacket
-	SendType(uint32) IPacket
-	ID(idType uint32, id uint64) IPacket
 	Router(idType uint32, id uint64) IPacket
 	Callback(actorId uint64, actorFunc string) IPacket
-	Rsp(err error, args ...any) IPacket
-	Client(nodeType uint32, err error, rsp IRspHead) IPacket
+	Rsp(nodeType uint32, err error, rsp IRspHead) IPacket
 	Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...any) IPacket
 	Cmd(cmd uint32, actorId uint64, args ...any) IPacket
-	Dispatch(routerId uint64) (*packet.Packet, error)
+	Dispatch(uint32) (*packet.Packet, error)
 }
 
 // 通用上下文接口

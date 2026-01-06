@@ -11,114 +11,113 @@ option  go_package = "./pb";
 import "enum.gen.proto";
 
 message CurrencyExchangeConfig {
-	uint32 Id = 1;	// 唯一ID
-	Currency Currency = 2;	// 货币类型
-	int64 Ratio = 3;	// 比率
+  uint32   Id       = 1;  // 唯一ID
+  Currency Currency = 2;  // 货币类型
+  int64    Ratio    = 3;  // 比率
 }
 
 message CurrencyExchangeConfigAry {
-repeated CurrencyExchangeConfig Ary = 1;
+  repeated CurrencyExchangeConfig Ary = 1;
 }
 
 message GameConfig {
-	uint32 Id = 1;	// 唯一ID
-	Provider Provider = 2;	// 游戏平台
-	GameType GameType = 3;	// 游戏类型
-	bool IsHot = 4;	// 是否热门游戏
-	int64 BeginTime = 5;	// 游戏开始时间
-	int64 EndTime = 6;	// 游戏结束时间
-	int32 Sort = 7;	// 排序值
-	string Version = 8;	// 版本控制
-	repeated Platform Platforms = 9;	// 平台控制
-	string Area = 10;	// 区域限制
-	repeated Currency Currencys = 11;	// 货币类型
-	string ProviderIcon = 12;	// 游戏平台图标
-	string GameIcon = 13;	// 游戏图标
+  uint32            Id           = 1;   // 唯一ID
+  Provider          Provider     = 2;   // 游戏平台
+  GameType          GameType     = 3;   // 游戏类型
+  bool              IsHot        = 4;   // 是否热门游戏
+  int64             BeginTime    = 5;   // 游戏开始时间
+  int64             EndTime      = 6;   // 游戏结束时间
+  int32             Sort         = 7;   // 排序值
+  string            Version      = 8;   // 版本控制
+  repeated Platform Platforms    = 9;   // 平台控制
+  string            Area         = 10;  // 区域限制
+  repeated Currency Currencys    = 11;  // 货币类型
+  string            ProviderIcon = 12;  // 游戏平台图标
+  string            GameIcon     = 13;  // 游戏图标
 }
 
 message GameConfigAry {
-repeated GameConfig Ary = 1;
+  repeated GameConfig Ary = 1;
 }
 
 message GlobalConfig {
-	uint64 UidBeginValue = 1;	// uid开始值
-	string GameUrl = 2;	// 游戏url地址
-	string SpribeLaunchUrl = 3;	// 游戏地址
-	string SpribeReturnUrl = 4;	// 回调地址
-	string InoutLaunchUrl = 5;	// 游戏地址
-	string InoutReturnUrl = 6;	// 回调地址
+  uint64 UidBeginValue   = 1;  // uid开始值
+  string GameUrl         = 2;  // 游戏url地址
+  string SpribeLaunchUrl = 3;  // 游戏地址
+  string SpribeReturnUrl = 4;  // 回调地址
+  string InoutLaunchUrl  = 5;  // 游戏地址
+  string InoutReturnUrl  = 6;  // 回调地址
 }
 
 message GlobalConfigAry {
-repeated GlobalConfig Ary = 1;
+  repeated GlobalConfig Ary = 1;
 }
 
 message InoutCurrencyConfig {
-	Currency Currency = 1;	// 货币类型
-	string Code = 2;	// 货币代码
-	string Name = 3;	// 货币名字
+  Currency Currency = 1;  // 货币类型
+  string   Code     = 2;  // 货币代码
+  string   Name     = 3;  // 货币名字
 }
 
 message InoutCurrencyConfigAry {
-repeated InoutCurrencyConfig Ary = 1;
+  repeated InoutCurrencyConfig Ary = 1;
 }
 
 message InoutGameConfig {
-	GameType GameType = 1;	// 游戏类型
-	string Code = 2;	// 游戏识别
-	string Name = 3;	// 名字
+  GameType GameType = 1;  // 游戏类型
+  string   Code     = 2;  // 游戏识别
+  string   Name     = 3;  // 名字
 }
 
 message InoutGameConfigAry {
-repeated InoutGameConfig Ary = 1;
+  repeated InoutGameConfig Ary = 1;
 }
 
 message InoutLangConfig {
-	LangType LangType = 1;	// 语言类型
-	string Code = 2;	// 语言代码
-	string Name = 3;	// 名字
+  LangType LangType = 1;  // 语言类型
+  string   Code     = 2;  // 语言代码
+  string   Name     = 3;  // 名字
 }
 
 message InoutLangConfigAry {
-repeated InoutLangConfig Ary = 1;
+  repeated InoutLangConfig Ary = 1;
 }
 
 message SpribeCurrencyConfig {
-	Currency Currency = 1;	// 货币类型
-	string Code = 2;	// 货币代码
-	string Name = 3;	// 货币名字
+  Currency Currency = 1;  // 货币类型
+  string   Code     = 2;  // 货币代码
+  string   Name     = 3;  // 货币名字
 }
 
 message SpribeCurrencyConfigAry {
-repeated SpribeCurrencyConfig Ary = 1;
+  repeated SpribeCurrencyConfig Ary = 1;
 }
 
 message SpribeGameConfig {
-	GameType GameType = 1;	// 游戏类型
-	string Code = 2;	// 游戏识别
-	string Name = 3;	// 名字
+  GameType GameType = 1;  // 游戏类型
+  string   Code     = 2;  // 游戏识别
+  string   Name     = 3;  // 名字
 }
 
 message SpribeGameConfigAry {
-repeated SpribeGameConfig Ary = 1;
+  repeated SpribeGameConfig Ary = 1;
 }
 
 message SpribeLangConfig {
-	LangType LangType = 1;	// 语言类型
-	string Code = 2;	// 语言代码
-	string Name = 3;	// 名字
+  LangType LangType = 1;  // 语言类型
+  string   Code     = 2;  // 语言代码
+  string   Name     = 3;  // 名字
 }
 
 message SpribeLangConfigAry {
-repeated SpribeLangConfig Ary = 1;
+  repeated SpribeLangConfig Ary = 1;
 }
 
 message SpribePlatformConfig {
-	Platform Platform = 1;	// 平台类型
-	string Code = 2;	// 名字
+  Platform Platform = 1;  // 平台类型
+  string   Code     = 2;  // 名字
 }
 
 message SpribePlatformConfigAry {
-repeated SpribePlatformConfig Ary = 1;
+  repeated SpribePlatformConfig Ary = 1;
 }
-

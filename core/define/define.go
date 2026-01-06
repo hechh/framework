@@ -84,7 +84,8 @@ type IPacket interface {
 	ID(idType uint32, id uint64) IPacket
 	Router(idType uint32, id uint64) IPacket
 	Callback(actorId uint64, actorFunc string) IPacket
-	Rsp(nodeType uint32, err error, rsp IRspHead) IPacket
+	Rsp(err error, args ...any) IPacket
+	Client(nodeType uint32, err error, rsp IRspHead) IPacket
 	Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...any) IPacket
 	Cmd(cmd uint32, actorId uint64, args ...any) IPacket
 	Dispatch(routerId uint64) (*packet.Packet, error)

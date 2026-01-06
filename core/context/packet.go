@@ -3,7 +3,6 @@ package context
 import (
 	"framework/core/cluster"
 	"framework/core/define"
-	"framework/core/global"
 	"framework/core/handler"
 	"framework/core/router"
 	"framework/library/uerror"
@@ -21,8 +20,19 @@ type Packet struct {
 
 func NewPacket(ctx define.IContext) *Packet {
 	ctx.AddDepth(1)
+	head := ctx.GetHead()
 	return &Packet{
-		head: ctx.GetHead(),
+		head: &packet.Head{
+			SendType: head.SendType,
+			IdType:   head.IdType,
+			Id:       head.Id,
+			Cmd:      head.Cmd,
+			Seq:      head.Seq,
+			Version:  head.Version,
+			SocketId: head.SocketId,
+			Reply:    head.Reply,
+			Back:     head.Back,
+		},
 	}
 }
 
@@ -71,7 +81,33 @@ func (d *Packet) Callback(actorId uint64, actorFunc string) define.IPacket {
 	return d
 }
 
-func (d *Packet) Rsp(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
+func (d *Packet) Rsp(err error, args ...any) define.IPacket {
+	if d.err != nil {
+		return d
+	}
+
+	if err != nil {
+		for _, arg := range args {
+			if rsp, ok := arg.(define.IRspHead); ok && rsp != nil {
+				uerr := uerror.Turn(-1, err)
+				rsp.SetRspHead(&packet.RspHead{Code: uerr.GetCode(), Msg: uerr.Error()})
+				break
+			}
+		}
+	}
+
+	hh := handler.GetByRpc(d.head.Back.NodeType, d.head.Back.ActorFunc)
+	d.body, d.err = hh.Marshal(args...)
+
+	d.head.DstNodeType = d.head.Back.NodeType
+	d.head.DstNodeId = d.head.Back.NodeId
+	d.head.ActorFunc = d.head.Back.ActorFunc
+	d.head.ActorId = d.head.Back.ActorId
+	d.head.Back = nil
+	return d
+}
+
+func (d *Packet) Client(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
 	if d.err != nil {
 		return d
 	}
@@ -79,8 +115,6 @@ func (d *Packet) Rsp(nodeType uint32, err error, rsp define.IRspHead) define.IPa
 		uerr := uerror.Turn(-1, err)
 		rsp.SetRspHead(&packet.RspHead{Code: uerr.GetCode(), Msg: uerr.Error()})
 	}
-	d.head.SrcNodeType = global.GetSelfType()
-	d.head.SrcNodeId = global.GetSelfId()
 	d.head.DstNodeType = nodeType
 	d.head.ActorFunc = 0
 	d.body, d.err = proto.Marshal(rsp)

@@ -72,12 +72,20 @@ type IBus interface {
 }
 
 type IPacket interface {
-	Get() (*packet.Packet, error)
+	Head(*packet.Head) IPacket
+	SendType(uint32) IPacket
+	ID(uint32, uint64) IPacket
+	Router(idType uint32, id uint64) IPacket
+	Callback(string, uint64) IPacket
+	Rpc(uint32, uint64, string, ...any) IPacket
+	Cmd(uint32, uint64, ...any) IPacket
+	Dispatch(uint64) (*packet.Packet, error)
 }
 
 // 通用上下文接口
 type IContext interface {
 	GetHead() *packet.Head                           // 获取包头
+	GetPacket() IPacket                              // 获取IPacket
 	GetIdType() uint32                               // 获取id类型
 	GetId() uint64                                   // 获取玩家uid
 	GetActorId() uint64                              // 获取actor id

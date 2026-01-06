@@ -64,32 +64,20 @@ func Broadcast(idType uint32, id uint64, nodeType uint32, actorId uint64, api st
 	})
 }
 
-func Send(vv any) error {
-	switch pack := vv.(type) {
-	case *packet.Packet:
-		return serviceObj.Send(pack)
-	case define.IPacket:
-		if pac, err := pack.Get(); err != nil {
-			return err
-		} else {
-			return serviceObj.Send(pac)
-		}
+func Send(pack define.IPacket, routerId uint64) error {
+	msg, err := pack.Dispatch(routerId)
+	if err != nil {
+		return err
 	}
-	return uerror.New(-1, "参数类型错误")
+	return serviceObj.Send(msg)
 }
 
-func Request(vv any, cb func([]byte) error) error {
-	switch pack := vv.(type) {
-	case *packet.Packet:
-		return serviceObj.Request(pack, cb)
-	case define.IPacket:
-		if pac, err := pack.Get(); err != nil {
-			return err
-		} else {
-			return serviceObj.Request(pac, cb)
-		}
+func Request(vv define.IPacket, routerId uint64, cb func([]byte) error) error {
+	msg, err := vv.Dispatch(routerId)
+	if err != nil {
+		return err
 	}
-	return uerror.New(-1, "参数类型错误")
+	return serviceObj.Request(msg, cb)
 }
 
 func Response(head *packet.Head, buf []byte) error {

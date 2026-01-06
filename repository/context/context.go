@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"framework/define"
 	"framework/library/mlog"
 	"framework/library/util"
 	"framework/packet"
@@ -25,6 +26,10 @@ func NewContext(head *packet.Head, actorName, funcName string) *Context {
 
 func (d *Context) GetHead() *packet.Head {
 	return d.head
+}
+
+func (d *Context) GetPacket() define.IPacket {
+	return NewPacket(d)
 }
 
 func (d *Context) GetIdType() uint32 {

@@ -72,6 +72,7 @@ func (d *ActorMgr) SendMsg(ctx define.IContext, args ...any) error {
 	switch ctx.GetHead().SendType {
 	case 0:
 		if act := d.GetActor(ctx.GetActorId()); act != nil {
+			ctx.AddDepth(1)
 			return act.SendMsg(ctx, args...)
 		}
 		return uerror.New(-1, "%s.%s未注册", ctx.GetActorName(), ctx.GetFuncName())
@@ -91,6 +92,7 @@ func (d *ActorMgr) Send(ctx define.IContext, buf []byte) error {
 	switch ctx.GetHead().SendType {
 	case 0:
 		if act := d.GetActor(ctx.GetActorId()); act != nil {
+			ctx.AddDepth(1)
 			return act.Send(ctx, buf)
 		}
 		return uerror.New(-1, "%s.%s未注册", ctx.GetActorName(), ctx.GetFuncName())

@@ -81,6 +81,7 @@ func (d *ActorPool) RegisterTimer(ctx define.IContext, ms time.Duration, times i
 
 func (d *ActorPool) SendMsg(ctx define.IContext, args ...any) error {
 	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+		ctx.AddDepth(1)
 		d.pool[ctx.GetActorId()%uint64(d.size)].Push(ff.Call(d.self, ctx, args...))
 		return nil
 	}
@@ -89,6 +90,7 @@ func (d *ActorPool) SendMsg(ctx define.IContext, args ...any) error {
 
 func (d *ActorPool) Send(ctx define.IContext, body []byte) error {
 	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+		ctx.AddDepth(1)
 		d.pool[ctx.GetActorId()%uint64(d.size)].Push(ff.Rpc(d.self, ctx, body))
 		return nil
 	}

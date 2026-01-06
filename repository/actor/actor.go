@@ -68,6 +68,7 @@ func (d *Actor) RegisterTimer(ctx define.IContext, ms time.Duration, times int32
 
 func (d *Actor) SendMsg(ctx define.IContext, args ...any) error {
 	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+		ctx.AddDepth(1)
 		d.tasks.Push(ff.Call(d.self, ctx, args...))
 		return nil
 	}
@@ -76,6 +77,7 @@ func (d *Actor) SendMsg(ctx define.IContext, args ...any) error {
 
 func (d *Actor) Send(ctx define.IContext, body []byte) error {
 	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+		ctx.AddDepth(1)
 		d.tasks.Push(ff.Rpc(d.self, ctx, body))
 		return nil
 	}

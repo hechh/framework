@@ -55,7 +55,7 @@ func (d *Packet) Router(idType uint32, id uint64) define.IPacket {
 	return d
 }
 
-func (d *Packet) Callback(actorFunc string, actorId uint64) define.IPacket {
+func (d *Packet) Callback(actorId uint64, actorFunc string) define.IPacket {
 	if d.err != nil {
 		return d
 	}
@@ -71,7 +71,7 @@ func (d *Packet) Callback(actorFunc string, actorId uint64) define.IPacket {
 	return d
 }
 
-func (d *Packet) Client(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
+func (d *Packet) Rsp(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
 	if d.err != nil {
 		return d
 	}
@@ -128,6 +128,10 @@ func (d *Packet) Dispatch(routerId uint64) (*packet.Packet, error) {
 	cls := cluster.Get(d.head.DstNodeType)
 	if cls == nil {
 		return nil, uerror.Err(-1, "集群(%d)不支持", d.head.DstNodeType)
+	}
+
+	if len(d.list) <= 0 {
+		d.list = append(d.list, &packet.Router{IdType: d.head.IdType, Id: d.head.Id})
 	}
 
 	for i, item := range d.list {

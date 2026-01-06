@@ -81,18 +81,17 @@ type IRspHead interface {
 type IPacket interface {
 	Head(*packet.Head) IPacket
 	SendType(uint32) IPacket
-	ID(uint32, uint64) IPacket
+	ID(idType uint32, id uint64) IPacket
 	Router(idType uint32, id uint64) IPacket
-	Callback(string, uint64) IPacket
-	Client(uint32, error, IRspHead) IPacket
-	Rpc(uint32, uint64, string, ...any) IPacket
-	Cmd(uint32, uint64, ...any) IPacket
-	Dispatch(uint64) (*packet.Packet, error)
+	Callback(actorId uint64, actorFunc string) IPacket
+	Rsp(nodeType uint32, err error, rsp IRspHead) IPacket
+	Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...any) IPacket
+	Cmd(cmd uint32, actorId uint64, args ...any) IPacket
+	Dispatch(routerId uint64) (*packet.Packet, error)
 }
 
 // 通用上下文接口
 type IContext interface {
-	To(string) IContext                              // 转发
 	GetHead() *packet.Head                           // 获取包头
 	GetPacket() IPacket                              // 获取IPacket
 	GetIdType() uint32                               // 获取id类型
@@ -102,6 +101,7 @@ type IContext interface {
 	GetFuncName() string                             // 获取函数名字
 	AddDepth(add uint32) uint32                      // 添加调用深度
 	CompareAndSwapDepth(old uint32, new uint32) bool // 原词操作
+	To(string) IContext                              // 转发
 	Tracef(fmt string, args ...any)                  // 输出trace日志
 	Debugf(fmt string, args ...any)                  // 输出debug日志
 	Warnf(fmt string, args ...any)                   // 输出warn日志

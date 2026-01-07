@@ -45,7 +45,7 @@ func Close() {
 	obj.Wait()
 }
 
-func Put(f func()) {
+func Push(f func()) {
 	obj.tasks.Push(f)
 	select {
 	case obj.notify <- struct{}{}:

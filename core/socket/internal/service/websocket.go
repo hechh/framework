@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"framework/core/define"
+	"framework/core"
 	"framework/core/socket/internal/entity"
 	"framework/library/async"
 	"framework/library/mlog"
@@ -29,17 +29,17 @@ var upgrader = websocket.Upgrader{
 }
 
 type Websocket struct {
-	frame   define.IFrame
+	frame   core.IFrame
 	handler func(*packet.Packet) error
 	mutex   sync.RWMutex
-	sockets map[uint32]define.ISocket
+	sockets map[uint32]core.ISocket
 	close   chan uint32
 	exit    chan struct{}
 }
 
-func NewWebsocket(ff define.IFrame, pp func(*packet.Packet) error) *Websocket {
+func NewWebsocket(ff core.IFrame, pp func(*packet.Packet) error) *Websocket {
 	return &Websocket{
-		sockets: make(map[uint32]define.ISocket),
+		sockets: make(map[uint32]core.ISocket),
 		frame:   ff,
 		handler: pp,
 		close:   make(chan uint32, 100),

@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"framework/core/define"
-	"framework/core/global"
+	"framework/core"
 	"framework/library/mlog"
 	"framework/library/uerror"
 	"framework/packet"
@@ -10,7 +9,7 @@ import (
 )
 
 type Client struct {
-	define.IFrame
+	core.IFrame
 	conn      net.Conn
 	socketId  uint32      // socketId
 	readBytes []byte      // 读缓存
@@ -21,7 +20,7 @@ type Client struct {
 
 func NewClient(list chan<- uint32) *Client {
 	return &Client{
-		socketId:  global.GenerateSocketId(),
+		socketId:  core.GenerateSocketId(),
 		readBytes: make([]byte, 1024*10),
 		write:     make(chan []byte, 100),
 		list:      list,
@@ -29,7 +28,7 @@ func NewClient(list chan<- uint32) *Client {
 	}
 }
 
-func (d *Client) Init(c net.Conn, f define.IFrame) {
+func (d *Client) Init(c net.Conn, f core.IFrame) {
 	d.conn = c
 	d.IFrame = f
 	go d.writeLoop()

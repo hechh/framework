@@ -2,7 +2,7 @@ package entity
 
 import (
 	"context"
-	"framework/core/define"
+	"framework/core"
 	"framework/library/async"
 	"framework/library/mlog"
 	"framework/library/util"
@@ -54,7 +54,7 @@ func (d *EtcdRegister) Register(key string, val []byte) error {
 	// 创建租约
 	var lease clientv3.LeaseID
 	if err := util.Retry(3, time.Second, func() error {
-		rsp, err := d.client.Grant(timeout, define.ETCD_GRANT_TTL)
+		rsp, err := d.client.Grant(timeout, core.ETCD_GRANT_TTL)
 		if err == nil {
 			lease = rsp.ID
 		}
@@ -78,7 +78,7 @@ func (d *EtcdRegister) Register(key string, val []byte) error {
 
 	d.Add(1)
 	async.Go(func() {
-		tt := time.NewTicker((define.ETCD_GRANT_TTL / 2) * time.Second)
+		tt := time.NewTicker((core.ETCD_GRANT_TTL / 2) * time.Second)
 		defer func() {
 			d.Done()
 			tt.Stop()

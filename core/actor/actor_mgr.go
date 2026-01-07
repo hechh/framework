@@ -1,8 +1,7 @@
 package actor
 
 import (
-	"framework/core/define"
-	"framework/core/global"
+	"framework/core"
 	"framework/library/timer"
 	"framework/library/uerror"
 	"reflect"
@@ -13,7 +12,7 @@ import (
 
 type ActorMgr struct {
 	mutex  sync.RWMutex
-	actors map[uint64]define.IActor
+	actors map[uint64]core.IActor
 	status uint32
 	id     uint64
 	name   string
@@ -53,13 +52,13 @@ func (d *ActorMgr) SetActorId(id uint64) {
 	atomic.StoreUint64(&d.id, id)
 }
 
-func (d *ActorMgr) Register(ac define.IActor, counts ...int) {
-	d.id = global.GenerateActorId()
-	d.name = global.ParseActorName(reflect.TypeOf(ac))
-	d.actors = make(map[uint64]define.IActor)
+func (d *ActorMgr) Register(ac core.IActor, counts ...int) {
+	d.id = core.GenerateActorId()
+	d.name = core.ParseActorName(reflect.TypeOf(ac))
+	d.actors = make(map[uint64]core.IActor)
 }
 
-func (d *ActorMgr) RegisterTimer(ctx define.IContext, ms time.Duration, times int32) error {
+func (d *ActorMgr) RegisterTimer(ctx core.IContext, ms time.Duration, times int32) error {
 	return timer.Register(&d.id, ms, times, func() {
 		if err := d.SendMsg(ctx); err != nil {
 			ctx.Errorf("ActorMgr定时器转发失败:%v", err)
@@ -67,7 +66,7 @@ func (d *ActorMgr) RegisterTimer(ctx define.IContext, ms time.Duration, times in
 	})
 }
 
-func (d *ActorMgr) SendMsg(ctx define.IContext, args ...any) error {
+func (d *ActorMgr) SendMsg(ctx core.IContext, args ...any) error {
 	switch ctx.GetHead().SendType {
 	case 0:
 		if act := d.GetActor(ctx.GetActorId()); act != nil {
@@ -87,7 +86,7 @@ func (d *ActorMgr) SendMsg(ctx define.IContext, args ...any) error {
 	}
 }
 
-func (d *ActorMgr) Send(ctx define.IContext, buf []byte) error {
+func (d *ActorMgr) Send(ctx core.IContext, buf []byte) error {
 	switch ctx.GetHead().SendType {
 	case 0:
 		if act := d.GetActor(ctx.GetActorId()); act != nil {
@@ -111,7 +110,7 @@ func (d *ActorMgr) Size() int {
 	return len(d.actors)
 }
 
-func (d *ActorMgr) GetActor(id uint64) define.IActor {
+func (d *ActorMgr) GetActor(id uint64) core.IActor {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 	if actor, ok := d.actors[id]; ok {
@@ -126,7 +125,7 @@ func (d *ActorMgr) DelActor(id uint64) {
 	d.mutex.Unlock()
 }
 
-func (d *ActorMgr) AddActor(act define.IActor) (ret bool) {
+func (d *ActorMgr) AddActor(act core.IActor) (ret bool) {
 	if ret = atomic.CompareAndSwapUint32(&d.status, 0, 0); ret {
 		id := act.GetActorId()
 		d.mutex.Lock()

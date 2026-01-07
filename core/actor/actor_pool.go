@@ -1,9 +1,7 @@
 package actor
 
 import (
-	"framework/core/define"
-	"framework/core/global"
-	"framework/core/handler"
+	"framework/core"
 	"framework/library/async"
 	"framework/library/timer"
 	"framework/library/uerror"
@@ -14,7 +12,7 @@ import (
 )
 
 type ActorPool struct {
-	self define.IActor
+	self core.IActor
 	pool []*async.Async
 	exit chan struct{}
 	size int
@@ -58,19 +56,19 @@ func (d *ActorPool) SetActorId(id uint64) {
 	atomic.StoreUint64(&d.id, id)
 }
 
-func (d *ActorPool) Register(ac define.IActor, counts ...int) {
-	d.id = global.GenerateActorId()
+func (d *ActorPool) Register(ac core.IActor, counts ...int) {
+	d.id = core.GenerateActorId()
 	d.exit = make(chan struct{}, 1)
 	d.size = util.Index[int](counts, 0, 10)
 	d.pool = make([]*async.Async, d.size)
 	for i := 0; i < d.size; i++ {
 		d.pool[i] = async.NewAsync()
 	}
-	d.name = global.ParseActorName(reflect.TypeOf(ac))
+	d.name = core.ParseActorName(reflect.TypeOf(ac))
 	d.self = ac
 }
 
-func (d *ActorPool) RegisterTimer(ctx define.IContext, ms time.Duration, times int32) error {
+func (d *ActorPool) RegisterTimer(ctx core.IContext, ms time.Duration, times int32) error {
 	return timer.Register(&d.id, ms, times, func() {
 		if err := d.SendMsg(ctx); err != nil {
 			ctx.Errorf("Actor定时器转发失败:%v", err)
@@ -78,8 +76,8 @@ func (d *ActorPool) RegisterTimer(ctx define.IContext, ms time.Duration, times i
 	})
 }
 
-func (d *ActorPool) SendMsg(ctx define.IContext, args ...any) error {
-	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+func (d *ActorPool) SendMsg(ctx core.IContext, args ...any) error {
+	if ff := core.GetHandler(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
 		ctx.AddDepth(1)
 		d.pool[ctx.GetActorId()%uint64(d.size)].Push(ff.Call(d.self, ctx, args...))
 		return nil
@@ -87,8 +85,8 @@ func (d *ActorPool) SendMsg(ctx define.IContext, args ...any) error {
 	return uerror.New(-1, "%s.%s未注册", ctx.GetActorName(), ctx.GetFuncName())
 }
 
-func (d *ActorPool) Send(ctx define.IContext, body []byte) error {
-	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+func (d *ActorPool) Send(ctx core.IContext, body []byte) error {
+	if ff := core.GetHandler(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
 		ctx.AddDepth(1)
 		d.pool[ctx.GetActorId()%uint64(d.size)].Push(ff.Rpc(d.self, ctx, body))
 		return nil

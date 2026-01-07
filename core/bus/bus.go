@@ -1,8 +1,8 @@
 package bus
 
 import (
+	"framework/core"
 	"framework/core/bus/internal/service"
-	"framework/core/define"
 	"framework/library/yaml"
 	"framework/packet"
 )
@@ -10,6 +10,12 @@ import (
 var (
 	serviceObj = service.NewService()
 )
+
+func init() {
+	core.SetBroadcast(Broadcast)
+	core.SetSend(Send)
+	core.SetRequest(Request)
+}
 
 func Init(cfg *yaml.NatsConfig) error {
 	return serviceObj.Init(cfg)
@@ -31,7 +37,7 @@ func SubscribeReply(f func(head *packet.Head, body []byte)) error {
 	return serviceObj.SubscribeReply(f)
 }
 
-func Broadcast(pack define.IPacket) error {
+func Broadcast(pack core.IPacket) error {
 	msg, err := pack.Dispatch(packet.SendType_Broadcast)
 	if err != nil {
 		return err
@@ -39,7 +45,7 @@ func Broadcast(pack define.IPacket) error {
 	return serviceObj.Broadcast(msg)
 }
 
-func Send(pack define.IPacket) error {
+func Send(pack core.IPacket) error {
 	msg, err := pack.Dispatch(packet.SendType_Point)
 	if err != nil {
 		return err
@@ -47,7 +53,7 @@ func Send(pack define.IPacket) error {
 	return serviceObj.Send(msg)
 }
 
-func Request(vv define.IPacket, cb func([]byte) error) error {
+func Request(vv core.IPacket, cb func([]byte) error) error {
 	msg, err := vv.Dispatch(packet.SendType_Point)
 	if err != nil {
 		return err

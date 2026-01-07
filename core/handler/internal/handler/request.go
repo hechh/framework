@@ -1,19 +1,18 @@
 package handler
 
 import (
-	"framework/core/bus"
-	"framework/core/define"
+	"framework/core"
 	"reflect"
 	"time"
 )
 
 type ReqHandler[Actor any, V1 any, V2 any] struct {
 	*Base
-	define.ISerialize
-	method define.P2Func[Actor, V1, V2]
+	core.ISerialize
+	method core.P2Func[Actor, V1, V2]
 }
 
-func NewReqHandler[Actor any, V1 any, V2 any](en define.ISerialize, nodeType uint32, cmd uint32, f define.P2Func[Actor, V1, V2]) *ReqHandler[Actor, V1, V2] {
+func NewReqHandler[Actor any, V1 any, V2 any](en core.ISerialize, nodeType uint32, cmd uint32, f core.P2Func[Actor, V1, V2]) *ReqHandler[Actor, V1, V2] {
 	return &ReqHandler[Actor, V1, V2]{
 		Base:       NewBase(nodeType, cmd, reflect.ValueOf(f)),
 		ISerialize: en,
@@ -21,7 +20,7 @@ func NewReqHandler[Actor any, V1 any, V2 any](en define.ISerialize, nodeType uin
 	}
 }
 
-func (d *ReqHandler[Actor, V1, V2]) Call(obj any, ctx define.IContext, args ...any) func() {
+func (d *ReqHandler[Actor, V1, V2]) Call(obj any, ctx core.IContext, args ...any) func() {
 	ref := ctx.AddDepth(1)
 	return func() {
 		startTime := time.Now().UnixMilli()
@@ -40,12 +39,12 @@ func (d *ReqHandler[Actor, V1, V2]) Call(obj any, ctx define.IContext, args ...a
 
 		// 应答
 		if ctx.CompareAndSwapDepth(ref, ref) && ctx.IsRsp() {
-			reterr = bus.Send(ctx.GetPacket().Rsp(define.GATE, err, args[1].(define.IRspHead)))
+			reterr = core.Send(ctx.GetPacket().Rsp(core.GATE, err, args[1].(core.IRspHead)))
 		}
 	}
 }
 
-func (d *ReqHandler[Actor, V1, V2]) Rpc(obj any, ctx define.IContext, body []byte) func() {
+func (d *ReqHandler[Actor, V1, V2]) Rpc(obj any, ctx core.IContext, body []byte) func() {
 	ref := ctx.AddDepth(1)
 	return func() {
 		startTime := time.Now().UnixMilli()
@@ -72,7 +71,7 @@ func (d *ReqHandler[Actor, V1, V2]) Rpc(obj any, ctx define.IContext, body []byt
 
 		// 应答
 		if ctx.CompareAndSwapDepth(ref, ref) && ctx.IsRsp() {
-			reterr = bus.Send(ctx.GetPacket().Rsp(define.GATE, err, any(req2).(define.IRspHead)))
+			reterr = core.Send(ctx.GetPacket().Rsp(core.GATE, err, any(req2).(core.IRspHead)))
 		}
 	}
 }

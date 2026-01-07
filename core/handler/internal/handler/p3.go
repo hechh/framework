@@ -1,18 +1,18 @@
 package handler
 
 import (
-	"framework/core/define"
+	"framework/core"
 	"reflect"
 	"time"
 )
 
 type P3Handler[Actor any, V1 any, V2 any, V3 any] struct {
 	*Base
-	define.ISerialize
-	method define.P3Func[Actor, V1, V2, V3]
+	core.ISerialize
+	method core.P3Func[Actor, V1, V2, V3]
 }
 
-func NewP3Handler[Actor any, V1 any, V2 any, V3 any](en define.ISerialize, nodeType uint32, cmd uint32, f define.P3Func[Actor, V1, V2, V3]) *P3Handler[Actor, V1, V2, V3] {
+func NewP3Handler[Actor any, V1 any, V2 any, V3 any](en core.ISerialize, nodeType uint32, cmd uint32, f core.P3Func[Actor, V1, V2, V3]) *P3Handler[Actor, V1, V2, V3] {
 	return &P3Handler[Actor, V1, V2, V3]{
 		Base:       NewBase(nodeType, cmd, reflect.ValueOf(f)),
 		ISerialize: en,
@@ -20,7 +20,7 @@ func NewP3Handler[Actor any, V1 any, V2 any, V3 any](en define.ISerialize, nodeT
 	}
 }
 
-func (d *P3Handler[Actor, V1, V2, V3]) Call(obj any, ctx define.IContext, args ...any) func() {
+func (d *P3Handler[Actor, V1, V2, V3]) Call(obj any, ctx core.IContext, args ...any) func() {
 	return func() {
 		startTime := time.Now().UnixMilli()
 
@@ -38,7 +38,7 @@ func (d *P3Handler[Actor, V1, V2, V3]) Call(obj any, ctx define.IContext, args .
 	}
 }
 
-func (d *P3Handler[Actor, V1, V2, V3]) Rpc(obj any, ctx define.IContext, body []byte) func() {
+func (d *P3Handler[Actor, V1, V2, V3]) Rpc(obj any, ctx core.IContext, body []byte) func() {
 	return func() {
 		startTime := time.Now().UnixMilli()
 		req1 := new(V1)

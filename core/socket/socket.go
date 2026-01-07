@@ -1,7 +1,7 @@
 package socket
 
 import (
-	"framework/core/define"
+	"framework/core"
 	"framework/core/socket/internal/service"
 	"framework/library/yaml"
 	"framework/packet"
@@ -11,7 +11,7 @@ var (
 	serviceObj *service.Websocket
 )
 
-func Init(cfg *yaml.NodeConfig, f define.IFrame, h func(*packet.Packet) error) error {
+func Init(cfg *yaml.NodeConfig, f core.IFrame, h func(*packet.Packet) error) error {
 	serviceObj = service.NewWebsocket(f, h)
 	return serviceObj.Init(cfg.Ip, cfg.Port)
 }

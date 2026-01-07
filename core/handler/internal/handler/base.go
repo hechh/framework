@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"framework/core/global"
+	"framework/core"
 	"reflect"
 )
 
@@ -13,10 +13,10 @@ type Base struct {
 }
 
 func NewBase(nodeType uint32, cmd uint32, fun reflect.Value) *Base {
-	name := global.ParseActorFunc(fun)
+	name := core.ParseActorFunc(fun)
 	return &Base{
 		nodeType: nodeType,
-		id:       global.GetCrc32(name),
+		id:       core.GetCrc32(name),
 		cmd:      cmd,
 		name:     name,
 	}

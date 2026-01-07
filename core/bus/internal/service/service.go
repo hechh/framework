@@ -2,10 +2,8 @@ package service
 
 import (
 	"fmt"
+	"framework/core"
 	"framework/core/bus/internal/entity"
-	"framework/core/define"
-	"framework/core/global"
-	"framework/core/router"
 	"framework/library/mlog"
 	"framework/library/yaml"
 	"framework/packet"
@@ -14,7 +12,7 @@ import (
 )
 
 type Service struct {
-	conn define.IMsgQueue
+	conn core.IMsgQueue
 }
 
 func NewService() *Service {
@@ -48,7 +46,7 @@ func (d *Service) replyTopic(nodeType uint32, nodeId uint32) string {
 
 // 监听广播
 func (d *Service) SubscribeBroadcast(f func(head *packet.Head, body []byte)) error {
-	return d.conn.Subscribe(d.broadcastTopic(global.GetSelfType()), func(msg *packet.Message) {
+	return d.conn.Subscribe(d.broadcastTopic(core.GetSelfType()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析广播数据包错误:%v", err)
@@ -60,14 +58,14 @@ func (d *Service) SubscribeBroadcast(f func(head *packet.Head, body []byte)) err
 
 // 监听单播
 func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error {
-	return d.conn.Subscribe(d.sendTopic(global.GetSelfType(), global.GetSelfId()), func(msg *packet.Message) {
+	return d.conn.Subscribe(d.sendTopic(core.GetSelfType(), core.GetSelfId()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
 		}
 		for _, rr := range pack.List {
-			router.GetOrNew(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
+			core.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
 		f(pack.Head, pack.Body)
 	})
@@ -75,14 +73,14 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 
 // 监听同步请求
 func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
-	return d.conn.Subscribe(d.replyTopic(global.GetSelfType(), global.GetSelfId()), func(msg *packet.Message) {
+	return d.conn.Subscribe(d.replyTopic(core.GetSelfType(), core.GetSelfId()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
 		}
 		for _, rr := range pack.List {
-			router.GetOrNew(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
+			core.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
 		f(pack.Head, pack.Body)
 	})
@@ -91,11 +89,11 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 // 发送广播
 func (d *Service) Broadcast(pack *packet.Packet) error {
 	pack.Head.SendType = 1
-	pack.Head.SrcNodeType = global.GetSelfType()
-	pack.Head.SrcNodeId = global.GetSelfId()
+	pack.Head.SrcNodeType = core.GetSelfType()
+	pack.Head.SrcNodeId = core.GetSelfId()
 	if pack.Head.Back != nil {
-		pack.Head.Back.NodeType = global.GetSelfType()
-		pack.Head.Back.NodeId = global.GetSelfId()
+		pack.Head.Back.NodeType = core.GetSelfType()
+		pack.Head.Back.NodeId = core.GetSelfId()
 	}
 	buf, err := proto.Marshal(pack)
 	if err != nil {
@@ -107,11 +105,11 @@ func (d *Service) Broadcast(pack *packet.Packet) error {
 // 发送请求
 func (d *Service) Send(pack *packet.Packet) error {
 	pack.Head.SendType = 0
-	pack.Head.SrcNodeType = global.GetSelfType()
-	pack.Head.SrcNodeId = global.GetSelfId()
+	pack.Head.SrcNodeType = core.GetSelfType()
+	pack.Head.SrcNodeId = core.GetSelfId()
 	if pack.Head.Back != nil {
-		pack.Head.Back.NodeType = global.GetSelfType()
-		pack.Head.Back.NodeId = global.GetSelfId()
+		pack.Head.Back.NodeType = core.GetSelfType()
+		pack.Head.Back.NodeId = core.GetSelfId()
 	}
 	buf, err := proto.Marshal(pack)
 	if err != nil {
@@ -123,11 +121,11 @@ func (d *Service) Send(pack *packet.Packet) error {
 // 同步请求
 func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
 	pack.Head.SendType = 0
-	pack.Head.SrcNodeType = global.GetSelfType()
-	pack.Head.SrcNodeId = global.GetSelfId()
+	pack.Head.SrcNodeType = core.GetSelfType()
+	pack.Head.SrcNodeId = core.GetSelfId()
 	if pack.Head.Back != nil {
-		pack.Head.Back.NodeType = global.GetSelfType()
-		pack.Head.Back.NodeId = global.GetSelfId()
+		pack.Head.Back.NodeType = core.GetSelfType()
+		pack.Head.Back.NodeId = core.GetSelfId()
 	}
 	buf, err := proto.Marshal(pack)
 	if err != nil {

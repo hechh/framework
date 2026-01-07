@@ -1,8 +1,7 @@
 package router
 
 import (
-	"framework/core/define"
-	"framework/core/global"
+	"framework/core"
 	"framework/core/router/internal/entity"
 	"framework/core/router/internal/service"
 	"framework/library/yaml"
@@ -13,8 +12,8 @@ var (
 )
 
 func init() {
-	global.SetGetRouter(Get)
-	global.SetGetOrNewRouter(GetOrNew)
+	core.SetGetRouter(Get)
+	core.SetGetOrNewRouter(GetOrNew)
 }
 
 func Init(cfg *yaml.NodeConfig) {
@@ -25,10 +24,10 @@ func Close() {
 	serviceObj.Close()
 }
 
-func Get(idType uint32, id uint64) define.IRouter {
+func Get(idType uint32, id uint64) core.IRouter {
 	return serviceObj.Get(idType, id)
 }
 
-func GetOrNew(idType uint32, id uint64) define.IRouter {
+func GetOrNew(idType uint32, id uint64) core.IRouter {
 	return serviceObj.GetOrNew(idType, id)
 }

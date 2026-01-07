@@ -3,9 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"framework/core"
 	"framework/core/cluster/internal/entity"
-	"framework/core/define"
-	"framework/core/global"
 	"framework/library/mlog"
 	"framework/library/yaml"
 	"framework/packet"
@@ -15,13 +14,13 @@ import (
 )
 
 type ClusterService struct {
-	register define.IRegister
-	watcher  define.IWatcher
-	clusters map[uint32]define.ICluster
+	register core.IRegister
+	watcher  core.IWatcher
+	clusters map[uint32]core.ICluster
 }
 
 func NewService(max uint32) *ClusterService {
-	ret := &ClusterService{clusters: make(map[uint32]define.ICluster)}
+	ret := &ClusterService{clusters: make(map[uint32]core.ICluster)}
 	for i := uint32(1); i <= max; i++ {
 		ret.clusters[i] = entity.NewCluster(i)
 	}
@@ -34,7 +33,7 @@ func (d *ClusterService) Init(cfg *yaml.EtcdConfig) (err error) {
 		return
 	}
 
-	nn := global.GetSelf()
+	nn := core.GetSelf()
 	buf, err := json.Marshal(nn)
 	if err != nil {
 		return err
@@ -58,7 +57,7 @@ func (d *ClusterService) Close() {
 	d.register.Close()
 }
 
-func (d *ClusterService) Get(nodeType uint32) define.ICluster {
+func (d *ClusterService) Get(nodeType uint32) core.ICluster {
 	if cls, ok := d.clusters[nodeType]; ok {
 		return cls
 	}

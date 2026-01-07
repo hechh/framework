@@ -3,7 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
-	"framework/core/define"
+	"framework/core"
 	"framework/library/util"
 	"strings"
 	"sync/atomic"
@@ -15,19 +15,19 @@ import (
 type Router struct {
 	idType     uint32
 	id         uint64
-	data       [define.MAX_NODE_TYPE_COUNT]uint32
+	data       [core.MAX_NODE_TYPE_COUNT]uint32
 	updateTime int64
 	ttl        int64
 	change     bool
 }
 
-func NewRouter(idType uint32, id uint64, ttl int64) define.IRouter {
+func NewRouter(idType uint32, id uint64, ttl int64) core.IRouter {
 	return &Router{
 		idType:     idType,
 		id:         id,
 		updateTime: time.Now().Unix(),
 		ttl:        ttl,
-		data:       [define.MAX_NODE_TYPE_COUNT]uint32{},
+		data:       [core.MAX_NODE_TYPE_COUNT]uint32{},
 	}
 }
 

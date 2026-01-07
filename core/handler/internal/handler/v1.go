@@ -1,18 +1,18 @@
 package handler
 
 import (
-	"framework/core/define"
+	"framework/core"
 	"reflect"
 	"time"
 )
 
 type V1Handler[Actor any, V1 any] struct {
 	*Base
-	define.ISerialize
-	method define.V1Func[Actor, V1]
+	core.ISerialize
+	method core.V1Func[Actor, V1]
 }
 
-func NewV1Handler[Actor any, V1 any](en define.ISerialize, nodeType uint32, cmd uint32, f define.V1Func[Actor, V1]) *V1Handler[Actor, V1] {
+func NewV1Handler[Actor any, V1 any](en core.ISerialize, nodeType uint32, cmd uint32, f core.V1Func[Actor, V1]) *V1Handler[Actor, V1] {
 	return &V1Handler[Actor, V1]{
 		Base:       NewBase(nodeType, cmd, reflect.ValueOf(f)),
 		ISerialize: en,
@@ -20,7 +20,7 @@ func NewV1Handler[Actor any, V1 any](en define.ISerialize, nodeType uint32, cmd 
 	}
 }
 
-func (d *V1Handler[Actor, V1]) Call(obj any, ctx define.IContext, args ...any) func() {
+func (d *V1Handler[Actor, V1]) Call(obj any, ctx core.IContext, args ...any) func() {
 	return func() {
 		startTime := time.Now().UnixMilli()
 
@@ -38,7 +38,7 @@ func (d *V1Handler[Actor, V1]) Call(obj any, ctx define.IContext, args ...any) f
 	}
 }
 
-func (d *V1Handler[Actor, V1]) Rpc(obj any, ctx define.IContext, body []byte) func() {
+func (d *V1Handler[Actor, V1]) Rpc(obj any, ctx core.IContext, body []byte) func() {
 	return func() {
 		startTime := time.Now().UnixMilli()
 		req := new(V1)

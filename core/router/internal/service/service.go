@@ -1,9 +1,7 @@
 package service
 
 import (
-	"framework/core/define"
-	"framework/core/global"
-	"framework/core/router/domain"
+	"framework/core"
 	"framework/library/async"
 	"framework/library/mlog"
 	"framework/library/structure"
@@ -12,18 +10,20 @@ import (
 	"time"
 )
 
+type NewFunc func(uint32, uint64, int64) core.IRouter // 创建路由函数
+
 type Service struct {
 	ttl     int64
-	newFunc domain.NewFunc // 创建函数
+	newFunc NewFunc // 创建函数
 	mutex   sync.RWMutex
-	routers structure.Map2[uint32, uint64, define.IRouter] // 路由表
-	exit    chan struct{}                                  // 退出通知
+	routers structure.Map2[uint32, uint64, core.IRouter] // 路由表
+	exit    chan struct{}                                // 退出通知
 }
 
-func NewService(n domain.NewFunc) *Service {
+func NewService(n NewFunc) *Service {
 	return &Service{
 		newFunc: n,
-		routers: make(structure.Map2[uint32, uint64, define.IRouter]),
+		routers: make(structure.Map2[uint32, uint64, core.IRouter]),
 		exit:    make(chan struct{}),
 	}
 }
@@ -48,7 +48,7 @@ func (d *Service) Close() {
 	close(d.exit)
 }
 
-func (d *Service) Get(idType uint32, id uint64) define.IRouter {
+func (d *Service) Get(idType uint32, id uint64) core.IRouter {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 	if val, ok := d.routers.Get(idType, id); ok {
@@ -57,19 +57,19 @@ func (d *Service) Get(idType uint32, id uint64) define.IRouter {
 	return nil
 }
 
-func (d *Service) GetOrNew(idType uint32, id uint64) define.IRouter {
+func (d *Service) GetOrNew(idType uint32, id uint64) core.IRouter {
 	if val, ok := d.routers.Get(idType, id); ok {
 		return val
 	}
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	item := d.newFunc(idType, id, d.ttl)
-	item.Set(global.GetSelf().Type, global.GetSelf().Id)
+	item.Set(core.GetSelf().Type, core.GetSelf().Id)
 	d.routers.Put(idType, id, item)
 	return item
 }
 
-func (d *Service) Remove(idType uint32, id uint64) define.IRouter {
+func (d *Service) Remove(idType uint32, id uint64) core.IRouter {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	item, _ := d.routers.Del(idType, id)
@@ -77,7 +77,7 @@ func (d *Service) Remove(idType uint32, id uint64) define.IRouter {
 }
 
 func (d *Service) refresh(now int64) {
-	dels, saves := []define.IRouter{}, []define.IRouter{}
+	dels, saves := []core.IRouter{}, []core.IRouter{}
 	d.mutex.RLock()
 	for _, item := range d.routers {
 		if item.IsExpire(now) {

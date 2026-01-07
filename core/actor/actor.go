@@ -1,9 +1,7 @@
 package actor
 
 import (
-	"framework/core/define"
-	"framework/core/global"
-	"framework/core/handler"
+	"framework/core"
 	"framework/library/async"
 	"framework/library/timer"
 	"framework/library/uerror"
@@ -13,7 +11,7 @@ import (
 
 type Actor struct {
 	tasks *async.Async
-	self  define.IActor
+	self  core.IActor
 	exit  chan struct{}
 	name  string
 }
@@ -49,15 +47,15 @@ func (d *Actor) SetActorId(id uint64) {
 	d.tasks.SetId(id)
 }
 
-func (d *Actor) Register(ac define.IActor, counts ...int) {
-	d.name = global.ParseActorName(reflect.TypeOf(ac))
+func (d *Actor) Register(ac core.IActor, counts ...int) {
+	d.name = core.ParseActorName(reflect.TypeOf(ac))
 	d.tasks = async.NewAsync()
-	d.tasks.SetId(global.GenerateActorId())
+	d.tasks.SetId(core.GenerateActorId())
 	d.exit = make(chan struct{}, 1)
 	d.self = ac
 }
 
-func (d *Actor) RegisterTimer(ctx define.IContext, ms time.Duration, times int32) error {
+func (d *Actor) RegisterTimer(ctx core.IContext, ms time.Duration, times int32) error {
 	return timer.Register(d.tasks.GetIdPointer(), ms, times, func() {
 		if err := d.SendMsg(ctx); err != nil {
 			ctx.Errorf("Actor定时器转发失败:%v", err)
@@ -65,8 +63,8 @@ func (d *Actor) RegisterTimer(ctx define.IContext, ms time.Duration, times int32
 	})
 }
 
-func (d *Actor) SendMsg(ctx define.IContext, args ...any) error {
-	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+func (d *Actor) SendMsg(ctx core.IContext, args ...any) error {
+	if ff := core.GetHandler(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
 		ctx.AddDepth(1)
 		d.tasks.Push(ff.Call(d.self, ctx, args...))
 		return nil
@@ -74,8 +72,8 @@ func (d *Actor) SendMsg(ctx define.IContext, args ...any) error {
 	return uerror.New(-1, "%s.%s未注册", ctx.GetActorName(), ctx.GetFuncName())
 }
 
-func (d *Actor) Send(ctx define.IContext, body []byte) error {
-	if ff := handler.Get(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
+func (d *Actor) Send(ctx core.IContext, body []byte) error {
+	if ff := core.GetHandler(ctx.GetActorName(), ctx.GetFuncName()); ff != nil {
 		ctx.AddDepth(1)
 		d.tasks.Push(ff.Rpc(d.self, ctx, body))
 		return nil

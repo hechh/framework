@@ -1,10 +1,6 @@
-package context
+package core
 
 import (
-	"framework/core/cluster"
-	"framework/core/define"
-	"framework/core/handler"
-	"framework/core/router"
 	"framework/library/uerror"
 	"framework/packet"
 
@@ -24,18 +20,18 @@ func NewPacket(head *packet.Head) *Packet {
 	}
 }
 
-func (d *Packet) Router(idType uint32, id uint64) define.IPacket {
+func (d *Packet) Router(idType uint32, id uint64) IPacket {
 	if d.err == nil {
 		d.list = append(d.list, &packet.Router{IdType: idType, Id: id})
 	}
 	return d
 }
 
-func (d *Packet) Callback(actorId uint64, actorFunc string) define.IPacket {
+func (d *Packet) Callback(actorId uint64, actorFunc string) IPacket {
 	if d.err != nil {
 		return d
 	}
-	hh := handler.Get(actorFunc)
+	hh := GetHandler(actorFunc)
 	if hh == nil {
 		d.err = uerror.New(-1, "远程接口(%s)未注册", actorFunc)
 		return d
@@ -47,7 +43,7 @@ func (d *Packet) Callback(actorId uint64, actorFunc string) define.IPacket {
 	return d
 }
 
-func (d *Packet) Rsp(nodeType uint32, err error, rsp define.IRspHead) define.IPacket {
+func (d *Packet) Rsp(nodeType uint32, err error, rsp IRspHead) IPacket {
 	if d.err != nil {
 		return d
 	}
@@ -70,11 +66,11 @@ func (d *Packet) Rsp(nodeType uint32, err error, rsp define.IRspHead) define.IPa
 	return d
 }
 
-func (d *Packet) Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...any) define.IPacket {
+func (d *Packet) Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...any) IPacket {
 	if d.err != nil {
 		return d
 	}
-	hh := handler.GetByRpc(nodeType, actorFunc)
+	hh := GetHandlerByRpc(nodeType, actorFunc)
 	if hh == nil {
 		d.err = uerror.New(-1, "远程接口(%s)未注册", actorFunc)
 		return d
@@ -86,11 +82,11 @@ func (d *Packet) Rpc(nodeType uint32, actorId uint64, actorFunc string, args ...
 	return d
 }
 
-func (d *Packet) Cmd(cmd uint32, actorId uint64, args ...any) define.IPacket {
+func (d *Packet) Cmd(cmd uint32, actorId uint64, args ...any) IPacket {
 	if d.err != nil {
 		return d
 	}
-	hh := handler.GetByCmd(cmd)
+	hh := GetHandlerByCmd(cmd)
 	if hh == nil {
 		d.err = uerror.New(-1, "命令字(%d)未注册", cmd)
 		return d
@@ -108,7 +104,7 @@ func (d *Packet) Dispatch(sendType packet.SendType) (*packet.Packet, error) {
 		return nil, d.err
 	}
 
-	cls := cluster.Get(d.head.DstNodeType)
+	cls := GetCluster(d.head.DstNodeType)
 	if cls == nil || cls.Size() <= 0 {
 		return nil, uerror.Err(-1, "集群(%d)不支持", d.head.DstNodeType)
 	}
@@ -119,7 +115,7 @@ func (d *Packet) Dispatch(sendType packet.SendType) (*packet.Packet, error) {
 			d.list = append(d.list, &packet.Router{IdType: d.head.IdType, Id: d.head.Id})
 		}
 		for i, item := range d.list {
-			rr := router.GetOrNew(item.IdType, item.Id)
+			rr := GetOrNewRouter(item.IdType, item.Id)
 			if i == 0 {
 				node := cls.Get(rr.Get(d.head.DstNodeType))
 				if node == nil {

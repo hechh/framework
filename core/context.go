@@ -1,8 +1,7 @@
-package context
+package core
 
 import (
 	"fmt"
-	"framework/core/define"
 	"framework/library/mlog"
 	"framework/library/util"
 	"framework/packet"
@@ -29,7 +28,7 @@ func (d *Context) GetHead() *packet.Head {
 	return d.head
 }
 
-func (d *Context) GetPacket() define.IPacket {
+func (d *Context) GetPacket() IPacket {
 	d.AddDepth(1)
 	return NewPacket(d.head)
 }
@@ -66,7 +65,7 @@ func (d *Context) CompareAndSwapDepth(old, new uint32) bool {
 	return atomic.CompareAndSwapUint32(&d.depth, old, new)
 }
 
-func (d *Context) To(actorFunc string) define.IContext {
+func (d *Context) To(actorFunc string) IContext {
 	if pos := strings.Index(actorFunc, "."); pos > 0 {
 		d.actorName = actorFunc[:pos]
 		d.funcName = actorFunc[pos+1:]

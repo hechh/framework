@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"framework/core/define"
+	"framework/core"
 	"reflect"
 	"time"
 )
@@ -9,17 +9,17 @@ import (
 type V0Handler[Actor any] struct {
 	*Base
 	EmptyEncoder
-	method define.V0Func[Actor]
+	method core.V0Func[Actor]
 }
 
-func NewV0Handler[Actor any](nodeType uint32, cmd uint32, f define.V0Func[Actor]) *V0Handler[Actor] {
+func NewV0Handler[Actor any](nodeType uint32, cmd uint32, f core.V0Func[Actor]) *V0Handler[Actor] {
 	return &V0Handler[Actor]{
 		Base:   NewBase(nodeType, cmd, reflect.ValueOf(f)),
 		method: f,
 	}
 }
 
-func (d *V0Handler[Actor]) Call(obj any, ctx define.IContext, args ...any) func() {
+func (d *V0Handler[Actor]) Call(obj any, ctx core.IContext, args ...any) func() {
 	return func() {
 		var err error
 		startTime := time.Now().UnixMilli()
@@ -36,7 +36,7 @@ func (d *V0Handler[Actor]) Call(obj any, ctx define.IContext, args ...any) func(
 	}
 }
 
-func (d *V0Handler[Actor]) Rpc(obj any, ctx define.IContext, body []byte) func() {
+func (d *V0Handler[Actor]) Rpc(obj any, ctx core.IContext, body []byte) func() {
 	return func() {
 		var err error
 		startTime := time.Now().UnixMilli()

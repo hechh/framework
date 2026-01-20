@@ -7,7 +7,6 @@ import (
 	"github.com/hechh/framework"
 	"github.com/hechh/library/async"
 	"github.com/hechh/library/timer"
-
 	"github.com/hechh/library/uerror"
 )
 
@@ -27,11 +26,11 @@ func (d *Actor) Stop() {
 }
 
 func (d *Actor) Done() {
-	close(d.exit)
+	d.tasks.Done()
 }
 
 func (d *Actor) Wait() {
-	<-d.exit
+	d.tasks.Wait()
 }
 
 func (d *Actor) GetActorName() string {

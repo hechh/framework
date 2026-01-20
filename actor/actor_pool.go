@@ -2,7 +2,6 @@ package actor
 
 import (
 	"reflect"
-	"sync/atomic"
 	"time"
 
 	"github.com/hechh/framework"
@@ -17,7 +16,6 @@ type ActorPool struct {
 	self  framework.IActor
 	exit  chan struct{}
 	name  string
-	id    uint64
 }
 
 func (d *ActorPool) Start() {
@@ -29,11 +27,11 @@ func (d *ActorPool) Stop() {
 }
 
 func (d *ActorPool) Done() {
-	close(d.exit)
+	d.tasks.Done()
 }
 
 func (d *ActorPool) Wait() {
-	<-d.exit
+	d.tasks.Wait()
 }
 
 func (d *ActorPool) GetActorName() string {
@@ -41,23 +39,23 @@ func (d *ActorPool) GetActorName() string {
 }
 
 func (d *ActorPool) GetActorId() uint64 {
-	return atomic.LoadUint64(&d.id)
+	return d.tasks.GetId()
 }
 
 func (d *ActorPool) SetActorId(id uint64) {
-	atomic.StoreUint64(&d.id, id)
+	d.tasks.SetId(id)
 }
 
 func (d *ActorPool) Register(ac framework.IActor, counts ...int) {
-	d.id = framework.GenActorId()
-	d.exit = make(chan struct{})
-	d.tasks = async.NewAsyncPool(util.Index[int](counts, 0, 10))
 	d.name = framework.ParseActorName(reflect.TypeOf(ac))
+	d.tasks = async.NewAsyncPool(util.Index(counts, 0, 10))
+	d.tasks.SetId(framework.GenActorId())
+	d.exit = make(chan struct{})
 	d.self = ac
 }
 
 func (d *ActorPool) RegisterTimer(ctx framework.IContext, ms time.Duration, times int32) error {
-	return timer.Register(&d.id, ms, times, func() {
+	return timer.Register(d.tasks.GetIdPointer(), ms, times, func() {
 		if err := d.SendMsg(ctx); err != nil {
 			ctx.Errorf("Actor定时器转发失败:%v", err)
 		}

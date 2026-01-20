@@ -2,12 +2,10 @@ module github.com/hechh/framework
 
 go 1.24.2
 
-replace github.com/hechh/library => ../library
-
 require (
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.3
-	github.com/hechh/library v0.0.2
+	github.com/hechh/library v0.0.1
 	github.com/nats-io/nats.go v1.47.0
 	github.com/spf13/cast v1.10.0
 	go.etcd.io/etcd/client/v3 v3.6.6

@@ -26,9 +26,11 @@ func (d *ActorMgr) Start() {
 	for _, act := range d.actors {
 		act.Start()
 	}
+	atomic.StoreUint32(&d.status, 1)
 }
 
 func (d *ActorMgr) Stop() {
+	atomic.StoreUint32(&d.status, 0)
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 	for _, act := range d.actors {
@@ -37,10 +39,22 @@ func (d *ActorMgr) Stop() {
 }
 
 func (d *ActorMgr) Done() {
-	atomic.StoreUint32(&d.status, 1)
+	atomic.StoreUint32(&d.status, 0)
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	for _, act := range d.actors {
+		act.Stop()
+	}
 }
 
-func (d *ActorMgr) Wait() {}
+func (d *ActorMgr) Wait() {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+	for _, act := range d.actors {
+		act.Wait()
+	}
+	atomic.StoreUint64(&d.id, 0)
+}
 
 func (d *ActorMgr) GetActorName() string {
 	return d.name
@@ -128,7 +142,7 @@ func (d *ActorMgr) DelActor(id uint64) {
 }
 
 func (d *ActorMgr) AddActor(act framework.IActor) (ret bool) {
-	if ret = atomic.CompareAndSwapUint32(&d.status, 0, 0); ret {
+	if ret = atomic.CompareAndSwapUint32(&d.status, 1, 1); ret {
 		id := act.GetActorId()
 		d.mutex.Lock()
 		d.actors[id] = act

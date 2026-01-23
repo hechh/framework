@@ -22,7 +22,7 @@ func Id2Name(val uint32) (string, bool) {
 	return serviceObj.Id2Name(val)
 }
 
-func Get(name string) framework.IHandler {
+func Get(name any) framework.IHandler {
 	return serviceObj.Get(name)
 }
 

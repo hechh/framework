@@ -5,6 +5,7 @@ import (
 
 	"github.com/hechh/framework"
 	"github.com/hechh/framework/bus/internal/entity"
+	"github.com/hechh/framework/context"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/yaml"
@@ -46,44 +47,64 @@ func (d *Service) replyTopic(nodeType uint32, nodeId uint32) string {
 }
 
 // 监听广播
-func (d *Service) SubscribeBroadcast(f func(head *packet.Head, body []byte)) error {
+func (d *Service) SubscribeBroadcast(f func(ctx framework.IContext, body []byte)) error {
 	return d.conn.Subscribe(d.broadcastTopic(framework.GetSelfType()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析广播数据包错误:%v", err)
 			return
 		}
-		f(pack.Head, pack.Body)
+		// 获取 handler
+		hh := framework.GetHandler(pack.Head.ActorFunc)
+		if hh == nil {
+			mlog.Errorf("接口(%d)未注册", pack.Head.ActorFunc)
+			return
+		}
+		f(context.NewContext(pack.Head, hh.GetName()), pack.Body)
 	})
 }
 
 // 监听单播
-func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error {
+func (d *Service) SubscribeUnicast(f func(ctx framework.IContext, body []byte)) error {
 	return d.conn.Subscribe(d.sendTopic(framework.GetSelfType(), framework.GetSelfId()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
 		}
+		// 获取 handler
+		hh := framework.GetHandler(pack.Head.ActorFunc)
+		if hh == nil {
+			mlog.Errorf("接口(%d)未注册", pack.Head.ActorFunc)
+			return
+		}
+		// 更新路由
 		for _, rr := range pack.List {
 			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
-		f(pack.Head, pack.Body)
+		f(context.NewContext(pack.Head, hh.GetName()), pack.Body)
 	})
 }
 
 // 监听同步请求
-func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
+func (d *Service) SubscribeReply(f func(ctx framework.IContext, body []byte)) error {
 	return d.conn.Subscribe(d.replyTopic(framework.GetSelfType(), framework.GetSelfId()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
 		}
+		// 获取 handler
+		hh := framework.GetHandler(pack.Head.ActorFunc)
+		if hh == nil {
+			mlog.Errorf("接口(%d)未注册", pack.Head.ActorFunc)
+			return
+		}
+		// 更新路由
 		for _, rr := range pack.List {
 			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
-		f(pack.Head, pack.Body)
+		f(context.NewContext(pack.Head, hh.GetName()), pack.Body)
 	})
 }
 

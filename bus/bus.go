@@ -24,15 +24,15 @@ func Close() {
 	serviceObj.Close()
 }
 
-func SubscribeBroadcast(f func(head *packet.Head, body []byte)) error {
+func SubscribeBroadcast(f func(framework.IContext, []byte)) error {
 	return serviceObj.SubscribeBroadcast(f)
 }
 
-func SubscribeUnicast(f func(head *packet.Head, body []byte)) error {
+func SubscribeUnicast(f func(framework.IContext, []byte)) error {
 	return serviceObj.SubscribeUnicast(f)
 }
 
-func SubscribeReply(f func(head *packet.Head, body []byte)) error {
+func SubscribeReply(f func(framework.IContext, []byte)) error {
 	return serviceObj.SubscribeReply(f)
 }
 
@@ -47,53 +47,66 @@ func to(msg any, sendType packet.SendType) (pack *packet.Packet) {
 	return
 }
 
-func Broadcast(msg any, funcs ...framework.PacketFunc) error {
-	pack := to(msg, packet.SendType_BROADCAST)
+func Broadcast(ctx framework.IContext, funcs ...framework.PacketFunc) (err error) {
+	pack := to(ctx, packet.SendType_BROADCAST)
 	for _, f := range funcs {
-		if err := f(pack); err != nil {
-			return err
+		if err = f(pack); err != nil {
+			return
 		}
 	}
-	return serviceObj.Broadcast(pack)
+	if err = serviceObj.Broadcast(pack); err == nil {
+		ctx.AddDepth(1)
+	}
+	return
 }
 
-func Send(msg any, funcs ...framework.PacketFunc) error {
-	pack := to(msg, packet.SendType_POINT)
+func Send(ctx framework.IContext, funcs ...framework.PacketFunc) (err error) {
+	pack := to(ctx, packet.SendType_POINT)
 	funcs = append(funcs, dispatcher)
 	for _, f := range funcs {
-		if err := f(pack); err != nil {
-			return err
+		if err = f(pack); err != nil {
+			return
 		}
 	}
-	return serviceObj.Send(pack)
+	if err = serviceObj.Send(pack); err == nil {
+		ctx.AddDepth(1)
+	}
+	return
 }
 
-func Request(msg any, cb func([]byte) error, funcs ...framework.PacketFunc) error {
-	pack := to(msg, packet.SendType_POINT)
+func Request(ctx framework.IContext, cb func([]byte) error, funcs ...framework.PacketFunc) (err error) {
+	pack := to(ctx, packet.SendType_POINT)
 	funcs = append(funcs, dispatcher)
 	for _, f := range funcs {
-		if err := f(pack); err != nil {
-			return err
+		if err = f(pack); err != nil {
+			return
 		}
 	}
-	return serviceObj.Request(pack, cb)
+	if err = serviceObj.Request(pack, cb); err == nil {
+		ctx.AddDepth(1)
+	}
+	return
 }
 
 func Response(head *packet.Head, buf []byte) error {
 	return serviceObj.Response(head, buf)
 }
 
-func SendResponse(msg any, funcs ...framework.PacketFunc) error {
-	pack := to(msg, packet.SendType_POINT)
+func SendResponse(ctx framework.IContext, funcs ...framework.PacketFunc) (err error) {
+	pack := to(ctx, packet.SendType_POINT)
 	for _, f := range funcs {
-		if err := f(pack); err != nil {
-			return err
+		if err = f(pack); err != nil {
+			return
 		}
 	}
 	if len(pack.Head.Reply) > 0 {
 		return Response(pack.Head, pack.Body)
 	}
-	return Send(pack)
+
+	if err = dispatcher(pack); err != nil {
+		return
+	}
+	return serviceObj.Send(pack)
 }
 
 func dispatcher(d *packet.Packet) error {

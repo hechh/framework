@@ -39,9 +39,18 @@ func (s *Service) Register(hh framework.IHandler) {
 	s.handlers[hh.GetName()] = hh
 }
 
-func (s *Service) Get(actorFunc string) framework.IHandler {
-	if val, ok := s.handlers[actorFunc]; ok {
-		return val
+func (s *Service) Get(actorFunc any) framework.IHandler {
+	switch vv := actorFunc.(type) {
+	case string:
+		if val, ok := s.handlers[vv]; ok {
+			return val
+		}
+	case uint32:
+		if id, ok := s.values[vv]; ok {
+			if val, ok := s.handlers[id]; ok {
+				return val
+			}
+		}
 	}
 	return nil
 }

@@ -1,11 +1,11 @@
 package framework
 
-type GetHandlerFunc func(string) IHandler
+type GetHandlerFunc func(any) IHandler
 type GetCmdFunc func(uint32) IRpc
 type GetRpcFunc func(uint32, any) IRpc
 type GetClusterFunc func(uint32) ICluster
 type GetRouterFunc func(uint32, uint64) IRouter
-type SendRspFunc func(any, ...PacketFunc) error
+type SendRspFunc func(IContext, ...PacketFunc) error
 
 var (
 	handlerGet     GetHandlerFunc
@@ -21,7 +21,7 @@ func SetBus(f SendRspFunc) {
 	sendRsp = f
 }
 
-func SendResponse(msg any, funcs ...PacketFunc) error {
+func SendResponse(msg IContext, funcs ...PacketFunc) error {
 	return sendRsp(msg, funcs...)
 }
 
@@ -31,7 +31,7 @@ func SetHandler(h GetHandlerFunc, c GetCmdFunc, r GetRpcFunc) {
 	handlerRpc = r
 }
 
-func GetHandler(name string) IHandler {
+func GetHandler(name any) IHandler {
 	return handlerGet(name)
 }
 

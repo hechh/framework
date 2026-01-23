@@ -32,14 +32,6 @@ type IMessage interface {
 	Close()                                                         // 关闭消息总线服务
 }
 
-// 消息总线
-type IBus interface {
-	Broadcast(*packet.Packet) error                   // 发送广播
-	Send(*packet.Packet) error                        // 发送请求
-	Request(*packet.Packet, func([]byte) error) error // 发送同步请求
-	Response(*packet.Head, []byte) error              // 应答
-}
-
 // 服务发现接口
 type IWatcher interface {
 	Watch(func(string, []byte)) error // 监听k-v变更
@@ -86,6 +78,7 @@ type IContext interface {
 	To(string) IContext
 	Copy() *packet.Head
 	GetHead() *packet.Head
+	GetId() uint64
 	GetActorId() uint64
 	GetActorName() string
 	GetActorFunc() string

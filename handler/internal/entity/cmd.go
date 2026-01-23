@@ -38,7 +38,7 @@ func (d *CmdHandler[Actor, V1, V2]) Call(obj any, ctx framework.IContext, args .
 
 		// 应答
 		if ctx.CompareAndSwapDepth(ref, ref) {
-			reterr = framework.SendResponse(ctx.GetHead(), framework.Rsp(d, err, args[1]))
+			reterr = framework.SendResponse(ctx, framework.Rsp(d, err, args[1]))
 		}
 	}
 }
@@ -70,7 +70,7 @@ func (d *CmdHandler[Actor, V1, V2]) Rpc(obj any, ctx framework.IContext, body []
 
 		// 应答
 		if ctx.CompareAndSwapDepth(ref, ref) {
-			reterr = framework.SendResponse(ctx.GetHead(), framework.Rsp(d, err, req2))
+			reterr = framework.SendResponse(ctx, framework.Rsp(d, err, req2))
 		}
 	}
 }

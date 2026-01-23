@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.3
-	github.com/hechh/library v0.0.1
+	github.com/hechh/library v0.0.2
 	github.com/nats-io/nats.go v1.48.0
 	github.com/spf13/cast v1.10.0
 	go.etcd.io/etcd/client/v3 v3.6.7
@@ -21,7 +21,6 @@ require (
 	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/nats-io/nkeys v0.4.12 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	go.etcd.io/etcd/api/v3 v3.6.7 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.6.7 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

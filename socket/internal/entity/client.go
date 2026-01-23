@@ -114,8 +114,7 @@ func (d *Client) Read(f func(*packet.Packet) error) {
 			// 处理请求
 			if err := f(pac); err != nil {
 				mlog.Error(0, "包处理错误 packet:%v, error:%v", pac, err)
-				//d.Stop()
-				//return
+				continue
 			}
 			atomic.StoreInt64(&d.updateTime, time.Now().Unix())
 		}

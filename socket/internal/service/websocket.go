@@ -107,7 +107,7 @@ func (d *Websocket) Stop(id uint32) {
 }
 
 func (d *Websocket) remove() {
-	tt := time.NewTicker(framework.HEART_TIME_EXPIRE * time.Second / 2)
+	tt := time.NewTicker(time.Duration(framework.HeartTimeExpire) * time.Second / 2)
 	defer tt.Stop()
 	for {
 		select {
@@ -115,7 +115,7 @@ func (d *Websocket) remove() {
 			ids := []uint32{}
 			d.mutex.RLock()
 			for _, cli := range d.sockets {
-				if cli.IsExpire(now.Unix(), framework.HEART_TIME_EXPIRE) {
+				if cli.IsExpire(now.Unix(), framework.HeartTimeExpire) {
 					ids = append(ids, cli.GetId())
 				}
 			}

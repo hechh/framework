@@ -12,10 +12,12 @@ import (
 )
 
 var (
-	self              *packet.Node
-	NodeTypeGate      uint32
-	actorIdGenerator  = uint64(0) // actorId生成器
-	socketIdGenerator = uint32(0)
+	self               *packet.Node
+	actorIdGenerator   = uint64(0) // actorId生成器
+	socketIdGenerator  = uint32(0)
+	NodeTypeGate       = uint32(1) // 网关节点类型
+	HeartTimeExpire    = int64(6)  // 心跳过期时间
+	RouterSyncInterval = int64(5)  // 路由同步间隔
 )
 
 func Init(gate uint32, nn *packet.Node) {

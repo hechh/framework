@@ -12,11 +12,10 @@ const (
 	MAX_NODE_TYPE_COUNT = 32  // 节点类型数量
 	CLUSTER_BUCKET_SIZE = 256 // 集群桶的数量
 	ETCD_GRANT_TTL      = 15
-	HEART_TIME_EXPIRE   = 6
 )
 
 type IEnum interface {
-	Uint32() uint32
+	Integer() uint32
 }
 
 type ISerialize interface {
@@ -151,6 +150,5 @@ type P1Func[Actor any, V any] func(*Actor, IContext, *V) error
 type P2Func[Actor any, V any, R any] func(*Actor, IContext, *V, *R) error
 type V1Func[Actor any, V any] func(*Actor, IContext, V) error
 type V2Func[Actor any, V any, R any] func(*Actor, IContext, V, R) error
-
 type PacketFunc func(*packet.Packet) error
 type SaveRouterFunc func(map[string]IRouter) error

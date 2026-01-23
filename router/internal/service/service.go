@@ -32,7 +32,7 @@ func (d *Service) Init(cfg *yaml.NodeConfig, f framework.SaveRouterFunc) {
 	d.ttl = cfg.RouterExpire
 	d.save = f
 	async.Go(func() {
-		tt := time.NewTicker(12 * time.Second)
+		tt := time.NewTicker(time.Duration(framework.RouterSyncInterval) * time.Second)
 		defer tt.Stop()
 		for {
 			select {

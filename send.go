@@ -29,7 +29,7 @@ func Copy(head *packet.Head) *packet.Head {
 func Router(idType IEnum, id uint64) PacketFunc {
 	return func(d *packet.Packet) error {
 		d.List = append(d.List, &packet.Router{
-			IdType: idType.Uint32(),
+			IdType: idType.Integer(),
 			Id:     id,
 		})
 		return nil
@@ -54,7 +54,7 @@ func Callback(name string, aid uint64) PacketFunc {
 
 func Rpc(nodeType IEnum, name string, aid uint64, args ...any) PacketFunc {
 	return func(d *packet.Packet) error {
-		rpc := GetRpc(nodeType.Uint32(), name)
+		rpc := GetRpc(nodeType.Integer(), name)
 		if rpc == nil {
 			return uerror.New(-1, "远程接口(%s)未注册", name)
 		}
@@ -72,11 +72,11 @@ func Rpc(nodeType IEnum, name string, aid uint64, args ...any) PacketFunc {
 
 func Cmd(cmd IEnum, aid uint64, args ...any) PacketFunc {
 	return func(d *packet.Packet) error {
-		rpc := GetCmdRpc(cmd.Uint32())
+		rpc := GetCmdRpc(cmd.Integer())
 		if rpc == nil {
 			return uerror.New(-1, "Cmd(%d)未注册", cmd)
 		}
-		d.Head.Cmd = cmd.Uint32()
+		d.Head.Cmd = cmd.Integer()
 		d.Head.DstNodeType = rpc.GetNodeType()
 		d.Head.ActorFunc = rpc.GetCrc32()
 		d.Head.ActorId = aid

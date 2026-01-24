@@ -49,21 +49,28 @@ func to(msg any, sendType packet.SendType) (pack *packet.Packet) {
 	return
 }
 
-func Broadcast(ctx framework.IContext, funcs ...framework.PacketFunc) (err error) {
-	pack := to(ctx, packet.SendType_BROADCAST)
+func addDepth(msg any) {
+	switch vv := msg.(type) {
+	case framework.IContext:
+		vv.AddDepth(1)
+	}
+}
+
+func Broadcast(msg any, funcs ...framework.PacketFunc) (err error) {
+	pack := to(msg, packet.SendType_BROADCAST)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
 			return
 		}
 	}
 	if err = serviceObj.Broadcast(pack); err == nil {
-		ctx.AddDepth(1)
+		addDepth(msg)
 	}
 	return
 }
 
-func Send(ctx framework.IContext, funcs ...framework.PacketFunc) (err error) {
-	pack := to(ctx, packet.SendType_POINT)
+func Send(msg any, funcs ...framework.PacketFunc) (err error) {
+	pack := to(msg, packet.SendType_POINT)
 	funcs = append(funcs, dispatcher)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
@@ -71,13 +78,13 @@ func Send(ctx framework.IContext, funcs ...framework.PacketFunc) (err error) {
 		}
 	}
 	if err = serviceObj.Send(pack); err == nil {
-		ctx.AddDepth(1)
+		addDepth(msg)
 	}
 	return
 }
 
-func Request(ctx framework.IContext, cb func([]byte) error, funcs ...framework.PacketFunc) (err error) {
-	pack := to(ctx, packet.SendType_POINT)
+func Request(msg any, cb func([]byte) error, funcs ...framework.PacketFunc) (err error) {
+	pack := to(msg, packet.SendType_POINT)
 	funcs = append(funcs, dispatcher)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
@@ -85,7 +92,7 @@ func Request(ctx framework.IContext, cb func([]byte) error, funcs ...framework.P
 		}
 	}
 	if err = serviceObj.Request(pack, cb); err == nil {
-		ctx.AddDepth(1)
+		addDepth(msg)
 	}
 	return
 }
@@ -94,8 +101,8 @@ func Response(head *packet.Head, buf []byte) error {
 	return serviceObj.Response(head, buf)
 }
 
-func SendResponse(ctx framework.IContext, funcs ...framework.PacketFunc) (err error) {
-	pack := to(ctx, packet.SendType_POINT)
+func SendResponse(msg any, funcs ...framework.PacketFunc) (err error) {
+	pack := to(msg, packet.SendType_POINT)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
 			return

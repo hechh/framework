@@ -34,12 +34,12 @@ func GetRpc(nodeType uint32, id any) framework.IRpc {
 	return serviceObj.GetRpc(nodeType, id)
 }
 
-func RegisterRpc[T any, U any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
-	serviceObj.RegisterRpc(entity.NewRpcHandler[T, U](e, nodeType.Integer(), cmd.Integer(), name))
+func RegisterRpc2[T any, U any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
+	serviceObj.RegisterRpc(entity.NewRpc2Handler[T, U](e, nodeType.Integer(), cmd.Integer(), name))
 }
 
-func RegisterCmdRpc[T any, U any](nodeType, cmd framework.IEnum, name string) {
-	serviceObj.RegisterRpc(entity.NewRpcHandler[T, U](framework.PROTO, nodeType.Integer(), cmd.Integer(), name))
+func RegisterRpc1[T any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
+	serviceObj.RegisterRpc(entity.NewRpc1Handler[T](e, nodeType.Integer(), cmd.Integer(), name))
 }
 
 func RegisterCmd[Actor any, V1 any, V2 any](f framework.P2Func[Actor, V1, V2]) {

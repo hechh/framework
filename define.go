@@ -107,12 +107,11 @@ type IActor interface {
 
 type IRpc interface {
 	ISerialize
-	GetNodeType() uint32   // 节点类型
-	GetCmd() uint32        // 对应命令字
-	GetName() string       // handler名字
-	GetCrc32() uint32      // 唯一id
-	NewReq() proto.Message // 请求
-	NewRsp() proto.Message // 应答
+	GetName() string     // handler名字
+	GetCrc32() uint32    // 唯一id
+	GetNodeType() uint32 // 节点类型
+	GetCmd() uint32      // 对应命令字
+	New(int) any         // 请求
 }
 
 type IHandler interface {

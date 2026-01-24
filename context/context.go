@@ -40,15 +40,17 @@ func (d *Context) To(actorFunc string) framework.IContext {
 	return d
 }
 
-func (d *Context) Copy() *packet.Head {
-	return &packet.Head{
-		SrcNodeType: framework.GetSelfType(),
-		SrcNodeId:   framework.GetSelfId(),
-		IdType:      d.Head.IdType,
-		Id:          d.Head.Id,
-		Version:     d.Version,
-		SocketId:    d.SocketId,
-		Extra:       d.Extra,
+func (d *Context) Copy() framework.IContext {
+	return &Context{
+		Head: &packet.Head{
+			SrcNodeType: framework.GetSelfType(),
+			SrcNodeId:   framework.GetSelfId(),
+			IdType:      d.Head.IdType,
+			Id:          d.Head.Id,
+			Version:     d.Version,
+			SocketId:    d.SocketId,
+			Extra:       d.Extra,
+		},
 	}
 }
 

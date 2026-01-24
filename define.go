@@ -76,7 +76,7 @@ type IResponse interface {
 
 type IContext interface {
 	To(string) IContext
-	Copy() *packet.Head
+	Copy() IContext
 	GetHead() *packet.Head
 	GetId() uint64
 	GetActorId() uint64

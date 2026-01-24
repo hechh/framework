@@ -104,7 +104,6 @@ func SendResponse(ctx framework.IContext, funcs ...framework.PacketFunc) (err er
 	if len(pack.Head.Reply) > 0 {
 		return Response(pack.Head, pack.Body)
 	}
-
 	if err = dispatcher(pack); err != nil {
 		return
 	}

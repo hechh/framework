@@ -3,7 +3,6 @@ package actor
 import (
 	"github.com/hechh/framework"
 	"github.com/hechh/framework/context"
-	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/uerror"
 )
 
@@ -29,10 +28,20 @@ func SendMsg(ctx framework.IContext, args ...any) error {
 	return uerror.New(-1, "%s未注册", ctx.GetActorFunc())
 }
 
-func SendSimple(head *packet.Head, name string, buf []byte) error {
-	return Send(context.NewContext(head, name), buf)
+func SendTo(ctx framework.IContext, name string, buf []byte) error {
+	ctx.To(name)
+	return Send(ctx, buf)
 }
 
-func SendMsgSimple(uid uint64, name string) error {
-	return SendMsg(context.NewSimpleContext(uid, name), name)
+func SendMsgTo(ctx framework.IContext, name string, args ...any) error {
+	ctx.To(name)
+	return SendMsg(ctx, args...)
+}
+
+func SendSimple(aid uint64, name string, body []byte) error {
+	return Send(context.NewSimpleContext(aid, name), body)
+}
+
+func SendMsgSimple(aid uint64, name string, args ...any) error {
+	return SendMsg(context.NewSimpleContext(aid, name), args...)
 }

@@ -93,17 +93,17 @@ type IContext interface {
 }
 
 type IActor interface {
-	Start()                                             // 启动actor任务队列协程
-	Stop()                                              // 关闭actor任务队列协程
-	Done()                                              // 出发业务关闭通知(业务层需要事项)
-	Wait()                                              // 等待actor自行关闭(业务层需要实现)
-	GetActorName() string                               // Actor名字
-	GetActorId() uint64                                 // Actor ID
-	SetActorId(uint64)                                  // Actor ID
-	Register(IActor, ...int)                            // 派生类自我注册
-	RegisterTimer(IContext, time.Duration, int32) error // 注册定时器
-	SendMsg(IContext, ...any) error                     // 异步调用派生类成员函数
-	Send(IContext, []byte) error                        // 异步调用派生类成员函数
+	Start()                                           // 启动actor任务队列协程
+	Stop()                                            // 关闭actor任务队列协程
+	Done()                                            // 出发业务关闭通知(业务层需要事项)
+	Wait()                                            // 等待actor自行关闭(业务层需要实现)
+	GetActorName() string                             // Actor名字
+	GetActorId() uint64                               // Actor ID
+	SetActorId(uint64)                                // Actor ID
+	Register(IActor, ...int)                          // 派生类自我注册
+	RegisterTimer(string, time.Duration, int32) error // 注册定时器
+	SendMsg(IContext, ...any) error                   // 异步调用派生类成员函数
+	Send(IContext, []byte) error                      // 异步调用派生类成员函数
 }
 
 type IRpc interface {

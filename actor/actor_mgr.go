@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/hechh/framework"
+	"github.com/hechh/framework/context"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/timer"
 	"github.com/hechh/library/uerror"
 )
@@ -74,10 +76,10 @@ func (d *ActorMgr) Register(ac framework.IActor, counts ...int) {
 	d.actors = make(map[uint64]framework.IActor)
 }
 
-func (d *ActorMgr) RegisterTimer(ctx framework.IContext, ms time.Duration, times int32) error {
+func (d *ActorMgr) RegisterTimer(name string, ms time.Duration, times int32) error {
 	return timer.Register(&d.id, ms, times, func() {
-		if err := d.SendMsg(ctx); err != nil {
-			ctx.Errorf("ActorMgr定时器转发失败:%v", err)
+		if err := d.SendMsg(context.NewSimpleContext(d.GetActorId(), name)); err != nil {
+			mlog.Errorf("ActorMgr定时器转发失败:%v", err)
 		}
 	})
 }

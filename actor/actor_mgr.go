@@ -45,17 +45,19 @@ func (d *ActorMgr) Done() {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 	for _, act := range d.actors {
-		act.Stop()
+		act.Done()
 	}
 }
 
 func (d *ActorMgr) Wait() {
+	atomic.StoreUint64(&d.id, 0)
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 	for _, act := range d.actors {
+		id := act.GetActorId()
 		act.Wait()
+		mlog.Infof("%s(%d)关闭成功", d.name, id)
 	}
-	atomic.StoreUint64(&d.id, 0)
 }
 
 func (d *ActorMgr) GetActorName() string {

@@ -77,7 +77,7 @@ func (d *ClusterService) addKeyValue(key string, value []byte) {
 	// 删除节点？
 	if value == nil {
 		nn := cluster.Del(nodeId)
-		mlog.Info(0, "删除服务节点:%d/%d  %s:%d", nn.GetType(), nn.GetId(), nn.GetIp(), nn.GetPort())
+		mlog.Info(-1, "删除服务节点:%d/%d  %s:%d", nn.GetType(), nn.GetId(), nn.GetIp(), nn.GetPort())
 		return
 	}
 	// 添加节点
@@ -87,5 +87,5 @@ func (d *ClusterService) addKeyValue(key string, value []byte) {
 		return
 	}
 	cluster.Add(nn)
-	mlog.Info(0, "添加服务节点:%d/%d  %s:%d", nn.GetType(), nn.GetId(), nn.GetIp(), nn.GetPort())
+	mlog.Info(-1, "添加服务节点:%d/%d  %s:%d", nn.GetType(), nn.GetId(), nn.GetIp(), nn.GetPort())
 }

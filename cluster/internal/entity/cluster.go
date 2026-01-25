@@ -72,6 +72,7 @@ func (c *Cluster) Add(node *packet.Node) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	ll := len(c.data)
+	c.data[node.Id] = node
 	if ll <= 0 {
 		for pos := 0; pos < framework.CLUSTER_BUCKET_SIZE; pos++ {
 			c.buckets[pos] = node
@@ -94,7 +95,6 @@ func (c *Cluster) Add(node *packet.Node) {
 		tmps[item.Id]++
 		c.buckets[pos] = node
 	}
-	c.data[node.Id] = node
 }
 
 func (c *Cluster) Random(seed uint64) *packet.Node {

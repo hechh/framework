@@ -87,6 +87,7 @@ type IContext interface {
 	Tracef(string, ...any)
 	Debugf(string, ...any)
 	Warnf(string, ...any)
+	Infof(string, ...any)
 	Errorf(string, ...any)
 	Fatalf(string, ...any)
 }

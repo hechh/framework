@@ -79,11 +79,7 @@ func (d *Context) CompareAndSwapDepth(old, new int32) bool {
 }
 
 func (d *Context) getformat(str string) string {
-	return fmt.Sprintf("[%d:%d->%d:%d] [%d] %s(%d) %s",
-		d.SrcNodeType,
-		d.SrcNodeId,
-		d.DstNodeType,
-		d.DstNodeId,
+	return fmt.Sprintf("id:%d, %s(%d), %s",
 		d.Id,
 		d.actorFunc,
 		d.GetActorId(),

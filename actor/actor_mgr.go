@@ -103,7 +103,7 @@ func (d *ActorMgr) SendMsg(ctx framework.IContext, args ...any) error {
 }
 
 func (d *ActorMgr) Send(ctx framework.IContext, buf []byte) error {
-	switch ctx.GetHead().SendType {
+	switch head := ctx.GetHead(); head.SendType {
 	case 0:
 		if act := d.GetActor(ctx.GetActorId()); act != nil {
 			ctx.AddDepth(1)
@@ -111,11 +111,18 @@ func (d *ActorMgr) Send(ctx framework.IContext, buf []byte) error {
 		}
 		return uerror.New(-1, "%s未注册", ctx.GetActorFunc())
 	default:
-		d.mutex.RLock()
-		defer d.mutex.RUnlock()
-		for _, act := range d.actors {
-			if err := act.SendMsg(ctx, buf); err != nil {
-				ctx.Errorf("%s.%s广播失败:%v", ctx.GetActorFunc(), err)
+		if head.ActorId > 0 {
+			if act := d.GetActor(head.ActorId); act != nil {
+				ctx.AddDepth(1)
+				return act.Send(ctx, buf)
+			}
+		} else {
+			d.mutex.RLock()
+			defer d.mutex.RUnlock()
+			for _, act := range d.actors {
+				if err := act.Send(ctx, buf); err != nil {
+					ctx.Errorf("%s.%s广播失败:%v", ctx.GetActorFunc(), err)
+				}
 			}
 		}
 		return nil

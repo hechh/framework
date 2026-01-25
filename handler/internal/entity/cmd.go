@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hechh/framework"
+	"github.com/hechh/library/mlog"
 )
 
 type CmdHandler[Actor any, V1 any, V2 any] struct {
@@ -28,9 +29,9 @@ func (d *CmdHandler[Actor, V1, V2]) Call(obj any, ctx framework.IContext, args .
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				ctx.Errorf("调用%s耗时%d毫秒, req:%v, rsp:%v, error:%v, reterr:%v", d.GetName(), endTime-startTime, args[0], args[1], err, reterr)
+				mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, reterr:%v, head:%v, req:%v, rsp:%v", d.GetName(), endTime-startTime, err, reterr, ctx.GetHead(), args[0], args[1])
 			} else {
-				ctx.Tracef("调用%s耗时%d毫秒, req:%v, rsp:%v, reterr:%v", d.GetName(), endTime-startTime, args[0], args[1], reterr)
+				mlog.Trace(-1, "调用%s耗时%d毫秒, reterr:%v, req:%v, head:%v, rsp:%v", d.GetName(), endTime-startTime, reterr, ctx.GetHead(), args[0], args[1])
 			}
 		}()
 
@@ -54,9 +55,9 @@ func (d *CmdHandler[Actor, V1, V2]) Rpc(obj any, ctx framework.IContext, body []
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				ctx.Errorf("调用%s耗时%d毫秒, req:%v, rsp:%v, error:%v, reterr:%v", d.GetName(), endTime-startTime, *req1, *req2, err, reterr)
+				mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, reterr:%v, head:%v, req:%v, rsp:%v", d.GetName(), endTime-startTime, err, reterr, ctx.GetHead(), *req1, *req2)
 			} else {
-				ctx.Tracef("调用%s耗时%d毫秒, req:%v, rsp:%v, reterr:%v", d.GetName(), endTime-startTime, *req1, *req2, reterr)
+				mlog.Trace(-1, "调用%s耗时%d毫秒, reterr:%v, req:%v, head:%v, rsp:%v", d.GetName(), endTime-startTime, reterr, ctx.GetHead(), *req1, *req2)
 			}
 		}()
 

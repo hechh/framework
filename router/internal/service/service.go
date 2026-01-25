@@ -71,6 +71,9 @@ func (d *Service) GetOrNew(idType uint32, id uint64) framework.IRouter {
 }
 
 func (d *Service) Add(str string) error {
+	if len(str) <= 0 {
+		return nil
+	}
 	item := entity.NewRouter(0, 0, d.ttl)
 	if err := item.Unmarshal(util.StringToBytes(str)); err != nil {
 		return err

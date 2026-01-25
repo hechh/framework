@@ -24,15 +24,15 @@ func Close() {
 	serviceObj.Close()
 }
 
-func SubscribeBroadcast(f func(framework.IContext, []byte)) error {
+func SubscribeBroadcast(f func(*packet.Head, []byte)) error {
 	return serviceObj.SubscribeBroadcast(f)
 }
 
-func SubscribeUnicast(f func(framework.IContext, []byte)) error {
+func SubscribeUnicast(f func(*packet.Head, []byte)) error {
 	return serviceObj.SubscribeUnicast(f)
 }
 
-func SubscribeReply(f func(framework.IContext, []byte)) error {
+func SubscribeReply(f func(*packet.Head, []byte)) error {
 	return serviceObj.SubscribeReply(f)
 }
 

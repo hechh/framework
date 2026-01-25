@@ -2,6 +2,7 @@ package entity
 
 import (
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/hechh/framework"
@@ -27,10 +28,12 @@ func (d *EmptyHandler[Actor]) Call(obj any, ctx framework.IContext, args ...any)
 		startTime := time.Now().UnixMilli()
 		defer func() {
 			endTime := time.Now().UnixMilli()
-			if err != nil {
-				mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
-			} else {
-				mlog.Trace(-1, "调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
+			if !strings.HasSuffix(d.name, "OnTick") {
+				if err != nil {
+					mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
+				} else {
+					mlog.Trace(-1, "调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
+				}
 			}
 		}()
 
@@ -44,10 +47,12 @@ func (d *EmptyHandler[Actor]) Rpc(obj any, ctx framework.IContext, body []byte) 
 		startTime := time.Now().UnixMilli()
 		defer func() {
 			endTime := time.Now().UnixMilli()
-			if err != nil {
-				mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
-			} else {
-				mlog.Trace(-1, "调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
+			if !strings.HasSuffix(d.name, "OnTick") {
+				if err != nil {
+					mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
+				} else {
+					mlog.Trace(-1, "调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
+				}
 			}
 		}()
 

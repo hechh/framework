@@ -20,7 +20,7 @@ type Context struct {
 func NewSimpleContext(aid uint64, name string) *Context {
 	return &Context{
 		Head: &packet.Head{
-			ActorId:   aid,
+			Id:        aid,
 			ActorFunc: framework.GetCrc32(name),
 		},
 		actorFunc: name,

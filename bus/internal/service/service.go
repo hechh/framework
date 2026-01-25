@@ -110,6 +110,7 @@ func (d *Service) SubscribeReply(f func(ctx framework.IContext, body []byte)) er
 
 // 发送广播
 func (d *Service) Broadcast(pack *packet.Packet) error {
+	mlog.Tracef("发送消息：%v", pack)
 	buf, err := proto.Marshal(pack)
 	if err != nil {
 		return err
@@ -119,6 +120,7 @@ func (d *Service) Broadcast(pack *packet.Packet) error {
 
 // 发送请求
 func (d *Service) Send(pack *packet.Packet) error {
+	mlog.Tracef("发送消息：%v", pack)
 	buf, err := proto.Marshal(pack)
 	if err != nil {
 		return err
@@ -128,6 +130,7 @@ func (d *Service) Send(pack *packet.Packet) error {
 
 // 同步请求
 func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
+	mlog.Tracef("发送消息：%v", pack)
 	buf, err := proto.Marshal(pack)
 	if err != nil {
 		return err
@@ -137,5 +140,6 @@ func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
 
 // 同步应答
 func (d *Service) Response(head *packet.Head, body []byte) error {
+	mlog.Tracef("发送消息：%v, body:%v", head, body)
 	return d.conn.Response(head.Reply, body)
 }

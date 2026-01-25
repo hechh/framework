@@ -110,7 +110,7 @@ func (d *Service) refresh(now int64) {
 	d.mutex.Lock()
 	for _, item := range dels {
 		if vv, ok := d.routers.Del(item.GetIdType(), item.GetId()); ok {
-			mlog.Info(0, "删除过期路由记录：%d:%d:%v:%v", vv.GetIdType(), vv.GetId(), ok, vv.GetRouter())
+			mlog.Info(0, "删除过期路由记录：%d:%d:%v", vv.GetIdType(), vv.GetId(), vv.GetRouter())
 		}
 	}
 	d.mutex.Unlock()

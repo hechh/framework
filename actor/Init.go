@@ -24,7 +24,7 @@ func Send(ctx framework.IContext, body []byte) error {
 	} else {
 		err = uerror.Err(pb.ErrorCode_ActorNotRegistered, "%s未注册", ctx.GetActorFunc())
 	}
-	mlog.Trace(-1, "[actor] 远程调用接口 head:%v, error:%v, body:%v", ctx.GetHead(), err, body)
+	mlog.Trace(-1, "[actor] 远程调用%s接口 head:%v, error:%v, body:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
 	return err
 }
 
@@ -35,7 +35,7 @@ func SendMsg(ctx framework.IContext, args ...any) error {
 	} else {
 		err = uerror.Err(pb.ErrorCode_ActorNotRegistered, "%s未注册", ctx.GetActorFunc())
 	}
-	mlog.Trace(-1, "[actor] 本地调用接口 head:%v, error:%v, args:%v", ctx.GetHead(), err, args)
+	mlog.Trace(-1, "[actor] 本地调用%s接口 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err
 }
 

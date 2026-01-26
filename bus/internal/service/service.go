@@ -64,7 +64,7 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 	return d.conn.Subscribe(d.sendTopic(framework.GetSelfType(), framework.GetSelfId()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		err := proto.Unmarshal(msg.Body, pack)
-		mlog.Trace(-1, "[Nats] 接收单播消息：head:%v, body:%d, error:%v", pack.Head, len(msg.Body), err)
+		mlog.Trace(-1, "[Nats] 接收单播消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
 		if err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
@@ -82,7 +82,7 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 	return d.conn.Subscribe(d.replyTopic(framework.GetSelfType(), framework.GetSelfId()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		err := proto.Unmarshal(msg.Body, pack)
-		mlog.Trace(-1, "[Nats] 接收同步消息：head:%v, body:%d, error:%v", pack.Head, len(msg.Body), err)
+		mlog.Trace(-1, "[Nats] 接收同步消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
 		if err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return

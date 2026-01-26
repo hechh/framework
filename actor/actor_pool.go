@@ -76,7 +76,7 @@ func (d *ActorPool) SendMsg(ctx framework.IContext, args ...any) error {
 			ctx.AddDepth(1)
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorPool本地调用 head:%v, error:%v, args:%v", ctx.GetHead(), err, args)
+	mlog.Trace(-1, "[actor] ActorPool(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err
 }
 
@@ -91,6 +91,6 @@ func (d *ActorPool) Send(ctx framework.IContext, body []byte) error {
 			ctx.AddDepth(1)
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorPool远程调用 head:%v, error:%v, args:%v", ctx.GetHead(), err, body)
+	mlog.Trace(-1, "[actor] ActorPool(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
 	return err
 }

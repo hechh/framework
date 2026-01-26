@@ -39,62 +39,58 @@ func (c *Cluster) Get(nodeId uint32) *packet.Node {
 	return nil
 }
 
-// 删除节点
-func (c *Cluster) Del(nodeId uint32) (nn *packet.Node) {
-	if nn = c.Get(nodeId); nn != nil {
-		c.mutex.Lock()
-		defer c.mutex.Unlock()
-		ll := len(c.data)
-		newVal := math.Ceil(framework.CLUSTER_BUCKET_SIZE / float64(ll-1))
-		oldVal := math.Ceil(framework.CLUSTER_BUCKET_SIZE / float64(ll))
-		diff := int(newVal - oldVal)
-
-		// 删除buckets中的节点
-		pos := 0
-		for _, item := range c.data {
-			count := 0
-			for ; pos < framework.CLUSTER_BUCKET_SIZE; pos++ {
-				if c.buckets[pos].Id == nodeId {
-					c.buckets[pos] = item
-					count++
-					if count == diff {
-						break
-					}
-				}
-			}
-		}
-		delete(c.data, nodeId)
-	}
-	return
-}
-
 func (c *Cluster) Add(node *packet.Node) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	ll := len(c.data)
 	c.data[node.Id] = node
-	if ll <= 0 {
-		for pos := 0; pos < framework.CLUSTER_BUCKET_SIZE; pos++ {
+	per := int(math.Ceil(framework.CLUSTER_BUCKET_SIZE / float64(len(c.data))))
+	tmps := map[uint32]int{}
+	for pos := 0; pos < framework.CLUSTER_BUCKET_SIZE; pos++ {
+		item := c.buckets[pos]
+		if item == nil || tmps[item.Id] >= per {
+			item = node
+		}
+		if tmps[item.Id] < per {
+			tmps[item.Id]++
 			c.buckets[pos] = node
+		}
+	}
+}
+
+// 删除节点
+func (c *Cluster) Del(nodeId uint32) (nn *packet.Node) {
+	nn = c.Get(nodeId)
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	delete(c.data, nodeId)
+	if len(c.data) <= 0 {
+		for pos := 0; pos < framework.CLUSTER_BUCKET_SIZE; pos++ {
+			c.buckets[pos] = nil
 		}
 		return
 	}
 
-	newVal := math.Ceil(framework.CLUSTER_BUCKET_SIZE / float64(ll))
-	oldVal := math.Ceil(framework.CLUSTER_BUCKET_SIZE / float64(ll+1))
-	diff := int(newVal - oldVal)
-
-	// 在buckets中添加
 	tmps := map[uint32]int{}
 	for pos := 0; pos < framework.CLUSTER_BUCKET_SIZE; pos++ {
-		item := c.buckets[pos]
-		val, ok := tmps[item.Id]
-		if ok && val >= diff {
-			continue
+		if item := c.buckets[pos]; item.Id != nodeId {
+			tmps[item.Id]++
 		}
-		tmps[item.Id]++
-		c.buckets[pos] = node
 	}
+
+	pos := 0
+	per := int(math.Ceil(framework.CLUSTER_BUCKET_SIZE / float64(len(c.data))))
+	for _, node := range c.data {
+		for ; pos < framework.CLUSTER_BUCKET_SIZE; pos++ {
+			if item := c.buckets[pos]; item.Id == nodeId {
+				if tmps[node.Id] >= per {
+					break
+				}
+				tmps[node.Id]++
+				c.buckets[pos] = node
+			}
+		}
+	}
+	return
 }
 
 func (c *Cluster) Random(seed uint64) *packet.Node {

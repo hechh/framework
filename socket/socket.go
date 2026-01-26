@@ -8,6 +8,7 @@ import (
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/socket/internal/entity"
 	"github.com/hechh/framework/socket/internal/service"
+	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/yaml"
 
 	"github.com/gorilla/websocket"
@@ -26,11 +27,14 @@ func Close() {
 }
 
 func Send(pac *packet.Packet) error {
-	return serviceObj.Send(pac)
+	err := serviceObj.Send(pac)
+	mlog.Trace(-1, "[socket] 发送客户端消息 head:%v, body:%d, error:%v", pac.Head, len(pac.Body), err)
+	return err
 }
 
 func Stop(id uint32) {
 	serviceObj.Stop(id)
+	mlog.Trace(-1, "[socket] 关闭链接%d", id)
 }
 
 func ConnWrapper(cc *websocket.Conn) net.Conn {

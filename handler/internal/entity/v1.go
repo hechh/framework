@@ -28,9 +28,9 @@ func (d *V1Handler[Actor, V1]) Call(obj any, ctx framework.IContext, args ...any
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), args[0])
+				mlog.Error(-1, "[result] 调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), args[0])
 			} else {
-				mlog.Trace(-1, "调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), args[0])
+				mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), args[0])
 			}
 		}()
 
@@ -47,9 +47,9 @@ func (d *V1Handler[Actor, V1]) Rpc(obj any, ctx framework.IContext, body []byte)
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				mlog.Error(-1, "调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), *req)
+				mlog.Error(-1, "[result] 调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), *req)
 			} else {
-				mlog.Trace(-1, "调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), *req)
+				mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), *req)
 			}
 		}()
 

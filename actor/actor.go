@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"myplay/common/pb"
 	"reflect"
 	"time"
 
@@ -64,19 +65,31 @@ func (d *Actor) RegisterTimer(name string, ms time.Duration, times int32) error 
 }
 
 func (d *Actor) SendMsg(ctx framework.IContext, args ...any) error {
-	if ff := framework.GetHandler(ctx.GetActorFunc()); ff != nil {
-		ctx.AddDepth(1)
-		d.tasks.Push(ff.Call(d.self, ctx, args...))
-		return nil
+	var err error
+	if ff := framework.GetHandler(ctx.GetActorFunc()); ff == nil {
+		err = uerror.Err(pb.ErrorCode_RpcNotRegistered, "%s未注册", ctx.GetActorFunc())
+	} else {
+		if !d.tasks.Push(ff.Call(d.self, ctx, args...)) {
+			err = uerror.Err(pb.ErrorCode_ServiceHasStopped, "Actor已经关闭")
+		} else {
+			ctx.AddDepth(1)
+		}
 	}
-	return uerror.New(-1, "%s未注册", ctx.GetActorFunc())
+	mlog.Trace(-1, "[actor] Actor本地调用 head:%v, error:%v, args:%v", ctx.GetHead(), err, args)
+	return err
 }
 
 func (d *Actor) Send(ctx framework.IContext, body []byte) error {
-	if ff := framework.GetHandler(ctx.GetActorFunc()); ff != nil {
-		ctx.AddDepth(1)
-		d.tasks.Push(ff.Rpc(d.self, ctx, body))
-		return nil
+	var err error
+	if ff := framework.GetHandler(ctx.GetActorFunc()); ff == nil {
+		err = uerror.Err(pb.ErrorCode_RpcNotRegistered, "%s未注册", ctx.GetActorFunc())
+	} else {
+		if !d.tasks.Push(ff.Rpc(d.self, ctx, body)) {
+			err = uerror.Err(pb.ErrorCode_ServiceHasStopped, "Actor已经关闭")
+		} else {
+			ctx.AddDepth(1)
+		}
 	}
-	return uerror.New(-1, "%s未注册", ctx.GetActorFunc())
+	mlog.Trace(-1, "[actor] Actor远程调用 head:%v, error:%v, args:%v", ctx.GetHead(), err, body)
+	return err
 }

@@ -1,7 +1,6 @@
 package actor
 
 import (
-	"myplay/common/pb"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -95,14 +94,14 @@ func (d *ActorMgr) SendMsg(ctx framework.IContext, args ...any) error {
 		if act := d.GetActor(ctx.GetActorId()); act != nil {
 			err = act.SendMsg(ctx, args...)
 		} else {
-			err = uerror.Err(pb.ErrorCode_ActorIdNotExist, "ActorId(%d)不存在", ctx.GetActorId())
+			err = uerror.Err(-1, "ActorId(%d)不存在", ctx.GetActorId())
 		}
 	case packet.SendType_BROADCAST:
 		if head.ActorId > 0 {
 			if act := d.GetActor(head.ActorId); act != nil {
 				err = act.SendMsg(ctx, args...)
 			} else {
-				err = uerror.Err(pb.ErrorCode_ActorIdNotExist, "ActorId(%d)不存在", head.ActorId)
+				err = uerror.Err(-1, "ActorId(%d)不存在", head.ActorId)
 			}
 		} else {
 			d.mutex.RLock()
@@ -126,14 +125,14 @@ func (d *ActorMgr) Send(ctx framework.IContext, buf []byte) error {
 		if act := d.GetActor(ctx.GetActorId()); act != nil {
 			err = act.Send(ctx, buf)
 		} else {
-			err = uerror.Err(pb.ErrorCode_ActorIdNotExist, "ActorId(%d)不存在", ctx.GetActorId())
+			err = uerror.Err(-1, "ActorId(%d)不存在", ctx.GetActorId())
 		}
 	case packet.SendType_BROADCAST:
 		if head.ActorId > 0 {
 			if act := d.GetActor(head.ActorId); act != nil {
 				err = act.Send(ctx, buf)
 			} else {
-				err = uerror.Err(pb.ErrorCode_ActorIdNotExist, "ActorId(%d)不存在", head.ActorId)
+				err = uerror.Err(-1, "ActorId(%d)不存在", head.ActorId)
 			}
 		} else {
 			d.mutex.RLock()

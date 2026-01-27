@@ -1,7 +1,6 @@
 package actor
 
 import (
-	"myplay/common/pb"
 	"reflect"
 	"time"
 
@@ -67,10 +66,10 @@ func (d *Actor) RegisterTimer(name string, ms time.Duration, times int32) error 
 func (d *Actor) SendMsg(ctx framework.IContext, args ...any) error {
 	var err error
 	if ff := framework.GetHandler(ctx.GetActorFunc()); ff == nil {
-		err = uerror.Err(pb.ErrorCode_RpcNotRegistered, "%s未注册", ctx.GetActorFunc())
+		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	} else {
 		if !d.tasks.Push(ff.Call(d.self, ctx, args...)) {
-			err = uerror.Err(pb.ErrorCode_ServiceHasStopped, "Actor已经关闭")
+			err = uerror.Err(-1, "Actor已经关闭")
 		} else {
 			ctx.AddDepth(1)
 		}
@@ -82,10 +81,10 @@ func (d *Actor) SendMsg(ctx framework.IContext, args ...any) error {
 func (d *Actor) Send(ctx framework.IContext, body []byte) error {
 	var err error
 	if ff := framework.GetHandler(ctx.GetActorFunc()); ff == nil {
-		err = uerror.Err(pb.ErrorCode_RpcNotRegistered, "%s未注册", ctx.GetActorFunc())
+		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	} else {
 		if !d.tasks.Push(ff.Rpc(d.self, ctx, body)) {
-			err = uerror.Err(pb.ErrorCode_ServiceHasStopped, "Actor已经关闭")
+			err = uerror.Err(-1, "Actor已经关闭")
 		} else {
 			ctx.AddDepth(1)
 		}

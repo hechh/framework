@@ -1,8 +1,6 @@
 package actor
 
 import (
-	"myplay/common/pb"
-
 	"github.com/hechh/framework"
 	"github.com/hechh/framework/context"
 	"github.com/hechh/library/mlog"
@@ -22,7 +20,7 @@ func Send(ctx framework.IContext, body []byte) error {
 	if act, ok := mapActor[ctx.GetActorName()]; ok {
 		err = act.Send(ctx, body)
 	} else {
-		err = uerror.Err(pb.ErrorCode_ActorNotRegistered, "%s未注册", ctx.GetActorFunc())
+		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	}
 	mlog.Trace(-1, "[actor] 远程调用%s接口 head:%v, error:%v, body:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
 	return err
@@ -33,7 +31,7 @@ func SendMsg(ctx framework.IContext, args ...any) error {
 	if act, ok := mapActor[ctx.GetActorName()]; ok {
 		err = act.SendMsg(ctx, args...)
 	} else {
-		err = uerror.Err(pb.ErrorCode_ActorNotRegistered, "%s未注册", ctx.GetActorFunc())
+		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	}
 	mlog.Trace(-1, "[actor] 本地调用%s接口 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err

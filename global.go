@@ -41,14 +41,14 @@ func GetSelfId() uint32 {
 	return self.Id
 }
 
-func ToRspHead(err error) *packet.RspHead {
+func ToRspHead(err error) (int32, string) {
 	switch vv := err.(type) {
 	case *uerror.UError:
-		return &packet.RspHead{Code: vv.GetCode(), Msg: vv.GetMsg()}
+		return vv.GetCode(), vv.GetMsg()
 	case nil:
-		return nil
+		return 0, ""
 	default:
-		return &packet.RspHead{Code: -1, Msg: vv.Error()}
+		return -1, vv.Error()
 	}
 }
 

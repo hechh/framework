@@ -70,8 +70,8 @@ type IRouter interface {
 
 type IResponse interface {
 	proto.Message
-	SetRspHead(*packet.RspHead)
-	GetRspHead() *packet.RspHead
+	SetRspHead(code int32, msg string)
+	GetRspHead() (int32, string)
 }
 
 type IContext interface {

@@ -4,8 +4,8 @@ package packet;
 option go_package = "github.com/hechh/framework/packet";
 
 enum SendType {
-  POINT     = 0; // 发送类型-点对点
-  BROADCAST = 1; // 发送类型-广播
+  POINT     = 0;  // 发送类型-点对点
+  BROADCAST = 1;  // 发送类型-广播
 }
 
 // 框架核心协议，任何人不能修改
@@ -18,22 +18,22 @@ message Node {
 }
 
 message Head {
-  SendType SendType    = 1; // 发送类型
-  uint32   SrcNodeType = 2; // 源地址
-  uint32   SrcNodeId   = 3; // 源地址
-  uint32   DstNodeType = 4; // 目的地址
-  uint32   DstNodeId   = 5; // 目的地址
-  uint32   IdType      = 6; // id类型
-  uint64   Id          = 7; // id
-  uint32   Cmd         = 8; // 客户端请求
-  uint32   Seq         = 9; // 请求序列号
-  uint32   ActorFunc   = 10; // 调用的Actor
-  uint64   ActorId     = 11; // actor id
-  uint32   Version     = 12; // 版本号
-  uint32   SocketId    = 13; // socketId
-  uint32   Extra       = 14; // 扩展字段
-  string   Reply       = 15; // 是否同步请求
-  Callback Back        = 16; // 回调信息
+  SendType SendType    = 1;   // 发送类型
+  uint32   SrcNodeType = 2;   // 源地址
+  uint32   SrcNodeId   = 3;   // 源地址
+  uint32   DstNodeType = 4;   // 目的地址
+  uint32   DstNodeId   = 5;   // 目的地址
+  uint32   IdType      = 6;   // id类型
+  uint64   Id          = 7;   // id
+  uint32   Cmd         = 8;   // 客户端请求
+  uint32   Seq         = 9;   // 请求序列号
+  uint32   ActorFunc   = 10;  // 调用的Actor
+  uint64   ActorId     = 11;  // actor id
+  uint32   Version     = 12;  // 版本号
+  uint32   SocketId    = 13;  // socketId
+  uint32   Extra       = 14;  // 扩展字段
+  string   Reply       = 15;  // 是否同步请求
+  Callback Back        = 16;  // 回调信息
 }
 
 message Callback {
@@ -44,20 +44,15 @@ message Callback {
 }
 
 message Packet {
-  Head            Head = 1; // 包头
-  bytes           Body = 2; // 包体
-  repeated Router List = 3; // 路由
+  Head            Head = 1;  // 包头
+  bytes           Body = 2;  // 包体
+  repeated Router List = 3;  // 路由
 }
 
 message Router {
-  uint32          IdType = 1; // 路由类型
-  uint64          Id     = 2; // 路由ID
-  repeated uint32 List   = 3; // 路由信息
-}
-
-message RspHead {
-  int32  Code = 1;
-  string Msg  = 2;
+  uint32          IdType = 1;  // 路由类型
+  uint64          Id     = 2;  // 路由ID
+  repeated uint32 List   = 3;  // 路由信息
 }
 
 message Message {

@@ -9,7 +9,7 @@ import (
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/yaml"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 type Service struct {

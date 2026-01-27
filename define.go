@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/hechh/framework/packet"
+	"google.golang.org/protobuf/proto"
 )
 
 const (

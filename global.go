@@ -18,6 +18,7 @@ var (
 	NodeTypeGate       = uint32(1) // 网关节点类型
 	HeartTimeExpire    = int64(6)  // 心跳过期时间
 	RouterSyncInterval = int64(5)  // 路由同步间隔
+	RunMode            = int(1)    // 运行环境
 )
 
 func Init(gate uint32, nn *packet.Node) {

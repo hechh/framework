@@ -36,13 +36,11 @@ func GetRpc(nodeType uint32, id any) framework.IRpc {
 }
 
 func RegisterRpc2[T any, U any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
-	e = util.Or(e != nil, e, framework.ISerialize(framework.PROTO))
 	cmdValue := util.Or(cmd != nil, cmd.Integer(), 0)
 	serviceObj.RegisterRpc(entity.NewRpc2Handler[T, U](e, nodeType.Integer(), cmdValue, name))
 }
 
 func RegisterRpc1[T any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
-	e = util.Or(e != nil, e, framework.ISerialize(framework.PROTO))
 	cmdValue := util.Or(cmd != nil, cmd.Integer(), 0)
 	serviceObj.RegisterRpc(entity.NewRpc1Handler[T](e, nodeType.Integer(), cmdValue, name))
 }

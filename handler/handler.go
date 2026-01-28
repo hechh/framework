@@ -42,10 +42,6 @@ func RegisterRpc1[T any](e framework.ISerialize, nodeType, cmd framework.IEnum, 
 	serviceObj.RegisterRpc(entity.NewRpc1Handler[T](e, nodeType.Integer(), cmd.Integer(), name))
 }
 
-func RegisterCmd[Actor any, V1 any, V2 any](f framework.P2Func[Actor, V1, V2]) {
-	serviceObj.Register(entity.NewCmdHandler(framework.PROTO, f))
-}
-
 func Register0[Actor any](e framework.ISerialize, f framework.EmptyFunc[Actor]) {
 	serviceObj.Register(entity.NewV0Handler(e, f))
 }
@@ -55,7 +51,12 @@ func RegisterP1[Actor any, V1 any](e framework.ISerialize, f framework.P1Func[Ac
 }
 
 func RegisterP2[Actor any, V1 any, V2 any](e framework.ISerialize, f framework.P2Func[Actor, V1, V2]) {
-	serviceObj.Register(entity.NewP2Handler(e, f))
+	switch e.(type) {
+	case *framework.ProtoSerialize:
+		serviceObj.Register(entity.NewCmdHandler(e, f))
+	default:
+		serviceObj.Register(entity.NewP2Handler(e, f))
+	}
 }
 
 func RegisterV1[Actor any, V1 any](e framework.ISerialize, f framework.V1Func[Actor, V1]) {

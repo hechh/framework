@@ -4,7 +4,6 @@ import (
 	"github.com/hechh/framework"
 	"github.com/hechh/framework/handler/internal/entity"
 	"github.com/hechh/framework/handler/internal/service"
-	"github.com/hechh/library/util"
 )
 
 var (
@@ -36,13 +35,11 @@ func GetRpc(nodeType uint32, id any) framework.IRpc {
 }
 
 func RegisterRpc2[T any, U any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
-	cmdValue := util.Or(cmd != nil, cmd.Integer(), 0)
-	serviceObj.RegisterRpc(entity.NewRpc2Handler[T, U](e, nodeType.Integer(), cmdValue, name))
+	serviceObj.RegisterRpc(entity.NewRpc2Handler[T, U](e, nodeType.Integer(), cmd.Integer(), name))
 }
 
 func RegisterRpc1[T any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
-	cmdValue := util.Or(cmd != nil, cmd.Integer(), 0)
-	serviceObj.RegisterRpc(entity.NewRpc1Handler[T](e, nodeType.Integer(), cmdValue, name))
+	serviceObj.RegisterRpc(entity.NewRpc1Handler[T](e, nodeType.Integer(), cmd.Integer(), name))
 }
 
 func Register0[Actor any](e framework.ISerialize, f framework.EmptyFunc[Actor]) {

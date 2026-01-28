@@ -98,16 +98,20 @@ func Rsp(en ISerialize, err error, args ...any) PacketFunc {
 				d.Head.ActorFunc = d.Head.Back.ActorFunc
 				d.Head.ActorId = d.Head.Back.ActorId
 				d.Head.Back = nil
-			} else if d.Head.Cmd > 0 {
-				d.Head.Cmd++
+			} else {
+				if d.Head.Cmd > 0 {
+					d.Head.Cmd++
+				}
 				d.Head.DstNodeType = NodeTypeGate
 				d.Head.ActorFunc = 0
-				d.Head.ActorId = 0
+				d.Head.ActorId = d.Head.Id
 			}
 		}
-		for _, arg := range args {
-			if rsp, ok := arg.(IResponse); ok && rsp != nil {
-				rsp.SetRspHead(ToRspHead(err))
+		if err != nil {
+			for _, arg := range args {
+				if rsp, ok := arg.(IResponse); ok && rsp != nil {
+					rsp.SetRspHead(ToRspHead(err))
+				}
 			}
 		}
 		if buf, err := en.Marshal(args...); err != nil {

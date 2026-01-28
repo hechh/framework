@@ -3,7 +3,6 @@ package actor
 import (
 	"github.com/hechh/framework"
 	"github.com/hechh/framework/context"
-	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/uerror"
 )
 
@@ -22,7 +21,7 @@ func Send(ctx framework.IContext, body []byte) error {
 	} else {
 		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	}
-	mlog.Trace(-1, "[actor] 远程调用%s接口 head:%v, error:%v, body:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
+	//mlog.Trace(-1, "[actor] 远程调用%s接口 head:%v, error:%v, body:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
 	return err
 }
 
@@ -33,7 +32,7 @@ func SendMsg(ctx framework.IContext, args ...any) error {
 	} else {
 		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	}
-	mlog.Trace(-1, "[actor] 本地调用%s接口 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
+	//mlog.Trace(-1, "[actor] 本地调用%s接口 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err
 }
 

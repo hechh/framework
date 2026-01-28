@@ -113,7 +113,7 @@ func (d *ActorMgr) SendMsg(ctx framework.IContext, args ...any) error {
 			}
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorMgr(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
+	//mlog.Trace(-1, "[actor] ActorMgr(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err
 }
 
@@ -144,7 +144,7 @@ func (d *ActorMgr) Send(ctx framework.IContext, buf []byte) error {
 			}
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorMgr(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, buf)
+	//mlog.Trace(-1, "[actor] ActorMgr(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, buf)
 	return err
 }
 

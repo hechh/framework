@@ -2,6 +2,7 @@ package actor
 
 import (
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/hechh/framework"
@@ -75,7 +76,9 @@ func (d *ActorPool) SendMsg(ctx framework.IContext, args ...any) error {
 			ctx.AddDepth(1)
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorPool(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
+	if !strings.HasSuffix(ctx.GetActorFunc(), "OnTick") {
+		mlog.Trace(-1, "[actor] ActorPool(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
+	}
 	return err
 }
 
@@ -90,6 +93,8 @@ func (d *ActorPool) Send(ctx framework.IContext, body []byte) error {
 			ctx.AddDepth(1)
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorPool(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
+	if !strings.HasSuffix(ctx.GetActorFunc(), "OnTick") {
+		mlog.Trace(-1, "[actor] ActorPool(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
+	}
 	return err
 }

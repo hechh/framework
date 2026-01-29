@@ -4,6 +4,7 @@ import (
 	"github.com/hechh/framework"
 	"github.com/hechh/framework/bus/internal/service"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/uerror"
 	"github.com/hechh/library/yaml"
 )
@@ -83,6 +84,24 @@ func Send(msg any, funcs ...framework.PacketFunc) (err error) {
 		addDepth(msg)
 	}
 	return
+}
+
+func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) error {
+	pack := to(&packet.Head{Cmd: cmd.Integer()}, packet.SendType_POINT)
+	funcs = append(funcs, dispatcher)
+	for _, f := range funcs {
+		if err := f(pack); err != nil {
+			return err
+		}
+	}
+	for _, uid := range uids {
+		pack.Head.IdType = 0
+		pack.Head.Id = uid
+		if reterr := serviceObj.Send(pack); reterr != nil {
+			mlog.Error(-1, "[notify] 推送消息失败：%v, error:%v", pack, reterr)
+		}
+	}
+	return nil
 }
 
 func Request(msg any, cb func([]byte) error, funcs ...framework.PacketFunc) (err error) {

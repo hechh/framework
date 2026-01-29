@@ -44,6 +44,8 @@ func to(msg any, sendType packet.SendType) (pack *packet.Packet) {
 		pack = &packet.Packet{Head: vv}
 	case framework.IContext:
 		pack = &packet.Packet{Head: vv.GetHead()}
+	case nil:
+		pack = &packet.Packet{Head: &packet.Head{}}
 	}
 	pack.Head.SendType = sendType
 	return

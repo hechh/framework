@@ -71,9 +71,7 @@ func (d *ActorPool) SendMsg(ctx framework.IContext, args ...any) error {
 		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	} else {
 		if !d.tasks.Push(ff.Call(d.self, ctx, args...)) {
-			err = uerror.Err(-1, "ActorPool已经关闭")
-		} else {
-			ctx.AddDepth(1)
+			err = uerror.Err(-1, "ActorPool已经停止服务")
 		}
 	}
 	if !strings.HasSuffix(ctx.GetActorFunc(), "OnTick") {
@@ -88,9 +86,7 @@ func (d *ActorPool) Send(ctx framework.IContext, body []byte) error {
 		err = uerror.Err(-1, "%s未注册", ctx.GetActorFunc())
 	} else {
 		if !d.tasks.Push(ff.Rpc(d.self, ctx, body)) {
-			err = uerror.Err(-1, "ActorPool已经关闭")
-		} else {
-			ctx.AddDepth(1)
+			err = uerror.Err(-1, "ActorPool已经停止服务")
 		}
 	}
 	if !strings.HasSuffix(ctx.GetActorFunc(), "OnTick") {

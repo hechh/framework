@@ -71,7 +71,7 @@ func (d *Context) GetActorFunc() string {
 }
 
 func (d *Context) AddDepth(val int32) int32 {
-	return atomic.AddInt32(&d.depth, 1)
+	return atomic.AddInt32(&d.depth, val)
 }
 
 func (d *Context) CompareAndSwapDepth(old, new int32) bool {

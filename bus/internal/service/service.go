@@ -73,6 +73,7 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 		for _, rr := range pack.List {
 			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
+		mlog.Trace(-1, "[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
 		f(pack.Head, pack.Body)
 	})
 }
@@ -94,6 +95,7 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 		for _, rr := range pack.List {
 			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
+		mlog.Trace(-1, "[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
 		f(pack.Head, pack.Body)
 	})
 }

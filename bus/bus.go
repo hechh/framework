@@ -88,7 +88,6 @@ func Send(msg any, funcs ...framework.PacketFunc) (err error) {
 
 func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) error {
 	pack := to(&packet.Head{Cmd: cmd.Integer()}, packet.SendType_POINT)
-	funcs = append(funcs, dispatcher)
 	for _, f := range funcs {
 		if err := f(pack); err != nil {
 			return err
@@ -97,6 +96,11 @@ func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) e
 	for _, uid := range uids {
 		pack.Head.IdType = 0
 		pack.Head.Id = uid
+		pack.List = pack.List[:0]
+		if err := dispatcher(pack); err != nil {
+			mlog.Error(-1, "[notify] 推送路由失败：%v, error:%v", pack, err)
+			continue
+		}
 		if reterr := serviceObj.Send(pack); reterr != nil {
 			mlog.Error(-1, "[notify] 推送消息失败：%v, error:%v", pack, reterr)
 		}

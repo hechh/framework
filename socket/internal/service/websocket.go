@@ -61,7 +61,7 @@ func (d *Websocket) Init(f framework.IFrame, h func(*packet.Packet) error, addr 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil || conn == nil {
-			mlog.Error(0, "WebSocket连接失败: %v", err)
+			mlog.Errorf("WebSocket连接失败: %v", err)
 			return
 		}
 		d.accept(conn)

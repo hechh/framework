@@ -63,7 +63,7 @@ func (d *Client) loop() {
 		select {
 		case buf := <-d.writeCh:
 			if _, err := d.conn.Write(buf); err != nil {
-				mlog.Error(0, "发送客户端消息错误: %v", err)
+				mlog.Errorf("发送客户端消息错误: %v", err)
 				d.Close()
 				return
 			}
@@ -96,7 +96,7 @@ func (d *Client) Read(f func(*packet.Packet) error) {
 		default:
 			size, err := d.conn.Read(d.readBytes)
 			if err != nil {
-				mlog.Error(0, "socket-client read error: %v", err)
+				mlog.Errorf("socket-client read error: %v", err)
 				d.Close()
 				return
 			}
@@ -104,14 +104,14 @@ func (d *Client) Read(f func(*packet.Packet) error) {
 			// 解包
 			pac, err := d.Decode(d.readBytes[:size])
 			if err != nil {
-				mlog.Error(0, "Packet:%v, error:%v", pac, err)
+				mlog.Errorf("Packet:%v, error:%v", pac, err)
 				continue
 			}
 			pac.Head.SocketId = d.socketId
 
 			// 处理请求
 			if err := f(pac); err != nil {
-				mlog.Error(0, "包处理错误 packet:%v, error:%v", pac, err)
+				mlog.Errorf("包处理错误 packet:%v, error:%v", pac, err)
 				continue
 			}
 			atomic.StoreInt64(&d.updateTime, time.Now().Unix())

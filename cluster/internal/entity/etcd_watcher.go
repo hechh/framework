@@ -55,17 +55,17 @@ func (d *EtcdWatcher) Watch(f func(string, []byte)) error {
 		for {
 			wchan := d.client.Watch(ctx, d.prefix, clientv3.WithPrefix())
 			if wchan == nil {
-				mlog.Error(0, "ETCD(%s)监听失败", d.prefix)
+				mlog.Errorf("ETCD(%s)监听失败", d.prefix)
 				time.Sleep(time.Second)
 				continue
 			}
 			for rsp := range wchan {
 				if rsp.Canceled {
-					mlog.Error(0, "Etcd(%s)监听被取消，尝试重新连接", d.prefix)
+					mlog.Errorf("Etcd(%s)监听被取消，尝试重新连接", d.prefix)
 					break
 				}
 				if rsp.Err() != nil {
-					mlog.Error(0, "Etcd(%s)监听服务出现错误: %v", d.prefix, rsp.Err().Error())
+					mlog.Errorf("Etcd(%s)监听服务出现错误: %v", d.prefix, rsp.Err().Error())
 					continue
 				}
 				for _, event := range rsp.Events {

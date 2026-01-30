@@ -13,13 +13,13 @@ import (
 
 var (
 	disconErr = nats.DisconnectErrHandler(func(_ *nats.Conn, err error) {
-		mlog.Error(0, "NATS disconnect error:%v", err)
+		mlog.Errorf("NATS disconnect error:%v", err)
 	})
 	reconErr = nats.ReconnectErrHandler(func(_ *nats.Conn, err error) {
-		mlog.Error(0, "NATS Reconnect error:%v", err)
+		mlog.Errorf("NATS Reconnect error:%v", err)
 	})
 	close = nats.ClosedHandler(func(_ *nats.Conn) {
-		mlog.Error(0, "NATS Close")
+		mlog.Errorf("NATS Close")
 	})
 	waitRecon = nats.ReconnectWait(5)
 )

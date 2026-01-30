@@ -52,7 +52,7 @@ func (d *Service) SubscribeBroadcast(f func(head *packet.Head, body []byte)) err
 		err := proto.Unmarshal(msg.Body, pack)
 		mlog.Tracef("[Nats] 接收广播消息：head:%v, body:%d, error:%v", pack.Head, len(msg.Body), err)
 		if err != nil {
-			mlog.Error(0, "解析广播数据包错误:%v", err)
+			mlog.Errorf("解析广播数据包错误:%v", err)
 			return
 		}
 		f(pack.Head, pack.Body)
@@ -66,7 +66,7 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 		err := proto.Unmarshal(msg.Body, pack)
 		mlog.Tracef("[Nats] 接收单播消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
 		if err != nil {
-			mlog.Error(0, "解析单播数据包错误:%v", err)
+			mlog.Errorf("解析单播数据包错误:%v", err)
 			return
 		}
 		// 更新路由
@@ -88,7 +88,7 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 		}
 		mlog.Tracef("[Nats] 接收同步消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
 		if err != nil {
-			mlog.Error(0, "解析单播数据包错误:%v", err)
+			mlog.Errorf("解析单播数据包错误:%v", err)
 			return
 		}
 		// 更新路由

@@ -66,6 +66,10 @@ func (d *Context) GetActorName() string {
 	return d.actorFunc[:strings.Index(d.actorFunc, ".")]
 }
 
+func (d *Context) GetFuncName() string {
+	return d.actorFunc[strings.Index(d.actorFunc, ".")+1:]
+}
+
 func (d *Context) GetActorFunc() string {
 	return d.actorFunc
 }
@@ -87,25 +91,25 @@ func (d *Context) getformat(str string) string {
 }
 
 func (d *Context) Tracef(format string, args ...any) {
-	mlog.Trace(1, d.getformat(format), args...)
+	mlog.Trace(1, d.GetFuncName(), d.getformat(format), args...)
 }
 
 func (d *Context) Debugf(format string, args ...any) {
-	mlog.Debug(1, d.getformat(format), args...)
+	mlog.Debug(1, d.GetFuncName(), d.getformat(format), args...)
 }
 
 func (d *Context) Warnf(format string, args ...any) {
-	mlog.Warn(1, d.getformat(format), args...)
+	mlog.Warn(1, d.GetFuncName(), d.getformat(format), args...)
 }
 
 func (d *Context) Infof(format string, args ...any) {
-	mlog.Info(1, d.getformat(format), args...)
+	mlog.Info(1, d.GetFuncName(), d.getformat(format), args...)
 }
 
 func (d *Context) Errorf(format string, args ...any) {
-	mlog.Error(1, d.getformat(format), args...)
+	mlog.Error(1, d.GetFuncName(), d.getformat(format), args...)
 }
 
 func (d *Context) Fatalf(format string, args ...any) {
-	mlog.Fatal(1, d.getformat(format), args...)
+	mlog.Fatal(1, d.GetFuncName(), d.getformat(format), args...)
 }

@@ -89,18 +89,18 @@ func (d *EtcdRegister) Register(key string, val []byte) error {
 			select {
 			case _, ok := <-aliveChan:
 				if !ok {
-					mlog.Error(0, "服务保活失败，重新注册服务中...")
+					mlog.Errorf("服务保活失败，重新注册服务中...")
 					if err := d.Register(key, val); err != nil {
-						mlog.Error(0, "ETCD重新注册服务失败:%v", err)
+						mlog.Errorf("ETCD重新注册服务失败:%v", err)
 					} else {
 						return
 					}
 				}
 			case <-tt.C:
 				if _, err := d.client.TimeToLive(ctx, lease); err != nil {
-					mlog.Error(0, "服务保活失败，重新注册服务中...%v", err)
+					mlog.Errorf("服务保活失败，重新注册服务中...%v", err)
 					if err := d.Register(key, val); err != nil {
-						mlog.Error(0, "ETCD重新注册服务失败:%v", err)
+						mlog.Errorf("ETCD重新注册服务失败:%v", err)
 					} else {
 						return
 					}

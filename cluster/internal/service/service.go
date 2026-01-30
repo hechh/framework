@@ -71,7 +71,7 @@ func (d *ClusterService) addKeyValue(key string, value []byte) {
 	// 获取集群
 	cluster := d.Get(nodeType)
 	if cluster == nil {
-		mlog.Error(0, "节点类型(%d)不支持", nodeType)
+		mlog.Errorf("节点类型(%d)不支持", nodeType)
 		return
 	}
 	// 删除节点？
@@ -83,7 +83,7 @@ func (d *ClusterService) addKeyValue(key string, value []byte) {
 	// 添加节点
 	nn := &packet.Node{}
 	if err := json.Unmarshal(value, nn); err != nil {
-		mlog.Error(0, "节点解析错误:%v", err)
+		mlog.Errorf("节点解析错误:%v", err)
 		return
 	}
 	cluster.Add(nn)

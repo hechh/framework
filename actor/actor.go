@@ -72,7 +72,7 @@ func (d *Actor) SendMsg(ctx framework.IContext, args ...any) error {
 			err = uerror.Err(-1, "Actor已经停止服务")
 		}
 	}
-	mlog.Tracef("[actor] Actor(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
+	ctx.Tracef("[actor] Actor(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err
 }
 
@@ -85,6 +85,6 @@ func (d *Actor) Send(ctx framework.IContext, body []byte) error {
 			err = uerror.Err(-1, "Actor已经停止服务")
 		}
 	}
-	mlog.Tracef("[actor] Actor(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
+	ctx.Tracef("[actor] Actor(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
 	return err
 }

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/hechh/framework"
-	"github.com/hechh/library/mlog"
 )
 
 type P1Handler[Actor any, V1 any] struct {
@@ -28,9 +27,9 @@ func (d *P1Handler[Actor, V1]) Call(obj any, ctx framework.IContext, args ...any
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				mlog.Errorf("[result] 调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), args[0])
+				ctx.Errorf("[result] 调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), args[0])
 			} else {
-				mlog.Tracef("[result] 调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), args[0])
+				ctx.Tracef("[result] 调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), args[0])
 			}
 		}()
 
@@ -47,9 +46,9 @@ func (d *P1Handler[Actor, V1]) Rpc(obj any, ctx framework.IContext, body []byte)
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				mlog.Errorf("[result] 调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), *req)
+				ctx.Errorf("[result] 调用%s耗时%d毫秒, error:%v, head:%v, req:%v", d.GetName(), endTime-startTime, err, ctx.GetHead(), *req)
 			} else {
-				mlog.Tracef("[result] 调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), *req)
+				ctx.Tracef("[result] 调用%s耗时%d毫秒, head:%v, req:%v", d.GetName(), endTime-startTime, ctx.GetHead(), *req)
 			}
 		}()
 

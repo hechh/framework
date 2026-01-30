@@ -40,6 +40,16 @@ func (d *Router) GetId() uint64 {
 	return d.id
 }
 
+func (d *Router) String() string {
+	strs := []string{}
+	for i := 0; i < len(d.data); i++ {
+		if val := atomic.LoadUint32(&d.data[i]); val > 0 {
+			strs = append(strs, fmt.Sprintf("%d:%d", i+1, val))
+		}
+	}
+	return fmt.Sprintf("%d/%d: %v", d.idType, d.id, strs)
+}
+
 func (d *Router) IsExpire(now int64) bool {
 	return now-atomic.LoadInt64(&d.updateTime) >= d.ttl
 }

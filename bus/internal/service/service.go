@@ -71,9 +71,10 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 		}
 		// 更新路由
 		for _, rr := range pack.List {
-			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
+			item := framework.GetOrNewRouter(rr.GetIdType(), rr.GetId())
+			item.SetRouter(rr.List...)
+			mlog.Tracef("[router] 更新路由表: %s", item.String())
 		}
-		mlog.Tracef("[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
 		f(pack.Head, pack.Body)
 	})
 }
@@ -93,9 +94,10 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 		}
 		// 更新路由
 		for _, rr := range pack.List {
-			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
+			item := framework.GetOrNewRouter(rr.GetIdType(), rr.GetId())
+			item.SetRouter(rr.List...)
+			mlog.Tracef("[router] 更新路由表: %s", item.String())
 		}
-		mlog.Tracef("[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
 		f(pack.Head, pack.Body)
 	})
 }

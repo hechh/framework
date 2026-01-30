@@ -67,7 +67,6 @@ func (d *Service) GetOrNew(idType uint32, id uint64) framework.IRouter {
 	item := entity.NewRouter(idType, id, d.ttl)
 	item.Set(framework.GetSelfType(), framework.GetSelfId())
 	d.routers.Put(idType, id, item)
-	mlog.Infof("[router] 新增路由表：%d:%d:%v", idType, id, item.GetRouter())
 	return item
 }
 
@@ -83,8 +82,8 @@ func (d *Service) Add(str string) error {
 		d.mutex.Lock()
 		d.routers.Put(item.GetIdType(), item.GetId(), item)
 		d.mutex.Unlock()
-		mlog.Infof("[router] 新增路由表：%d:%d:%v", item.GetIdType(), item.GetId(), item.GetRouter())
 	}
+	mlog.Infof("[router] 更新路由表：%s", item.String())
 	return nil
 }
 
@@ -112,7 +111,7 @@ func (d *Service) refresh(now int64) {
 	d.mutex.Lock()
 	for _, item := range dels {
 		if vv, ok := d.routers.Del(item.GetIdType(), item.GetId()); ok {
-			mlog.Infof("[router] 删除过期路由记录：%d:%d:%v", vv.GetIdType(), vv.GetId(), vv.GetRouter())
+			mlog.Infof("[router] 删除过期路由记录：%s", vv.String())
 		}
 	}
 	d.mutex.Unlock()

@@ -66,6 +66,7 @@ type IRouter interface {
 	SetRouter(...uint32)     // 设置路由
 	Update()                 // 更新路由有效时间
 	IsExpire(now int64) bool // 是否过期
+	String() string          // 格式化
 }
 
 type IResponse interface {

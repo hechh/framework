@@ -98,11 +98,11 @@ func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) e
 		pack.Head.Id = uid
 		pack.List = pack.List[:0]
 		if err := dispatcher(pack); err != nil {
-			mlog.Error(-1, "[notify] 推送路由失败：%v, error:%v", pack, err)
+			mlog.Errorf("[notify] 推送路由失败：%v, error:%v", pack, err)
 			continue
 		}
 		if reterr := serviceObj.Send(pack); reterr != nil {
-			mlog.Error(-1, "[notify] 推送消息失败：%v, error:%v", pack, reterr)
+			mlog.Errorf("[notify] 推送消息失败：%v, error:%v", pack, reterr)
 		}
 	}
 	return nil

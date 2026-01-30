@@ -29,9 +29,9 @@ func (d *CmdHandler[Actor, V1, V2]) Call(obj any, ctx framework.IContext, args .
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				mlog.Error(-1, "[result] 调用%s耗时%d毫秒, error:%v, reterr:%v, head:%v, req:%v, rsp:%v", d.GetName(), endTime-startTime, err, reterr, ctx.GetHead(), args[0], args[1])
+				mlog.Errorf("[result] 调用%s耗时%d毫秒, error:%v, reterr:%v, head:%v, req:%v, rsp:%v", d.GetName(), endTime-startTime, err, reterr, ctx.GetHead(), args[0], args[1])
 			} else {
-				mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, reterr:%v, req:%v, head:%v, rsp:%v", d.GetName(), endTime-startTime, reterr, ctx.GetHead(), args[0], args[1])
+				mlog.Tracef("[result] 调用%s耗时%d毫秒, reterr:%v, req:%v, head:%v, rsp:%v", d.GetName(), endTime-startTime, reterr, ctx.GetHead(), args[0], args[1])
 			}
 		}()
 
@@ -55,9 +55,9 @@ func (d *CmdHandler[Actor, V1, V2]) Rpc(obj any, ctx framework.IContext, body []
 		defer func() {
 			endTime := time.Now().UnixMilli()
 			if err != nil {
-				mlog.Error(-1, "[result] 调用%s耗时%d毫秒, error:%v, reterr:%v, head:%v, req:%v, rsp:%v", d.GetName(), endTime-startTime, err, reterr, ctx.GetHead(), *req1, *req2)
+				mlog.Errorf("[result] 调用%s耗时%d毫秒, error:%v, reterr:%v, head:%v, req:%v, rsp:%v", d.GetName(), endTime-startTime, err, reterr, ctx.GetHead(), *req1, *req2)
 			} else {
-				mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, reterr:%v, req:%v, head:%v, rsp:%v", d.GetName(), endTime-startTime, reterr, ctx.GetHead(), *req1, *req2)
+				mlog.Tracef("[result] 调用%s耗时%d毫秒, reterr:%v, req:%v, head:%v, rsp:%v", d.GetName(), endTime-startTime, reterr, ctx.GetHead(), *req1, *req2)
 			}
 		}()
 

@@ -73,7 +73,7 @@ func (d *ActorPool) SendMsg(ctx framework.IContext, args ...any) error {
 			err = uerror.Err(-1, "ActorPool已经停止服务")
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorPool(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
+	mlog.Tracef("[actor] ActorPool(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err
 }
 
@@ -86,6 +86,6 @@ func (d *ActorPool) Send(ctx framework.IContext, body []byte) error {
 			err = uerror.Err(-1, "ActorPool已经停止服务")
 		}
 	}
-	mlog.Trace(-1, "[actor] ActorPool(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
+	mlog.Tracef("[actor] ActorPool(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
 	return err
 }

@@ -28,13 +28,13 @@ func Close() {
 
 func Send(pac *packet.Packet) error {
 	err := serviceObj.Send(pac)
-	mlog.Trace(-1, "[socket] 发送客户端消息 head:%v, body:%d, error:%v", pac.Head, len(pac.Body), err)
+	mlog.Tracef("[socket] 发送客户端消息 head:%v, body:%d, error:%v", pac.Head, len(pac.Body), err)
 	return err
 }
 
 func Stop(id uint32) {
 	serviceObj.Stop(id)
-	mlog.Trace(-1, "[socket] 关闭链接%d", id)
+	mlog.Tracef("[socket] 关闭链接%d", id)
 }
 
 func ConnWrapper(cc *websocket.Conn) net.Conn {

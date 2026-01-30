@@ -50,7 +50,7 @@ func (d *Service) SubscribeBroadcast(f func(head *packet.Head, body []byte)) err
 	return d.conn.Subscribe(d.broadcastTopic(framework.GetSelfType()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		err := proto.Unmarshal(msg.Body, pack)
-		mlog.Trace(-1, "[Nats] 接收广播消息：head:%v, body:%d, error:%v", pack.Head, len(msg.Body), err)
+		mlog.Tracef("[Nats] 接收广播消息：head:%v, body:%d, error:%v", pack.Head, len(msg.Body), err)
 		if err != nil {
 			mlog.Error(0, "解析广播数据包错误:%v", err)
 			return
@@ -64,7 +64,7 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 	return d.conn.Subscribe(d.sendTopic(framework.GetSelfType(), framework.GetSelfId()), func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		err := proto.Unmarshal(msg.Body, pack)
-		mlog.Trace(-1, "[Nats] 接收单播消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
+		mlog.Tracef("[Nats] 接收单播消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
 		if err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
@@ -73,7 +73,7 @@ func (d *Service) SubscribeUnicast(f func(head *packet.Head, body []byte)) error
 		for _, rr := range pack.List {
 			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
-		mlog.Trace(-1, "[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
+		mlog.Tracef("[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
 		f(pack.Head, pack.Body)
 	})
 }
@@ -86,7 +86,7 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 		if pack.Head != nil {
 			pack.Head.Reply = msg.Reply
 		}
-		mlog.Trace(-1, "[Nats] 接收同步消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
+		mlog.Tracef("[Nats] 接收同步消息：head:%v, body:%d, error:%v, router:%v", pack.Head, len(msg.Body), err, pack.List)
 		if err != nil {
 			mlog.Error(0, "解析单播数据包错误:%v", err)
 			return
@@ -95,7 +95,7 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 		for _, rr := range pack.List {
 			framework.GetOrNewRouter(rr.GetIdType(), rr.GetId()).SetRouter(rr.List...)
 		}
-		mlog.Trace(-1, "[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
+		mlog.Tracef("[router] 玩家%d路由表%v", pack.Head.Id, pack.List)
 		f(pack.Head, pack.Body)
 	})
 }
@@ -103,7 +103,7 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 // 发送广播
 func (d *Service) Broadcast(pack *packet.Packet) error {
 	buf, err := proto.Marshal(pack)
-	mlog.Trace(-1, "[Nats] 发送广播消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
+	mlog.Tracef("[Nats] 发送广播消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (d *Service) Broadcast(pack *packet.Packet) error {
 // 发送请求
 func (d *Service) Send(pack *packet.Packet) error {
 	buf, err := proto.Marshal(pack)
-	mlog.Trace(-1, "[Nats] 发送单播消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
+	mlog.Tracef("[Nats] 发送单播消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (d *Service) Send(pack *packet.Packet) error {
 // 同步请求
 func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
 	buf, err := proto.Marshal(pack)
-	mlog.Trace(-1, "[Nats] 发送同步消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
+	mlog.Tracef("[Nats] 发送同步消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
 	if err != nil {
 		return err
 	}
@@ -133,6 +133,6 @@ func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
 // 同步应答
 func (d *Service) Response(head *packet.Head, body []byte) error {
 	err := d.conn.Response(head.Reply, body)
-	mlog.Trace(-1, "[Nats] 发送同步回复：head:%v, body:%d, error:%v", head, len(body), err)
+	mlog.Tracef("[Nats] 发送同步回复：head:%v, body:%d, error:%v", head, len(body), err)
 	return err
 }

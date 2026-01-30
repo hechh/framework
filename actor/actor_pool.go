@@ -2,7 +2,6 @@ package actor
 
 import (
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/hechh/framework"
@@ -74,9 +73,7 @@ func (d *ActorPool) SendMsg(ctx framework.IContext, args ...any) error {
 			err = uerror.Err(-1, "ActorPool已经停止服务")
 		}
 	}
-	if !strings.HasSuffix(ctx.GetActorFunc(), "OnTick") {
-		mlog.Trace(-1, "[actor] ActorPool(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
-	}
+	mlog.Trace(-1, "[actor] ActorPool(%s)本地调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, args)
 	return err
 }
 
@@ -89,8 +86,6 @@ func (d *ActorPool) Send(ctx framework.IContext, body []byte) error {
 			err = uerror.Err(-1, "ActorPool已经停止服务")
 		}
 	}
-	if !strings.HasSuffix(ctx.GetActorFunc(), "OnTick") {
-		mlog.Trace(-1, "[actor] ActorPool(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
-	}
+	mlog.Trace(-1, "[actor] ActorPool(%s)远程调用 head:%v, error:%v, args:%v", ctx.GetActorFunc(), ctx.GetHead(), err, body)
 	return err
 }

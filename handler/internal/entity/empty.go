@@ -2,7 +2,6 @@ package entity
 
 import (
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/hechh/framework"
@@ -31,9 +30,7 @@ func (d *EmptyHandler[Actor]) Call(obj any, ctx framework.IContext, args ...any)
 			if err != nil {
 				mlog.Error(-1, "[result] 调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
 			} else {
-				if !strings.HasSuffix(d.name, "OnTick") {
-					mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
-				}
+				mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
 			}
 		}()
 
@@ -50,9 +47,7 @@ func (d *EmptyHandler[Actor]) Rpc(obj any, ctx framework.IContext, body []byte) 
 			if err != nil {
 				mlog.Error(-1, "[result] 调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
 			} else {
-				if !strings.HasSuffix(d.name, "OnTick") {
-					mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
-				}
+				mlog.Trace(-1, "[result] 调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
 			}
 		}()
 

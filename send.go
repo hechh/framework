@@ -3,7 +3,6 @@ package framework
 import (
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/uerror"
-	"github.com/hechh/library/util"
 )
 
 func Copy(head *packet.Head) *packet.Head {
@@ -92,7 +91,9 @@ func Cmd(cmd IEnum, aid uint64, args ...any) PacketFunc {
 
 func Rsp(en ISerialize, cmd IEnum, args ...any) PacketFunc {
 	return func(d *packet.Packet) error {
-		d.Head.Cmd = util.Or(cmd != nil, cmd.Integer(), d.Head.Cmd)
+		if cmd != nil {
+			d.Head.Cmd = cmd.Integer()
+		}
 		if len(d.Head.Reply) <= 0 {
 			if d.Head.Back != nil {
 				d.Head.DstNodeType = d.Head.Back.NodeType

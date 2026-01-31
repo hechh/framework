@@ -104,6 +104,7 @@ func Rsp(en ISerialize, cmd IEnum, args ...any) PacketFunc {
 			} else {
 				d.Head.DstNodeType = NodeTypeGate
 				d.Head.ActorFunc = 0
+				d.Head.ActorId = 0
 			}
 		}
 		if buf, err := en.Marshal(args...); err != nil {

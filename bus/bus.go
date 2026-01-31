@@ -116,10 +116,7 @@ func Request(msg any, cb func([]byte) error, funcs ...framework.PacketFunc) (err
 			return
 		}
 	}
-	if err = serviceObj.Request(pack, cb); err == nil {
-		addDepth(msg)
-	}
-	return
+	return serviceObj.Request(pack, cb)
 }
 
 func Response(head *packet.Head, buf []byte) error {
@@ -128,18 +125,21 @@ func Response(head *packet.Head, buf []byte) error {
 
 func SendResponse(msg any, funcs ...framework.PacketFunc) (err error) {
 	pack := to(msg, packet.SendType_POINT)
+	defer mlog.Tracef("[Nats] 自动回复：head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
 			return
 		}
 	}
 	if len(pack.Head.Reply) > 0 {
-		return Response(pack.Head, pack.Body)
+		err = Response(pack.Head, pack.Body)
+		return
 	}
 	if err = dispatcher(pack); err != nil {
 		return
 	}
-	return serviceObj.Send(pack)
+	err = serviceObj.Send(pack)
+	return
 }
 
 func dispatcher(d *packet.Packet) error {

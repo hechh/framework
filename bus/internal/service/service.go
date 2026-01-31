@@ -104,8 +104,9 @@ func (d *Service) SubscribeReply(f func(head *packet.Head, body []byte)) error {
 
 // 发送广播
 func (d *Service) Broadcast(pack *packet.Packet) error {
+	pack.Head.SrcNodeType = framework.GetSelfType()
+	pack.Head.SrcNodeId = framework.GetSelfId()
 	buf, err := proto.Marshal(pack)
-	mlog.Tracef("[Nats] 发送广播消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
 	if err != nil {
 		return err
 	}
@@ -114,8 +115,9 @@ func (d *Service) Broadcast(pack *packet.Packet) error {
 
 // 发送请求
 func (d *Service) Send(pack *packet.Packet) error {
+	pack.Head.SrcNodeType = framework.GetSelfType()
+	pack.Head.SrcNodeId = framework.GetSelfId()
 	buf, err := proto.Marshal(pack)
-	mlog.Tracef("[Nats] 发送单播消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
 	if err != nil {
 		return err
 	}
@@ -124,8 +126,9 @@ func (d *Service) Send(pack *packet.Packet) error {
 
 // 同步请求
 func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
+	pack.Head.SrcNodeType = framework.GetSelfType()
+	pack.Head.SrcNodeId = framework.GetSelfId()
 	buf, err := proto.Marshal(pack)
-	mlog.Tracef("[Nats] 发送同步消息：head:%v, body:%d, error:%v", pack.Head, len(buf), err)
 	if err != nil {
 		return err
 	}
@@ -135,6 +138,5 @@ func (d *Service) Request(pack *packet.Packet, cb func([]byte) error) error {
 // 同步应答
 func (d *Service) Response(head *packet.Head, body []byte) error {
 	err := d.conn.Response(head.Reply, body)
-	mlog.Tracef("[Nats] 发送同步回复：head:%v, body:%d, error:%v", head, len(body), err)
 	return err
 }

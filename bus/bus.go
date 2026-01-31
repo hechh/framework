@@ -7,6 +7,7 @@ import (
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/uerror"
 	"github.com/hechh/library/yaml"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -45,6 +46,8 @@ func to(msg any, sendType packet.SendType) (pack *packet.Packet) {
 		pack = &packet.Packet{Head: vv}
 	case framework.IContext:
 		pack = &packet.Packet{Head: vv.GetHead()}
+	case uint64:
+		pack = &packet.Packet{Head: &packet.Head{Id: vv}}
 	case nil:
 		pack = &packet.Packet{Head: &packet.Head{}}
 	}
@@ -101,23 +104,23 @@ func Response(head *packet.Head, buf []byte) error {
 	return serviceObj.Response(head, buf)
 }
 
-func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) error {
-	pack := to(&packet.Head{Cmd: cmd.Integer()}, packet.SendType_POINT)
-	for _, f := range funcs {
-		if err := f(pack); err != nil {
-			return err
-		}
+func Notify(cmd framework.IEnum, data proto.Message, uids ...uint64) error {
+	buf, err := proto.Marshal(data)
+	if err != nil {
+		return err
+	}
+	pack := &packet.Packet{
+		Head: &packet.Head{Cmd: cmd.Integer(), DstNodeType: framework.NodeTypeGate},
+		Body: buf,
 	}
 	for _, uid := range uids {
-		pack.Head.IdType = 0
 		pack.Head.Id = uid
-		pack.List = pack.List[:0]
-		if err := dispatcher(pack); err != nil {
-			mlog.Errorf("[notify] 推送路由失败：%v, error:%v", pack, err)
-			continue
+		err := dispatcher(pack)
+		if err == nil {
+			err = serviceObj.Send(pack)
 		}
-		if reterr := serviceObj.Send(pack); reterr != nil {
-			mlog.Errorf("[notify] 推送消息失败：%v, error:%v", pack, reterr)
+		if err != nil {
+			mlog.Errorf("[notify] uid:%v, error:%v, cmd:%d, event:%v", uid, err, cmd.Integer(), data)
 		}
 	}
 	return nil
@@ -125,7 +128,7 @@ func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) e
 
 func SendResponse(msg any, funcs ...framework.PacketFunc) (err error) {
 	pack := to(msg, packet.SendType_POINT)
-	defer mlog.Tracef("[Nats] 自动回复：head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
+	defer mlog.Tracef("[SendResponse] 自动回复：head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
 			return

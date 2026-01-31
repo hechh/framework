@@ -86,6 +86,21 @@ func Send(msg any, funcs ...framework.PacketFunc) (err error) {
 	return
 }
 
+func Request(msg any, cb func([]byte) error, funcs ...framework.PacketFunc) (err error) {
+	pack := to(msg, packet.SendType_POINT)
+	funcs = append(funcs, dispatcher)
+	for _, f := range funcs {
+		if err = f(pack); err != nil {
+			return
+		}
+	}
+	return serviceObj.Request(pack, cb)
+}
+
+func Response(head *packet.Head, buf []byte) error {
+	return serviceObj.Response(head, buf)
+}
+
 func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) error {
 	pack := to(&packet.Head{Cmd: cmd.Integer()}, packet.SendType_POINT)
 	for _, f := range funcs {
@@ -108,21 +123,6 @@ func Notify(uids []uint64, cmd framework.IEnum, funcs ...framework.PacketFunc) e
 	return nil
 }
 
-func Request(msg any, cb func([]byte) error, funcs ...framework.PacketFunc) (err error) {
-	pack := to(msg, packet.SendType_POINT)
-	funcs = append(funcs, dispatcher)
-	for _, f := range funcs {
-		if err = f(pack); err != nil {
-			return
-		}
-	}
-	return serviceObj.Request(pack, cb)
-}
-
-func Response(head *packet.Head, buf []byte) error {
-	return serviceObj.Response(head, buf)
-}
-
 func SendResponse(msg any, funcs ...framework.PacketFunc) (err error) {
 	pack := to(msg, packet.SendType_POINT)
 	defer mlog.Tracef("[Nats] 自动回复：head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
@@ -143,7 +143,6 @@ func SendResponse(msg any, funcs ...framework.PacketFunc) (err error) {
 }
 
 func dispatcher(d *packet.Packet) error {
-	// 集群
 	cls := framework.GetCluster(d.Head.DstNodeType)
 	if cls == nil || cls.Size() <= 0 {
 		return uerror.Err(-1, "集群(%d)不支持", d.Head.DstNodeType)

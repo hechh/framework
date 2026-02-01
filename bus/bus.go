@@ -55,24 +55,14 @@ func to(msg any, sendType packet.SendType) (pack *packet.Packet) {
 	return
 }
 
-func addDepth(msg any) {
-	switch vv := msg.(type) {
-	case framework.IContext:
-		vv.AddDepth(1)
-	}
-}
-
-func Broadcast(msg any, funcs ...framework.PacketFunc) (err error) {
+func Broadcast(msg any, funcs ...framework.PacketFunc) error {
 	pack := to(msg, packet.SendType_BROADCAST)
 	for _, f := range funcs {
-		if err = f(pack); err != nil {
-			return
+		if err := f(pack); err != nil {
+			return err
 		}
 	}
-	if err = serviceObj.Broadcast(pack); err == nil {
-		addDepth(msg)
-	}
-	return
+	return serviceObj.Broadcast(pack)
 }
 
 func Send(msg any, funcs ...framework.PacketFunc) (err error) {
@@ -84,7 +74,10 @@ func Send(msg any, funcs ...framework.PacketFunc) (err error) {
 		}
 	}
 	if err = serviceObj.Send(pack); err == nil {
-		addDepth(msg)
+		switch vv := msg.(type) {
+		case framework.IContext:
+			vv.AddDepth(1)
+		}
 	}
 	return
 }

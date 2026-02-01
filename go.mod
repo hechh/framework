@@ -3,7 +3,6 @@ module github.com/hechh/framework
 go 1.24.2
 
 require (
-	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.3
 	github.com/hechh/library v0.0.2
 	github.com/nats-io/nats.go v1.48.0
@@ -17,6 +16,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.5 // indirect
 	github.com/klauspost/compress v1.18.3 // indirect
 	github.com/nats-io/nkeys v0.4.12 // indirect

@@ -1,23 +1,33 @@
 package entity
 
 import (
-	"reflect"
-
 	"github.com/hechh/framework"
 )
 
 type Rpc[T any, U any] struct {
-	*Base
+	framework.ISerialize
+	name     string
+	crc32    uint32
 	nodeType uint32
 	cmd      uint32
 }
 
-func NewRpcHandler[T any, U any](en framework.ISerialize, nodeType uint32, cmd uint32, name string) *Rpc[T, U] {
+func NewRpc[T any, U any](en framework.ISerialize, nodeType uint32, cmd uint32, name string) *Rpc[T, U] {
 	return &Rpc[T, U]{
-		Base:     NewBase(en, name, reflect.ValueOf(nil)),
-		nodeType: nodeType,
-		cmd:      cmd,
+		ISerialize: en,
+		name:       name,
+		crc32:      framework.GetCrc32(name),
+		nodeType:   nodeType,
+		cmd:        cmd,
 	}
+}
+
+func (d *Rpc[T, U]) GetName() string {
+	return d.name
+}
+
+func (d *Rpc[T, U]) GetCrc32() uint32 {
+	return d.crc32
 }
 
 func (d *Rpc[T, U]) GetNodeType() uint32 {

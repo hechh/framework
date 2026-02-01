@@ -35,30 +35,25 @@ func GetRpc(nodeType uint32, id any) framework.IRpc {
 }
 
 func RegisterRpc[T any, U any](e framework.ISerialize, nodeType, cmd framework.IEnum, name string) {
-	serviceObj.RegisterRpc(entity.NewRpcHandler[T, U](e, nodeType.Integer(), cmd.Integer(), name))
+	serviceObj.RegisterRpc(entity.NewRpc[T, U](e, nodeType.Integer(), cmd.Integer(), name))
 }
 
 func Register0[Actor any](e framework.ISerialize, f framework.EmptyFunc[Actor]) {
-	serviceObj.Register(entity.NewV0Handler(e, f))
+	serviceObj.Register(entity.NewEmptyHandler(e, f))
 }
 
-func RegisterP1[Actor any, V1 any](e framework.ISerialize, f framework.P1Func[Actor, V1]) {
+func RegisterP1[Actor any, N any](e framework.ISerialize, f framework.P1Func[Actor, N]) {
 	serviceObj.Register(entity.NewP1Handler(e, f))
 }
 
-func RegisterP2[Actor any, V1 any, V2 any](e framework.ISerialize, f framework.P2Func[Actor, V1, V2]) {
-	switch e.(type) {
-	case *framework.ProtoSerialize:
-		serviceObj.Register(entity.NewCmdHandler(e, f))
-	default:
-		serviceObj.Register(entity.NewP2Handler(e, f))
-	}
+func RegisterP2[Actor any, N any, R any](e framework.ISerialize, f framework.P2Func[Actor, N, R]) {
+	serviceObj.Register(entity.NewP2Handler(e, f))
 }
 
-func RegisterV1[Actor any, V1 any](e framework.ISerialize, f framework.V1Func[Actor, V1]) {
+func RegisterV1[Actor any, N any](e framework.ISerialize, f framework.V1Func[Actor, N]) {
 	serviceObj.Register(entity.NewV1Handler(e, f))
 }
 
-func RegisterV2[Actor any, V1 any, V2 any](e framework.ISerialize, f framework.V2Func[Actor, V1, V2]) {
+func RegisterV2[Actor any, N any, R any](e framework.ISerialize, f framework.V2Func[Actor, N, R]) {
 	serviceObj.Register(entity.NewV2Handler(e, f))
 }

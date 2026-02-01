@@ -126,23 +126,20 @@ func Notify(cmd framework.IEnum, data proto.Message, uids ...uint64) error {
 	return nil
 }
 
-func SendResponse(msg any, funcs ...framework.PacketFunc) (err error) {
+func SendResponse(msg any, funcs ...framework.PacketFunc) error {
 	pack := to(msg, packet.SendType_POINT)
-	defer mlog.Tracef("[SendResponse] 自动回复：head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
 	for _, f := range funcs {
-		if err = f(pack); err != nil {
-			return
+		if err := f(pack); err != nil {
+			return err
 		}
 	}
 	if len(pack.Head.Reply) > 0 {
-		err = Response(pack.Head, pack.Body)
-		return
+		return Response(pack.Head, pack.Body)
 	}
-	if err = dispatcher(pack); err != nil {
-		return
+	if err := dispatcher(pack); err != nil {
+		return err
 	}
-	err = serviceObj.Send(pack)
-	return
+	return serviceObj.Send(pack)
 }
 
 func dispatcher(d *packet.Packet) error {

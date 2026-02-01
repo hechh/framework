@@ -8,48 +8,43 @@ import (
 )
 
 type EmptyHandler[Actor any] struct {
-	*Base
 	framework.ISerialize
-	method framework.EmptyFunc[Actor]
+	name string
+	id   uint32
+	fun  framework.EmptyFunc[Actor]
 }
 
-func NewV0Handler[Actor any](en framework.ISerialize, f framework.EmptyFunc[Actor]) *EmptyHandler[Actor] {
+func NewEmptyHandler[Actor any](en framework.ISerialize, f framework.EmptyFunc[Actor]) *EmptyHandler[Actor] {
+	name := framework.ParseActorFunc(reflect.ValueOf(f))
 	return &EmptyHandler[Actor]{
-		Base:   NewBase(en, "", reflect.ValueOf(f)),
-		method: f,
+		ISerialize: en,
+		name:       name,
+		id:         framework.GetCrc32(name),
+		fun:        f,
 	}
+}
+
+func (d *EmptyHandler[Actor]) GetName() string {
+	return d.name
+}
+
+func (d *EmptyHandler[Actor]) GetCrc32() uint32 {
+	return d.id
 }
 
 func (d *EmptyHandler[Actor]) Call(obj any, ctx framework.IContext, args ...any) func() {
 	return func() {
-		var err error
 		startTime := time.Now().UnixMilli()
-		defer func() {
-			endTime := time.Now().UnixMilli()
-			if err != nil {
-				ctx.Errorf("[result] 调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
-			} else {
-				ctx.Tracef("[result] 调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
-			}
-		}()
-
-		err = d.method(obj.(*Actor), ctx)
+		err := d.fun(obj.(*Actor), ctx)
+		endTime := time.Now().UnixMilli()
+		if err != nil {
+			ctx.Errorf("[%s] %dms, error:%v", d.GetName(), endTime-startTime, err)
+		} else {
+			ctx.Tracef("[%s] %dms", d.GetName(), endTime-startTime)
+		}
 	}
 }
 
 func (d *EmptyHandler[Actor]) Rpc(obj any, ctx framework.IContext, body []byte) func() {
-	return func() {
-		var err error
-		startTime := time.Now().UnixMilli()
-		defer func() {
-			endTime := time.Now().UnixMilli()
-			if err != nil {
-				ctx.Errorf("[result] 调用%s耗时%d毫秒, error:%v, head:%v", d.GetName(), endTime-startTime, err, ctx.GetHead())
-			} else {
-				ctx.Tracef("[result] 调用%s耗时%d毫秒, head:%v", d.GetName(), endTime-startTime, ctx.GetHead())
-			}
-		}()
-
-		err = d.method(obj.(*Actor), ctx)
-	}
+	return d.Call(obj, ctx)
 }

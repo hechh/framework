@@ -103,6 +103,7 @@ func (d *Websocket) Stop(id uint32) {
 	defer d.mutex.RUnlock()
 	if item, ok := d.sockets[id]; ok {
 		item.Close()
+		mlog.Tracef("[socket] 关闭链接%d", id)
 	}
 }
 

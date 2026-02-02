@@ -34,7 +34,6 @@ func Send(pac *packet.Packet) error {
 
 func Stop(id uint32) {
 	serviceObj.Stop(id)
-	mlog.Tracef("[socket] 关闭链接%d", id)
 }
 
 func ConnWrapper(cc *websocket.Conn) net.Conn {

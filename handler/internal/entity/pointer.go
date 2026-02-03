@@ -86,8 +86,8 @@ type P2Handler[Actor any, N any, R any] struct {
 
 func NewP2Handler[Actor any, N any, R any](en framework.ISerialize, f framework.P2Func[Actor, N, R]) *P2Handler[Actor, N, R] {
 	name := framework.ParseActorFunc(reflect.ValueOf(f))
-	nType := reflect.TypeOf((*N)(nil)).Elem()
-	rType := reflect.TypeOf((*R)(nil)).Elem()
+	nType := reflect.TypeOf((*N)(nil))
+	rType := reflect.TypeOf((*R)(nil))
 	return &P2Handler[Actor, N, R]{
 		ISerialize: en,
 		name:       name,

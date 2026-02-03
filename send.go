@@ -52,12 +52,13 @@ func Callback(name string, aid uint64) PacketFunc {
 	}
 }
 
-func Rpc(nodeType IEnum, name string, aid uint64, args ...any) PacketFunc {
+func Cmd(cmd IEnum, aid uint64, args ...any) PacketFunc {
 	return func(d *packet.Packet) error {
-		rpc := GetRpc(nodeType.Integer(), name)
+		rpc := GetCmdRpc(cmd.Integer())
 		if rpc == nil {
-			return uerror.New(-1, "远程接口(%s)未注册", name)
+			return uerror.New(-1, "Cmd(%d)未注册", cmd)
 		}
+		d.Head.Cmd = cmd.Integer()
 		d.Head.DstNodeType = rpc.GetNodeType()
 		d.Head.ActorFunc = rpc.GetCrc32()
 		d.Head.ActorId = aid
@@ -70,13 +71,12 @@ func Rpc(nodeType IEnum, name string, aid uint64, args ...any) PacketFunc {
 	}
 }
 
-func Cmd(cmd IEnum, aid uint64, args ...any) PacketFunc {
+func Rpc(nodeType IEnum, name string, aid uint64, args ...any) PacketFunc {
 	return func(d *packet.Packet) error {
-		rpc := GetCmdRpc(cmd.Integer())
+		rpc := GetRpc(nodeType.Integer(), name)
 		if rpc == nil {
-			return uerror.New(-1, "Cmd(%d)未注册", cmd)
+			return uerror.New(-1, "远程接口(%s)未注册", name)
 		}
-		d.Head.Cmd = cmd.Integer()
 		d.Head.DstNodeType = rpc.GetNodeType()
 		d.Head.ActorFunc = rpc.GetCrc32()
 		d.Head.ActorId = aid

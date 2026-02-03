@@ -55,18 +55,21 @@ func to(msg any, sendType packet.SendType) (pack *packet.Packet) {
 	return
 }
 
-func Broadcast(msg any, funcs ...framework.PacketFunc) error {
+func Broadcast(msg any, funcs ...framework.PacketFunc) (err error) {
 	pack := to(msg, packet.SendType_BROADCAST)
+	defer mlog.Tracef("[Broadcast] head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
 	for _, f := range funcs {
 		if err := f(pack); err != nil {
 			return err
 		}
 	}
-	return serviceObj.Broadcast(pack)
+	err = serviceObj.Broadcast(pack)
+	return
 }
 
 func Send(msg any, funcs ...framework.PacketFunc) (err error) {
 	pack := to(msg, packet.SendType_POINT)
+	defer mlog.Tracef("[Send] head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
 	funcs = append(funcs, dispatcher)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
@@ -84,13 +87,15 @@ func Send(msg any, funcs ...framework.PacketFunc) (err error) {
 
 func Request(msg any, cb func([]byte) error, funcs ...framework.PacketFunc) (err error) {
 	pack := to(msg, packet.SendType_POINT)
+	defer mlog.Tracef("[Request] head:%v, body:%d, error:%v", pack.Head, len(pack.Body), err)
 	funcs = append(funcs, dispatcher)
 	for _, f := range funcs {
 		if err = f(pack); err != nil {
 			return
 		}
 	}
-	return serviceObj.Request(pack, cb)
+	err = serviceObj.Request(pack, cb)
+	return
 }
 
 func Response(head *packet.Head, buf []byte) error {

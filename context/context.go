@@ -1,7 +1,6 @@
 package context
 
 import (
-	"fmt"
 	"strings"
 	"sync/atomic"
 
@@ -83,17 +82,20 @@ func (d *Context) CompareAndSwapDepth(old, new int32) bool {
 }
 
 func (d *Context) getformat(str string) string {
-	return fmt.Sprintf("[%s] src(%d:%d)|dst(%d:%d)|id(%d)|cmd(%d)|seq(%d)|actorId(%d) %s",
-		d.actorFunc,
-		d.SrcNodeType,
-		d.SrcNodeId,
-		d.DstNodeType,
-		d.DstNodeId,
-		d.Id,
-		d.Cmd,
-		d.Seq,
-		d.ActorId,
-		str)
+	return str
+	/*
+		return fmt.Sprintf("[%s] src(%d:%d)|dst(%d:%d)|id(%d)|cmd(%d)|seq(%d)|actorId(%d) %s",
+			d.actorFunc,
+			d.SrcNodeType,
+			d.SrcNodeId,
+			d.DstNodeType,
+			d.DstNodeId,
+			d.Id,
+			d.Cmd,
+			d.Seq,
+			d.ActorId,
+			str)
+	*/
 }
 
 func (d *Context) Tracef(format string, args ...any) {

@@ -22,6 +22,7 @@ type Collector struct {
 }
 
 func Init() {
+	obj.Add(1)
 	go run()
 }
 

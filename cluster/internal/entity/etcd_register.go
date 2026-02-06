@@ -15,11 +15,6 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-const (
-	ETCD_GRANT_TTL       = 30 // 租约TTL（秒）
-	ETCD_UPDATE_INTERVAL = 60 // 值更新间隔（秒）
-)
-
 type EtcdRegister struct {
 	sync.WaitGroup
 	client *clientv3.Client

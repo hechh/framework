@@ -2,10 +2,8 @@ package router
 
 import (
 	"sync"
-	"time"
 
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/datetime"
 	"github.com/hechh/library/base/tuple"
 	"github.com/hechh/library/mlog"
 )
@@ -36,44 +34,11 @@ func (d *Router) Init(cfg *packet.Node, types []uint32) error {
 	for _, t := range types {
 		d.nodeTypes[t] = struct{}{}
 	}
-	go d.run()
 	return nil
 }
 
 func (d *Router) Close() {
 	close(d.exitCh)
-}
-
-func (d *Router) run() {
-	tt := time.NewTicker(300 * time.Second)
-	defer tt.Stop()
-	for {
-		select {
-		case <-d.exitCh:
-			return
-		case <-tt.C:
-			if expired := d.GetExpired(); len(expired) > 0 {
-				d.mutex.Lock()
-				for _, item := range expired {
-					delete(d.data, tuple.T2(item.idType, item.id))
-					mlog.Errorf("删除过期缓存路由: %v", item.ToRouteInfo())
-				}
-				d.mutex.Unlock()
-			}
-		}
-	}
-}
-
-func (d *Router) GetExpired() (expired []*Entity) {
-	d.mutex.RLock()
-	defer d.mutex.RUnlock()
-	now := datetime.NowUnix()
-	for _, item := range d.data {
-		if now-item.GetAccessTime() >= DEFAULT_ROUTER_TTL {
-			expired = append(expired, item)
-		}
-	}
-	return
 }
 
 func (d *Router) Get(idType uint32, id uint64) *Entity {
@@ -112,9 +77,10 @@ func (d *Router) GetOrNew(idType uint32, id uint64) *Entity {
 func (d *Router) Remove(idType uint32, id uint64) {
 	key := tuple.T2(idType, id)
 	d.mutex.Lock()
-	defer d.mutex.Unlock()
-	if elem, ok := d.data[key]; ok {
+	elem, ok := d.data[key]
+	if ok {
 		delete(d.data, key)
 		mlog.Tracef("删除缓存路由: %v", elem.ToRouteInfo())
 	}
+	d.mutex.Unlock()
 }

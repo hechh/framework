@@ -13,6 +13,7 @@ type Entity struct {
 	nodes      map[uint32]*atomic.Uint32 // 节点类型到路由ID的映射
 	change     atomic.Uint32             // 路由映射是否变更
 	accessTime atomic.Int64              // 最后访问时间
+	ttlMs      int64                     // 有效时长
 }
 
 // NewEntity 创建路由实体
@@ -29,24 +30,23 @@ func NewEntity(idType uint32, id uint64, nodeTypes map[uint32]struct{}) *Entity 
 	return ret
 }
 
-// GetAccessTime 获取最后访问时间
-func (d *Entity) GetAccessTime() int64 {
-	return d.accessTime.Load()
+// 实现定时器的 Iask 接口
+func (d *Entity) IsEnable() bool {
+	return true
 }
 
-// UpdateAccessTime 更新最后访问时间
-func (d *Entity) UpdateAccessTime() {
-	d.accessTime.Store(datetime.NowUnix())
+func (d *Entity) GetTTL() int64 { return d.ttlMs }
+
+func (d *Entity) GetExpire() int64 {
+	return d.accessTime.Load() + d.ttlMs
 }
 
-// IsChange 是否变更
-func (d *Entity) IsChange() bool {
-	return d.change.Load() > 0
+func (d *Entity) Refresh(now int64) {
+	d.accessTime.Store(now)
 }
 
-// Reset 重置变更映射
-func (d *Entity) Reset() {
-	d.change.Store(0)
+func (d *Entity) Call() {
+	// todo：删除路由
 }
 
 // Get 获取节点路由ID

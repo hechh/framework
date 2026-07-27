@@ -1,0 +1,133 @@
+mysql:
+  shards_size: 500000
+  globals:
+    - db_name: global
+      user: root
+      password: 123456
+      ip: localhost
+      port: 13306
+      prefix: global
+  shards:
+    - shards_id: 1
+      db_name: shards_1
+      user: root
+      password: 123456
+      ip: localhost
+      port: 13306
+      prefix: shards_1
+
+redis:
+  shards_size: 100000
+  globals:
+    - db_name: global
+      db: 0
+      user: default
+      password: 123456
+      ip: localhost
+      port: 16371
+      prefix: global
+    - db_name: player_cache
+      db: 0
+      user: default
+      password: 123456
+      ip: localhost
+      port: 16372
+      prefix: player_cache
+  shards:
+    - shards_id: 1
+      db: 0
+      db_name: shards_1
+      user: default
+      password: 123456
+      ip: localhost
+      port: 16371
+      prefix: shards_1
+    - shards_id: 2
+      db: 0
+      db_name: shards_2
+      user: default
+      password: 123456
+      ip: localhost
+      port: 16372
+      prefix: shards_2
+
+http_cli:
+  timeout: 5
+  max_idle_conns: 100
+  max_idle_conns_per_host: 10
+  idle_conn_timeout: 30
+
+timer:
+  size: 5
+  min_period_bit_number: 5
+
+msgbus:
+  nats:
+    prefix: richgame/local
+    endpoints: localhost:14222,localhost:14223,localhost:14224
+    max_reconnect: 10
+    reconnect_wait: 2
+    ping_interval: 5
+    drain_timeout: 5
+
+cluster:
+  etcd:
+    prefix: richgame/local
+    endpoints:
+      - http://localhost:12379
+    keep_alive: 12
+
+fwatcher:
+  data_path: ./data
+  ext: .conf
+  xlsx_path: ./xlsx
+  etcd:
+    prefix_topic: configurecenter/global
+    endpoints:
+      - http://localhost:12379
+
+common:
+  env: develop
+  is_open_pprof: true
+  aes_secret: 1234567890123456
+  jwt_secret: gH7%kL9!qW2#sD4*FpV6&nZ8@xJ0^yT1
+  uid_mod_value: 1000000000
+  pay_port: 22345
+  geo_db_path: "./mmdb/GeoLite2-City.mmdb"
+
+logger:
+  mode: develop
+  format: line
+  path: ./log
+  level: debug
+
+nodes:
+  accountsrv:
+    1:
+      ip: localhost
+      port: 11001
+  gatesrv:
+    1:
+      ip: localhost
+      port: 12001
+  gamesrv:
+    1:
+      ip: localhost
+      port: 13001
+  dbsrv:
+    1:
+      ip: localhost
+      port: 14001
+  centersrv:
+    1:
+      ip: localhost
+      port: 15001
+  adminsrv:
+    1:
+      ip: localhost
+      port: 16001
+  gmsrv:
+    1:
+      ip: localhost
+      port: 17001
+      

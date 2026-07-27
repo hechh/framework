@@ -7,10 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hechh/framework/packet"
+	"github.com/hechh/framework/core/cluster"
 	"github.com/hechh/library/base/safe"
 	"github.com/hechh/library/mlog"
-
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -26,10 +25,9 @@ func NewEtcd() *Etcd {
 	return &Etcd{exitCh: make(chan struct{})}
 }
 
-func (e *Etcd) Init(cfg *packet.DiscoveryConfig) error {
-	e.prefix = cfg.Etcd.PrefixTopic
+func (e *Etcd) Init(cfg *cluster.Config) error {
+	e.prefix = cfg.Etcd.Prefix
 	e.ttl = cfg.Etcd.KeepAlive
-
 	var err error
 	return safe.Retry(3, 3*time.Second, func() error {
 		e.client, err = clientv3.New(clientv3.Config{

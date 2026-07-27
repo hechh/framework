@@ -24,21 +24,36 @@ func Total() int {
 
 func Get(nodeType, nodeId uint32) *packet.Node {
 	if object != nil {
-		return object.Get(nodeType, nodeId)
+		if node := object.Get(nodeType, nodeId); node != nil {
+			if pn, ok := node.(*packet.Node); ok {
+				return pn
+			}
+		}
 	}
 	return nil
 }
 
 func Gets(nodeType uint32) []*packet.Node {
 	if object != nil {
-		return object.Gets(nodeType)
+		nodes := object.Gets(nodeType)
+		result := make([]*packet.Node, 0, len(nodes))
+		for _, n := range nodes {
+			if pn, ok := n.(*packet.Node); ok {
+				result = append(result, pn)
+			}
+		}
+		return result
 	}
 	return nil
 }
 
 func HashRoute(nodeType uint32, seed uint64) *packet.Node {
 	if object != nil {
-		return object.Route(nodeType, seed)
+		if node := object.Route(nodeType, seed); node != nil {
+			if pn, ok := node.(*packet.Node); ok {
+				return pn
+			}
+		}
 	}
 	return nil
 }

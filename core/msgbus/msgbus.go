@@ -2,39 +2,63 @@ package msgbus
 
 import (
 	"fmt"
+
 	"github.com/hechh/framework/core/msgbus/internal/base"
-	"github.com/hechh/framework/core/msgbus/internal/domain"
 	"github.com/hechh/framework/packet"
-
 	"github.com/hechh/library/mlog"
-
 	"google.golang.org/protobuf/proto"
 )
 
+type NatsConfig struct {
+	Prefix        string `yaml:"prefix,omitempty"`
+	Endpoints     string `yaml:"endpoints,omitempty"`
+	MaxReconnect  int32  `yaml:"max_reconnect,omitempty"`
+	ReconnectWait int64  `yaml:"reconnect_wait,omitempty"`
+	PingInterval  int64  `yaml:"ping_interval,omitempty"`
+	DrainTimeout  int64  `yaml:"drain_timeout,omitempty"`
+}
+
+type Config struct {
+	Nats *NatsConfig `yaml:"nats,omitempty"`
+}
+
+type IMessage interface {
+	Init(*Config) error                                             // 初始化
+	Close()                                                         // 关闭消息队列
+	Subscribe(topic string, handle func(*packet.Message)) error     // 读取消息
+	Publish(topic string, body []byte) error                        // 发布消息到指定主题
+	Request(topic string, body []byte, cb func([]byte) error) error // 发送同步消息
+	Response(topic string, body []byte) error                       // 回复同步消息
+}
+
 type MsgBus struct {
-	adapter       domain.IMessage
-	nodeCfg       *packet.NodeConfig
+	adapter       IMessage
+	cfg           *Config
+	nodeType      uint32
+	nodeId        uint32
 	selfPoint     string // 当前节点单播主题
 	selfBroadcast string // 当前节点广播主题
 	selfReply     string // 当前节点回复主题
 }
 
-func NewMsgBus(msg domain.IMessage) *MsgBus {
+func NewMsgBus(msg IMessage) *MsgBus {
 	return &MsgBus{
 		adapter: msg,
 	}
 }
 
-func (d *MsgBus) Init(cfg *packet.Config) error {
-	if err := d.adapter.Init(cfg.MsgQueue); err != nil {
+func (d *MsgBus) Init(cfg *Config, nodeType, nodeId uint32) error {
+	if err := d.adapter.Init(cfg); err != nil {
 		return err
 	}
 
 	// 预计算当前节点主题
-	d.nodeCfg = cfg.Node
-	d.selfPoint = base.BuildSelfPoint(cfg.Node)
-	d.selfBroadcast = base.BuildSelfBroadcast(cfg.Node)
-	d.selfReply = base.BuildSelfReply(cfg.Node)
+	d.cfg = cfg
+	d.nodeType = nodeType
+	d.nodeId = nodeId
+	d.selfPoint = base.BuildPoint(nodeType, nodeId)
+	d.selfBroadcast = base.BuildBroadcast(nodeType)
+	d.selfReply = base.BuildReply(nodeType, nodeId)
 
 	fun := func(msg *packet.Message) {
 		pack := &packet.Packet{}
@@ -43,7 +67,7 @@ func (d *MsgBus) Init(cfg *packet.Config) error {
 			return
 		}
 		pack.Head.Reply = msg.Reply
-		domain.PacketHandler(pack)
+		base.PacketHandler(pack)
 	}
 
 	// 订阅广播主题
@@ -85,8 +109,8 @@ func (d *MsgBus) Publish(topic string, body []byte) error {
 
 // Broadcast 广播消息
 func (d *MsgBus) Broadcast(head *packet.Head, msg []byte, funcs ...func(*packet.Packet) error) error {
-	head.SrcType = d.nodeCfg.Type
-	head.SrcId = d.nodeCfg.Id
+	head.SrcType = d.nodeType
+	head.SrcId = d.nodeId
 	pack := &packet.Packet{
 		Head: head,
 		Body: msg,
@@ -119,8 +143,8 @@ func (d *MsgBus) Response(reply string, body []byte) error {
 
 // Request 发送同步请求
 func (d *MsgBus) Request(head *packet.Head, msg []byte, rsp proto.Message, funcs ...func(*packet.Packet) error) error {
-	head.SrcType = d.nodeCfg.Type
-	head.SrcId = d.nodeCfg.Id
+	head.SrcType = d.nodeType
+	head.SrcId = d.nodeId
 	pack := &packet.Packet{
 		Head: head,
 		Body: msg,
@@ -151,8 +175,8 @@ func (d *MsgBus) Request(head *packet.Head, msg []byte, rsp proto.Message, funcs
 
 // Send 发送点对点消息
 func (d *MsgBus) Send(head *packet.Head, msg []byte, funcs ...func(*packet.Packet) error) error {
-	head.SrcType = d.nodeCfg.Type
-	head.SrcId = d.nodeCfg.Id
+	head.SrcType = d.nodeType
+	head.SrcId = d.nodeId
 	pack := &packet.Packet{
 		Head: head,
 		Body: msg,

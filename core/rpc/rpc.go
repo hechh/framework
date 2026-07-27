@@ -9,9 +9,9 @@ import (
 
 type IRpc interface {
 	GetNodeType() uint32        // 获取节点类型
-	GetCmd() uint32             // 获取命令ID
 	GetActorFuncName() string   // 获取处理函数名称
 	GetActorFunc() uint32       // 获取处理函数唯一ID
+	GetCmd() uint32             // 获取命令ID
 	GetMask() uint32            // 获取屏蔽模式
 	News([]byte) ([]any, error) // 创建请求/响应消息实例
 }

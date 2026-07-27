@@ -41,16 +41,16 @@ func Bind(socketId uint32, uid uint64) bool {
 }
 
 // Unbind 解绑并移除连接（全局便捷方法）
-func Unbind(socketId uint32) {
+func Unbind(socketId uint32, uid uint64) {
 	if object != nil {
-		object.Unbind(socketId)
+		object.Unbind(socketId, uid)
 	}
 }
 
 // SendToClient 发送消息到客户端（全局便捷方法）
-func SendToClient(head *packet.Head, body []byte) error {
+func Send(head *packet.Head, body []byte) error {
 	if object != nil {
-		return object.SendToClient(head, body)
+		return object.Send(head, body)
 	}
 	return fmt.Errorf("Network未初始化")
 }

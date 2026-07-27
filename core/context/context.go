@@ -6,7 +6,8 @@ import (
 
 	"github.com/hechh/framework/common/constant"
 	"github.com/hechh/framework/common/define"
-	"github.com/hechh/framework/middle/fun"
+	"github.com/hechh/framework/common/global"
+	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/templ"
@@ -43,7 +44,7 @@ func NewContext(head *packet.Head, act define.ICache, opts ...func(*packet.Head)
 
 func (c *Context) Destroy() {
 	if c.Head != nil {
-		packet.PutHead(c.Head)
+		global.PutHead(c.Head)
 		c.Head = nil
 	}
 	c.actor = nil
@@ -56,7 +57,7 @@ func (c *Context) ReadOnly() *packet.Head {
 }
 
 func (c *Context) Header(opts ...func(*packet.Head)) *packet.Head {
-	head := packet.GetHead(fun.COPY(c.Head))
+	head := global.GetHead(fun.COPY(c.Head))
 	for _, opt := range opts {
 		opt(head)
 	}
@@ -64,7 +65,7 @@ func (c *Context) Header(opts ...func(*packet.Head)) *packet.Head {
 }
 
 func (c *Context) Clone(opts ...func(*packet.Head)) *packet.Head {
-	head := packet.GetHead(fun.DERIVE(c.Head))
+	head := global.GetHead(fun.DERIVE(c.Head))
 	for _, opt := range opts {
 		opt(head)
 	}

@@ -1,31 +1,47 @@
 package network
 
 import (
-	"fmt"
-
-	"github.com/hechh/framework/core/network/internal/domain"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/timer"
 )
 
-// Network 网络服务
+// IServer 网络服务端接口
+type INetwork interface {
+	Init(*timer.Timer, string) error
+	Close()
+	Bind(uint32, uint64) bool
+	Unbind(uint32, uint64)
+	Send(*packet.Head, []byte) error
+}
+
 type Network struct {
-	domain.IServer // 网络服务器
+	net     INetwork
+	newFunc func() INetwork
 }
 
-// NewNetwork 创建 Network（泛型工厂）
-func NewNetwork[T any](f func() *T) *Network {
-	return &Network{IServer: any(f()).(domain.IServer)}
-}
-
-// Unbind 解绑并移除连接
-func (d *Network) Unbind(socketId uint32) {
-	d.Del(socketId)
-}
-
-// SendToClient 发送消息到客户端
-func (d *Network) SendToClient(head *packet.Head, body []byte) error {
-	if client := d.Get(head.Uid); client != nil {
-		return client.Send(head, body)
+func NewNetwork[T INetwork](f func() T) *Network {
+	return &Network{
+		newFunc: func() INetwork { return f() },
 	}
-	return fmt.Errorf("连接不存在, socketId:%d, cmd:%d", head.SocketId, head.Cmd)
+}
+
+func (d *Network) Init(t *timer.Timer, addr string) error {
+	d.net = d.newFunc()
+	return d.net.Init(t, addr)
+}
+
+func (d *Network) Close() {
+	d.net.Close()
+}
+
+func (d *Network) Bind(socketId uint32, uid uint64) bool {
+	return d.net.Bind(socketId, uid)
+}
+
+func (d *Network) Unbind(socketId uint32, uid uint64) {
+	d.net.Unbind(socketId, uid)
+}
+
+func (d *Network) Send(head *packet.Head, body []byte) error {
+	return d.net.Send(head, body)
 }

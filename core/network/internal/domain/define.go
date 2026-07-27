@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/hechh/framework/packet"
 )
@@ -10,40 +11,16 @@ const (
 	IDLE_INTERVAL = 30 // 空闲超时（秒）
 )
 
-/*
-// 数据帧编码/解码
-type IFrame interface {
-	Decode([]byte) (*packet.Packet, error)
-	Encode(*packet.Packet) ([]byte, error)
-}
-*/
-
-// IClient 网络客户端接口
-type IClient interface {
-	Init()                           // 启动客户端读写循环
-	Close()                          // 关闭客户端
-	GetId() uint32                   // 获取 socketId
-	GetUid() uint64                  // 获取uid
-	SetUid(uint64) bool              // 设置uid
-	GetUpdateTime() int64            // 获取最后活跃时间（Unix 秒）
-	Send(*packet.Head, []byte) error // 发送消息
-}
-
-// IServer 网络服务端接口
-type IServer interface {
-	Init(*packet.Config) error
-	Close()
-	Bind(uint32, uint64) bool
-	Add(IClient)
-	Get(any) IClient
-	Del(any)
-}
-
 var (
+	socketId   atomic.Uint32
 	packetFunc func(*packet.Packet) error
 	decodeFunc func([]byte) (*packet.Packet, error)
 	encodeFunc func(*packet.Packet) ([]byte, error)
 )
+
+func GenSocketId() uint32 {
+	return socketId.Add(1)
+}
 
 func SetDecodeFunc(f func([]byte) (*packet.Packet, error)) {
 	decodeFunc = f

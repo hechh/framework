@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hechh/framework/packet"
+	"github.com/hechh/framework/core/cluster"
 	"github.com/hechh/framework/core/cluster/adapter/discovery"
 	"go.etcd.io/etcd/server/v3/embed"
 )
@@ -29,7 +29,7 @@ func NewMockDiscovery() *MockDiscovery {
 }
 
 // Init 启动嵌入式 etcd 服务并委托 Etcd.Init 完成客户端初始化。
-func (m *MockDiscovery) Init(cfg *packet.DiscoveryConfig) error {
+func (m *MockDiscovery) Init(cfg *cluster.Config) error {
 	dir, err := os.MkdirTemp("", "mock-etcd-")
 	if err != nil {
 		return fmt.Errorf("mock etcd: create temp dir: %w", err)
@@ -69,11 +69,11 @@ func (m *MockDiscovery) Init(cfg *packet.DiscoveryConfig) error {
 	}
 
 	// 将嵌入式 etcd 的本地地址作为 endpoint，委托 Etcd.Init 完成客户端初始化
-	return m.Etcd.Init(&packet.DiscoveryConfig{
-		Etcd: &packet.EtcdConfig{
-			PrefixTopic: cfg.Etcd.PrefixTopic,
-			Endpoints:   []string{clientPort},
-			KeepAlive:   cfg.Etcd.KeepAlive,
+	return m.Etcd.Init(&cluster.Config{
+		Etcd: &cluster.EtcdConfig{
+			Prefix:    cfg.Etcd.Prefix,
+			Endpoints: []string{clientPort},
+			KeepAlive: cfg.Etcd.KeepAlive,
 		},
 	})
 }

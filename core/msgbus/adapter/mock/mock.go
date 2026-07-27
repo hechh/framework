@@ -2,9 +2,10 @@ package mock
 
 import (
 	"fmt"
-	"github.com/hechh/framework/packet"
 	"time"
 
+	"github.com/hechh/framework/core/msgbus"
+	"github.com/hechh/framework/packet"
 	natsrv "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 )
@@ -24,7 +25,7 @@ func NewMockMessage() *MockMessage {
 
 // Init 启动内嵌 NATS 服务器并建立客户端连接。
 // cfg 参数保留以兼容接口，当前实现忽略配置，始终在 127.0.0.1 随机端口启动。
-func (m *MockMessage) Init(cfg *packet.MsgQueueConfig) error {
+func (m *MockMessage) Init(cfg *msgbus.Config) error {
 	// 创建内嵌 NATS 服务器，端口设为 -1 由 OS 自动分配
 	opts := &natsrv.Options{
 		Host: "127.0.0.1",

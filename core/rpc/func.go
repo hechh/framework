@@ -2,13 +2,9 @@ package rpc
 
 import (
 	"github.com/hechh/library/base/utils"
-	"google.golang.org/protobuf/proto"
 )
 
 type Message interface {
-	proto.Message
-	SizeVT() int
-	MarshalVT() ([]byte, error)
 	UnmarshalVT([]byte) error
 }
 

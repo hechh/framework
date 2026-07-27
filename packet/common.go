@@ -2,7 +2,6 @@ package packet
 
 import (
 	"sort"
-	sync "sync"
 )
 
 type Config struct {
@@ -34,23 +33,4 @@ func (c *Config) RandGatewayConfig(uid uint64) *NodeConfig {
 		return nil
 	}
 	return rets[uid%uint64(ll)]
-}
-
-var (
-	headPool = sync.Pool{
-		New: func() any { return new(Head) },
-	}
-)
-
-func GetHead(opts ...func(*Head)) *Head {
-	obj := headPool.Get().(*Head)
-	for _, opt := range opts {
-		opt(obj)
-	}
-	return obj
-}
-
-func PutHead(val *Head) {
-	*val = Head{}
-	headPool.Put(val)
 }

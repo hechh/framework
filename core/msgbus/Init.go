@@ -3,12 +3,15 @@ package msgbus
 import (
 	"fmt"
 
+	"github.com/hechh/framework/common/constant"
+	"github.com/hechh/framework/common/define"
+	"github.com/hechh/framework/core/fun"
+	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/msgbus/internal/base"
-	"github.com/hechh/framework/core/msgbus/internal/domain"
-	"github.com/hechh/framework/middle/fun"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/logic"
+	"github.com/hechh/library/base/uerror"
 	"github.com/hechh/library/mlog"
-
 	"google.golang.org/protobuf/proto"
 )
 
@@ -19,7 +22,7 @@ func SetObject(o *MsgBus) {
 }
 
 func SetPacketFunc(f func(*packet.Packet)) {
-	domain.SetPacketFunc(f)
+	base.SetPacketFunc(f)
 }
 
 // Subscribe 订阅主题
@@ -135,4 +138,29 @@ func NotifyToClient(head *packet.Head, msg proto.Message, uids ...uint64) error 
 		return err
 	}
 	return object.Notify(head, body, uids)
+}
+
+func AutoRsp(ctx define.IContext, h handler.IHandler, head *packet.Head, rsp any, reterr error) {
+	uerror.SetRspHead(rsp, reterr)
+
+	irsp, ok := rsp.(proto.Message)
+	if !ok {
+		mlog.Errorf("跨服务转发只支持protobuf协议 func=%s", h.GetActorFuncName())
+		return
+	}
+
+	var err error
+	if head.Reply != "" {
+		err = Response(head.Reply, irsp)
+	} else if head.Cmd > 0 {
+		err = Send(head, irsp, fun.SetRspClient, fun.CacheRouting)
+	} else if head.Back != nil {
+		err = Send(head, irsp, fun.SetRspBack)
+	}
+
+	if err != nil {
+		ctx.Error("自动回复失败", err, head, rsp)
+	} else if !logic.Has(h.GetMask(), constant.LOG_MASK) {
+		ctx.Trace("自动回复成功", err, head, rsp)
+	}
 }

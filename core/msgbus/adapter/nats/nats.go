@@ -2,13 +2,12 @@ package nats
 
 import (
 	"fmt"
-	"github.com/hechh/framework/core/msgbus/internal/domain"
-	"github.com/hechh/framework/packet"
 	"time"
 
+	"github.com/hechh/framework/core/msgbus"
+	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/safe"
 	"github.com/hechh/library/mlog"
-
 	"github.com/nats-io/nats.go"
 )
 
@@ -28,14 +27,14 @@ func NewNats() *Nats {
 	return &Nats{}
 }
 
-func (n *Nats) Init(cfg *packet.MsgQueueConfig) (err error) {
+func (n *Nats) Init(cfg *msgbus.Config) (err error) {
 	opts := natsOptions(cfg.Nats, n)
 	safe.Retry(3, 3*time.Second, func() error {
 		n.client, err = nats.Connect(cfg.Nats.Endpoints, opts...)
 		return err
 	})
 	if err == nil {
-		n.prefix = cfg.Nats.PrefixTopic
+		n.prefix = cfg.Nats.Prefix
 		mlog.Infof("[nats] 连接成功: %s, 服务器: %v", n.client.ConnectedUrl(), n.client.Servers())
 	}
 	return
@@ -90,7 +89,7 @@ func (d *Nats) Publish(topic string, body []byte) error {
 
 // Request 发送同步消息请求
 func (d *Nats) Request(topic string, body []byte, cb func([]byte) error) error {
-	resp, err := d.client.Request(d.GetRealTopic(topic), body, time.Duration(domain.DEFAULT_REQUEST_TIMEOUT)*time.Second)
+	resp, err := d.client.Request(d.GetRealTopic(topic), body, 3*time.Second)
 	if err != nil {
 		return fmt.Errorf("publish failed: %w", err)
 	}
@@ -129,7 +128,7 @@ func (d *Nats) restoreSubscribe() {
 	mlog.Infof("[nats] 全部订阅恢复完成，共恢复 %d 个订阅", len(d.entries))
 }
 
-func natsOptions(cfg *packet.NatsConfig, adapter *Nats) []nats.Option {
+func natsOptions(cfg *msgbus.NatsConfig, adapter *Nats) []nats.Option {
 	opts := []nats.Option{
 		nats.DisconnectErrHandler(func(d *nats.Conn, err error) {
 			if err != nil {

@@ -1,4 +1,4 @@
-package mock
+package mockbus
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type MockMessage struct {
 }
 
 // NewMockMessage 创建一个新的 MockMessage 实例。
-func NewMockMessage() *MockMessage {
+func New() *MockMessage {
 	return &MockMessage{}
 }
 

@@ -1,4 +1,4 @@
-package mock
+package mockdis
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ type MockDiscovery struct {
 	once   sync.Once
 }
 
-func NewMockDiscovery() *MockDiscovery {
+func New() *MockDiscovery {
 	return &MockDiscovery{
 		Etcd: discovery.NewEtcd(),
 	}

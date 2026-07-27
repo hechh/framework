@@ -1,4 +1,4 @@
-package network_mock
+package mocknet
 
 import (
 	"net/http"
@@ -20,7 +20,7 @@ type Server struct {
 }
 
 // NewServer 创建 Mock 服务端
-func NewServer() *Server {
+func New() *Server {
 	return &Server{
 		Server: websocket.NewServer(),
 		upgrader: ws.Upgrader{

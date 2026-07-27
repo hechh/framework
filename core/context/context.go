@@ -1,19 +1,23 @@
 package context
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/datetime"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/mlog"
 )
 
 var (
 	ctxPool = sync.Pool{
-		New: func() any { return new(Context) },
+		New: func() any {
+			return new(Context)
+		},
 	}
 )
 
@@ -123,15 +127,34 @@ func (c *Context) SetReply(v string)             { c.Head.Reply = v }
 func (c *Context) SetActorFuncName(v string)     { c.Head.ActorFuncName = v }
 func (c *Context) GetClientIp() string           { return c.Head.ClientIp }
 func (c *Context) SetClientIp(ip string)         { c.Head.ClientIp = ip }
-func (c *Context) Trace(args ...any)             { mlog.Output(2, mlog.LOG_TRACE, args...) }
-func (c *Context) Debug(args ...any)             { mlog.Output(2, mlog.LOG_DEBUG, args...) }
-func (c *Context) Warn(args ...any)              { mlog.Output(2, mlog.LOG_WARN, args...) }
-func (c *Context) Info(args ...any)              { mlog.Output(2, mlog.LOG_INFO, args...) }
-func (c *Context) Error(args ...any)             { mlog.Output(2, mlog.LOG_ERROR, args...) }
-func (c *Context) Fatal(args ...any)             { mlog.Output(2, mlog.LOG_FATAL, args...) }
-func (c *Context) Tracef(f string, args ...any)  { mlog.Outputf(2, mlog.LOG_TRACE, f, args...) }
-func (c *Context) Debugf(f string, args ...any)  { mlog.Outputf(2, mlog.LOG_DEBUG, f, args...) }
-func (c *Context) Warnf(f string, args ...any)   { mlog.Outputf(2, mlog.LOG_WARN, f, args...) }
-func (c *Context) Infof(f string, args ...any)   { mlog.Outputf(2, mlog.LOG_INFO, f, args...) }
-func (c *Context) Errorf(f string, args ...any)  { mlog.Outputf(2, mlog.LOG_ERROR, f, args...) }
-func (c *Context) Fatalf(f string, args ...any)  { mlog.Outputf(2, mlog.LOG_FATAL, f, args...) }
+
+func (c *Context) Trace(args ...any) { mlog.Output(2, mlog.LOG_TRACE, tag(c.Head), args...) }
+func (c *Context) Debug(args ...any) { mlog.Output(2, mlog.LOG_DEBUG, tag(c.Head), args...) }
+func (c *Context) Warn(args ...any)  { mlog.Output(2, mlog.LOG_WARN, tag(c.Head), args...) }
+func (c *Context) Info(args ...any)  { mlog.Output(2, mlog.LOG_INFO, tag(c.Head), args...) }
+func (c *Context) Error(args ...any) { mlog.Output(2, mlog.LOG_ERROR, tag(c.Head), args...) }
+func (c *Context) Fatal(args ...any) { mlog.Output(2, mlog.LOG_FATAL, tag(c.Head), args...) }
+
+func (c *Context) Tracef(f string, args ...any) {
+	mlog.Outputf(2, mlog.LOG_TRACE, tag(c.Head), f, args...)
+}
+func (c *Context) Debugf(f string, args ...any) {
+	mlog.Outputf(2, mlog.LOG_DEBUG, tag(c.Head), f, args...)
+}
+func (c *Context) Warnf(f string, args ...any) {
+	mlog.Outputf(2, mlog.LOG_WARN, tag(c.Head), f, args...)
+}
+func (c *Context) Infof(f string, args ...any) {
+	mlog.Outputf(2, mlog.LOG_INFO, tag(c.Head), f, args...)
+}
+func (c *Context) Errorf(f string, args ...any) {
+	mlog.Outputf(2, mlog.LOG_ERROR, tag(c.Head), f, args...)
+}
+func (c *Context) Fatalf(f string, args ...any) {
+	mlog.Outputf(2, mlog.LOG_FATAL, tag(c.Head), f, args...)
+}
+
+func tag(head *packet.Head) string {
+	now := datetime.NowUnixMilli()
+	return fmt.Sprintf("%dms|%s", now-datetime.NanoToMilli(head.CreateTime), head.TraceId)
+}

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/datetime"
 	"github.com/hechh/library/mlog"
 )
 
@@ -39,9 +38,4 @@ func GetActorName(name string) string {
 		return name
 	}
 	return name[:pos]
-}
-
-func Tag(head *packet.Head) string {
-	now := datetime.NowUnixMilli()
-	return fmt.Sprintf("%dms", now-datetime.NanoToMilli(head.CreateTime))
 }

@@ -2,24 +2,6 @@ syntax = "proto3";
 
 option go_package = "github.com/hechh/framework/packet";
 
-enum ComponentType {
-  CT_NONE      = 0;
-  DBPOOL    = 1;   // 数据库连接池
-  FWATCHER  = 2;   // 文件监听器
-  GC        = 3;   // 垃圾回收器
-  MLOG      = 4;   // 日志
-  REDISPOOL = 5;   // redis连接池
-  SNOWFLAKE = 6;   // 雪花ID生成器
-  TIMER     = 7;   // 定时器
-  NETWORK   = 8;   // 网络服务
-  ROUTER    = 9;   // 路由器
-  CLUSTER   = 10;  // 集群服务
-  MSGBUS    = 11;  // 消息总线服务
-  FSYNC     = 12;  // 配置服务
-  PPROF     = 13;  // pprof模块
-  HTTPCLI   = 14;  // http.Client模块
-}
-
 enum SendType {
   POINT     = 0;
   BROADCAST = 1;

@@ -7,11 +7,12 @@
 package packet
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -20,91 +21,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-type ComponentType int32
-
-const (
-	ComponentType_CT_NONE   ComponentType = 0
-	ComponentType_DBPOOL    ComponentType = 1  // 数据库连接池
-	ComponentType_FWATCHER  ComponentType = 2  // 文件监听器
-	ComponentType_GC        ComponentType = 3  // 垃圾回收器
-	ComponentType_MLOG      ComponentType = 4  // 日志
-	ComponentType_REDISPOOL ComponentType = 5  // redis连接池
-	ComponentType_SNOWFLAKE ComponentType = 6  // 雪花ID生成器
-	ComponentType_TIMER     ComponentType = 7  // 定时器
-	ComponentType_NETWORK   ComponentType = 8  // 网络服务
-	ComponentType_ROUTER    ComponentType = 9  // 路由器
-	ComponentType_CLUSTER   ComponentType = 10 // 集群服务
-	ComponentType_MSGBUS    ComponentType = 11 // 消息总线服务
-	ComponentType_FSYNC     ComponentType = 12 // 配置服务
-	ComponentType_PPROF     ComponentType = 13 // pprof模块
-	ComponentType_HTTPCLI   ComponentType = 14 // http.Client模块
-)
-
-// Enum value maps for ComponentType.
-var (
-	ComponentType_name = map[int32]string{
-		0:  "CT_NONE",
-		1:  "DBPOOL",
-		2:  "FWATCHER",
-		3:  "GC",
-		4:  "MLOG",
-		5:  "REDISPOOL",
-		6:  "SNOWFLAKE",
-		7:  "TIMER",
-		8:  "NETWORK",
-		9:  "ROUTER",
-		10: "CLUSTER",
-		11: "MSGBUS",
-		12: "FSYNC",
-		13: "PPROF",
-		14: "HTTPCLI",
-	}
-	ComponentType_value = map[string]int32{
-		"CT_NONE":   0,
-		"DBPOOL":    1,
-		"FWATCHER":  2,
-		"GC":        3,
-		"MLOG":      4,
-		"REDISPOOL": 5,
-		"SNOWFLAKE": 6,
-		"TIMER":     7,
-		"NETWORK":   8,
-		"ROUTER":    9,
-		"CLUSTER":   10,
-		"MSGBUS":    11,
-		"FSYNC":     12,
-		"PPROF":     13,
-		"HTTPCLI":   14,
-	}
-)
-
-func (x ComponentType) Enum() *ComponentType {
-	p := new(ComponentType)
-	*p = x
-	return p
-}
-
-func (x ComponentType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ComponentType) Descriptor() protoreflect.EnumDescriptor {
-	return file_packet_proto_enumTypes[0].Descriptor()
-}
-
-func (ComponentType) Type() protoreflect.EnumType {
-	return &file_packet_proto_enumTypes[0]
-}
-
-func (x ComponentType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ComponentType.Descriptor instead.
-func (ComponentType) EnumDescriptor() ([]byte, []int) {
-	return file_packet_proto_rawDescGZIP(), []int{0}
-}
 
 type SendType int32
 
@@ -136,11 +52,11 @@ func (x SendType) String() string {
 }
 
 func (SendType) Descriptor() protoreflect.EnumDescriptor {
-	return file_packet_proto_enumTypes[1].Descriptor()
+	return file_packet_proto_enumTypes[0].Descriptor()
 }
 
 func (SendType) Type() protoreflect.EnumType {
-	return &file_packet_proto_enumTypes[1]
+	return &file_packet_proto_enumTypes[0]
 }
 
 func (x SendType) Number() protoreflect.EnumNumber {
@@ -149,7 +65,7 @@ func (x SendType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SendType.Descriptor instead.
 func (SendType) EnumDescriptor() ([]byte, []int) {
-	return file_packet_proto_rawDescGZIP(), []int{1}
+	return file_packet_proto_rawDescGZIP(), []int{0}
 }
 
 // 节点信息
@@ -823,27 +739,7 @@ const file_packet_proto_rawDesc = "" +
 	"\x03Msg\x18\x02 \x01(\tR\x03Msg\"3\n" +
 	"\aMessage\x12\x14\n" +
 	"\x05Reply\x18\x01 \x01(\tR\x05Reply\x12\x12\n" +
-	"\x04Body\x18\x02 \x01(\fR\x04Body*\xc6\x01\n" +
-	"\rComponentType\x12\v\n" +
-	"\aCT_NONE\x10\x00\x12\n" +
-	"\n" +
-	"\x06DBPOOL\x10\x01\x12\f\n" +
-	"\bFWATCHER\x10\x02\x12\x06\n" +
-	"\x02GC\x10\x03\x12\b\n" +
-	"\x04MLOG\x10\x04\x12\r\n" +
-	"\tREDISPOOL\x10\x05\x12\r\n" +
-	"\tSNOWFLAKE\x10\x06\x12\t\n" +
-	"\x05TIMER\x10\a\x12\v\n" +
-	"\aNETWORK\x10\b\x12\n" +
-	"\n" +
-	"\x06ROUTER\x10\t\x12\v\n" +
-	"\aCLUSTER\x10\n" +
-	"\x12\n" +
-	"\n" +
-	"\x06MSGBUS\x10\v\x12\t\n" +
-	"\x05FSYNC\x10\f\x12\t\n" +
-	"\x05PPROF\x10\r\x12\v\n" +
-	"\aHTTPCLI\x10\x0e*$\n" +
+	"\x04Body\x18\x02 \x01(\fR\x04Body*$\n" +
 	"\bSendType\x12\t\n" +
 	"\x05POINT\x10\x00\x12\r\n" +
 	"\tBROADCAST\x10\x01B#Z!github.com/hechh/framework/packetb\x06proto3"
@@ -860,26 +756,25 @@ func file_packet_proto_rawDescGZIP() []byte {
 	return file_packet_proto_rawDescData
 }
 
-var file_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_packet_proto_goTypes = []any{
-	(ComponentType)(0), // 0: ComponentType
-	(SendType)(0),      // 1: SendType
-	(*Node)(nil),       // 2: Node
-	(*Packet)(nil),     // 3: Packet
-	(*Router)(nil),     // 4: Router
-	(*RouteInfo)(nil),  // 5: RouteInfo
-	(*Head)(nil),       // 6: Head
-	(*Callback)(nil),   // 7: Callback
-	(*RspHead)(nil),    // 8: RspHead
-	(*Message)(nil),    // 9: Message
+	(SendType)(0),     // 0: SendType
+	(*Node)(nil),      // 1: Node
+	(*Packet)(nil),    // 2: Packet
+	(*Router)(nil),    // 3: Router
+	(*RouteInfo)(nil), // 4: RouteInfo
+	(*Head)(nil),      // 5: Head
+	(*Callback)(nil),  // 6: Callback
+	(*RspHead)(nil),   // 7: RspHead
+	(*Message)(nil),   // 8: Message
 }
 var file_packet_proto_depIdxs = []int32{
-	6, // 0: Packet.Head:type_name -> Head
-	4, // 1: Packet.List:type_name -> Router
-	5, // 2: Router.List:type_name -> RouteInfo
-	1, // 3: Head.SendType:type_name -> SendType
-	7, // 4: Head.Back:type_name -> Callback
+	5, // 0: Packet.Head:type_name -> Head
+	3, // 1: Packet.List:type_name -> Router
+	4, // 2: Router.List:type_name -> RouteInfo
+	0, // 3: Head.SendType:type_name -> SendType
+	6, // 4: Head.Back:type_name -> Callback
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -897,7 +792,7 @@ func file_packet_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_packet_proto_rawDesc), len(file_packet_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,

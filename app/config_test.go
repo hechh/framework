@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"encoding/json"
@@ -33,7 +33,7 @@ func TestInit(t *testing.T) {
 		},
 	}
 
-	cfg, err := Init("config.yaml", 1, 1, conv)
+	cfg, err := Load("config.yaml", 1, 1, conv)
 
 	buf, _ := json.Marshal(cfg)
 	t.Log(string(buf))

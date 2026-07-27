@@ -46,7 +46,7 @@ type App struct {
 }
 
 // NewApp 创建应用实例
-func NewApp() *App {
+func New() *App {
 	return &App{
 		dbpool:    dbpool.NewDbPool(mysql.NewClient),
 		fwatcher:  fwatcher.NewFwatcher(etcdsync.NewEtcdSync),
@@ -92,6 +92,11 @@ func (d *App) GetRouter() *router.Router          { return d.router }
 func (d *App) GetNetwork() *network.Network       { return d.network }
 func (d *App) GetMsgBus() *msgbus.MsgBus          { return d.msgbus }
 func (d *App) GetCluster() *cluster.Cluster       { return d.cluster }
+
+// 注册组件
+func (d *App) Register(c IComponent) {
+	d.comps = append(d.comps, c)
+}
 
 // Init 按顺序初始化各组件
 func (d *App) Init(filename string, nodeType, nodeId uint32) error {

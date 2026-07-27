@@ -1,4 +1,4 @@
-package mock
+package mockapp
 
 import (
 	"github.com/hechh/framework/app"

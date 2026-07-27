@@ -7,12 +7,11 @@
 package packet
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -847,7 +846,7 @@ const file_packet_proto_rawDesc = "" +
 	"\aHTTPCLI\x10\x0e*$\n" +
 	"\bSendType\x12\t\n" +
 	"\x05POINT\x10\x00\x12\r\n" +
-	"\tBROADCAST\x10\x01B\x12Z\x10framework/packetb\x06proto3"
+	"\tBROADCAST\x10\x01B#Z!github.com/hechh/framework/packetb\x06proto3"
 
 var (
 	file_packet_proto_rawDescOnce sync.Once

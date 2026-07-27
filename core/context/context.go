@@ -4,10 +4,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/hechh/framework/common/constant"
-	"github.com/hechh/framework/common/define"
-	"github.com/hechh/framework/common/global"
 	"github.com/hechh/framework/core/fun"
+	"github.com/hechh/framework/define"
+	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/templ"
@@ -73,7 +72,7 @@ func (c *Context) Clone(opts ...func(*packet.Head)) *packet.Head {
 }
 
 func (c *Context) SetCache(key string, value any, flag uint32) {
-	if logic.Has(flag, constant.ACTOR_CACHE_FLAG) && c.actor != nil {
+	if logic.Has(flag, define.ACTOR_CACHE_FLAG) && c.actor != nil {
 		c.actor.SetCache(key, value, flag)
 		return
 	}

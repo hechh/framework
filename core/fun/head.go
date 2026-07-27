@@ -2,7 +2,6 @@ package fun
 
 import (
 	"github.com/hechh/framework/packet"
-
 	"github.com/hechh/library/base/datetime"
 	"github.com/hechh/library/base/utils"
 )

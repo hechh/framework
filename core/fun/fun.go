@@ -3,12 +3,11 @@ package fun
 import (
 	"fmt"
 
-	"github.com/hechh/framework/common/global"
-	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/core/cluster"
 	"github.com/hechh/framework/core/router"
 	"github.com/hechh/framework/core/rpc"
-
+	"github.com/hechh/framework/global"
+	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/templ"
 )
 
@@ -80,7 +79,7 @@ func SetRspBack(pack *packet.Packet) error {
 }
 
 func SetRspClient(pack *packet.Packet) error {
-	pack.Head.DstType = global.GlobalCfg.Gateway.Type
+	pack.Head.DstType = global.GatewayNodeType
 	pack.Head.ActorId = 0
 	pack.Head.ActorFunc = 0
 	return nil

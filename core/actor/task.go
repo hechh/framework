@@ -4,13 +4,12 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/hechh/framework/common/constant"
-	"github.com/hechh/framework/common/define"
 	"github.com/hechh/framework/core/context"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/msgbus"
 	"github.com/hechh/framework/core/rpc"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/logic"
 )
@@ -60,7 +59,7 @@ func (d *Task) Release() {
 
 func (d *Task) Do() (flag bool) {
 	depth := d.AddDepth(1)
-	flag = !logic.Has(d.GetMask(), constant.UPDATETIME_MASK)
+	flag = !logic.Has(d.GetMask(), define.UPDATETIME_MASK)
 	defer func() {
 		d.Release()
 		if err := recover(); err != nil {
@@ -72,12 +71,12 @@ func (d *Task) Do() (flag bool) {
 	err := d.Call(d.actor, d.IContext, d.args...)
 	if err != nil {
 		d.Error(err, d.args)
-	} else if !logic.Has(mask, constant.LOG_MASK) {
+	} else if !logic.Has(mask, define.LOG_MASK) {
 		d.Trace(d.args...)
 	}
 
 	// 是否自动回复
-	if logic.Has(mask, constant.CMD_FLAG) && d.GetDepth() == depth {
+	if logic.Has(mask, define.CMD_FLAG) && d.GetDepth() == depth {
 		msgbus.AutoRsp(d.IContext, d.IHandler, d.ReadOnly(), d.args[len(d.args)-1], err)
 	}
 	return
@@ -120,7 +119,7 @@ func (d *RpcTask) Release() {
 
 func (d *RpcTask) Do() (flag bool) {
 	depth := d.AddDepth(1)
-	flag = !logic.Has(d.GetMask(), constant.UPDATETIME_MASK)
+	flag = !logic.Has(d.GetMask(), define.UPDATETIME_MASK)
 	defer func() {
 		d.Release()
 		if err := recover(); err != nil {
@@ -139,12 +138,12 @@ func (d *RpcTask) Do() (flag bool) {
 	err = d.Call(d.actor, d.IContext, args...)
 	if err != nil {
 		d.Error(err, args)
-	} else if !logic.Has(mask, constant.LOG_MASK) {
+	} else if !logic.Has(mask, define.LOG_MASK) {
 		d.Trace(args...)
 	}
 
 	// 是否自动回复
-	if logic.Has(mask, constant.CMD_FLAG) && d.GetDepth() == depth {
+	if logic.Has(mask, define.CMD_FLAG) && d.GetDepth() == depth {
 		msgbus.AutoRsp(d.IContext, d.IHandler, d.ReadOnly(), args[len(args)-1], err)
 	}
 	return

@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hechh/framework/common/global"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/rpc"
+	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/base/utils"

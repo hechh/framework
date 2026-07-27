@@ -3,11 +3,10 @@ package msgbus
 import (
 	"fmt"
 
-	"github.com/hechh/framework/common/constant"
-	"github.com/hechh/framework/common/define"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/msgbus/internal/base"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/uerror"
@@ -160,7 +159,7 @@ func AutoRsp(ctx define.IContext, h handler.IHandler, head *packet.Head, rsp any
 
 	if err != nil {
 		ctx.Error("自动回复失败", err, head, rsp)
-	} else if !logic.Has(h.GetMask(), constant.LOG_MASK) {
+	} else if !logic.Has(h.GetMask(), define.LOG_MASK) {
 		ctx.Trace("自动回复成功", err, head, rsp)
 	}
 }

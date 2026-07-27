@@ -1,20 +1,15 @@
 package global
 
 import (
-	"os"
-	"strings"
-
-	"github.com/goccy/go-yaml"
-	"github.com/hechh/framework/common/constant"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/utils"
 )
 
 var (
-	CmdConvertor  utils.IConvertor
-	NodeConvertor utils.IConvertor
-	Self          *packet.Node
-	GlobalCfg     *packet.Config
+	CmdConvertor    utils.IConvertor
+	NodeConvertor   utils.IConvertor
+	Self            *packet.Node
+	GatewayNodeType uint32
 )
 
 func SetNodeConvertor(n map[string]int32, i map[int32]string) {
@@ -25,6 +20,7 @@ func SetCmdConvertor(n map[string]int32, i map[int32]string) {
 	CmdConvertor = utils.WrapConvertor(n, i)
 }
 
+/*
 func Init(filename string, nodeType uint32, nodeId uint32) (*packet.Config, error) {
 	// 加载配置
 	content, err := os.ReadFile(filename)
@@ -66,3 +62,4 @@ func Init(filename string, nodeType uint32, nodeId uint32) (*packet.Config, erro
 	}
 	return GlobalCfg, nil
 }
+*/

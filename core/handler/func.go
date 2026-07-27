@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/hechh/framework/common/define"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/library/base/utils"
 )
 

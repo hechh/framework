@@ -4,22 +4,57 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hechh/framework/core/cluster"
+	"github.com/hechh/framework/core/msgbus"
 	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/base/utils"
+	"github.com/hechh/library/dbpool"
+	"github.com/hechh/library/fwatcher"
+	"github.com/hechh/library/httpcli"
 	"github.com/hechh/library/mlog"
+	"github.com/hechh/library/redispool"
+	"github.com/hechh/library/timer"
 	"go.yaml.in/yaml/v2"
 )
 
-// 加载配置
-func (d *App) Load(filename string, nodeType, nodeId uint32, conv utils.IConvertor) error {
-	cfg, err := Load(filename, nodeType, nodeId, conv)
-	if err != nil {
-		return err
-	}
-	d.cfg = cfg
-	return nil
+// 节点配置
+type NodeConfig struct {
+	Type   uint32       `yaml:"type,omitempty"`   // 节点类型
+	Id     uint32       `yaml:"id,omitempty"`     // 节点id
+	Name   string       `yaml:"name,omitempty"`   // 节点名字
+	Ip     string       `yaml:"ip,omitempty"`     // ip 地址
+	Port   int          `yaml:"port,omitempty"`   // 端口
+	Logger *mlog.Config `yaml:"logger,omitempty"` // 日志
+}
+
+// 公共配置
+type CommonConfig struct {
+	Env         string `yaml:"env,omitempty"`
+	IsOpenPprof bool   `yaml:"is_open_pprof,omitempty"`
+	JwtSecret   string `yaml:"jwt_secret,omitempty"`
+	AesSecret   string `yaml:"aes_secret,omitempty"`
+	UidModValue uint64 `yaml:"uid_mod_value,omitempty"`
+	PayPort     int32  `yaml:"pay_port,omitempty"`
+	GeoDbPath   string `yaml:"geo_db_path,omitempty"` // GeoLite2-City.mmdb 文件路径
+}
+
+type Config struct {
+	Mysql    *dbpool.Config                    `yaml:"mysql,omitempty"`
+	Redis    *redispool.Config                 `yaml:"redis,omitempty"`
+	Fwatcher *fwatcher.Config                  `yaml:"fwatcher,omitempty"`
+	HttpCli  *httpcli.Config                   `yaml:"http_cli,omitempty"`
+	Logger   *mlog.Config                      `yaml:"logger,omitempty"`
+	Timer    *timer.Config                     `yaml:"timer,omitempty"`
+	MsgBus   *msgbus.Config                    `yaml:"msgbus,omitempty"`
+	Cluster  *cluster.Config                   `yaml:"cluster,omitempty"`
+	Common   *CommonConfig                     `yaml:"common,omitempty"`
+	Nodes    map[string]map[uint32]*NodeConfig `yaml:"nodes,omitempty"`
+	Types    map[uint32]map[uint32]*NodeConfig `yaml:"-"`
+	Node     *NodeConfig                       `yaml:"-"`
+	Gateway  *NodeConfig                       `yaml:"-"`
+	Self     *packet.Node                      `yaml:"-"`
 }
 
 func Load(filename string, nodeType uint32, nodeId uint32, conv utils.IConvertor) (*Config, error) {

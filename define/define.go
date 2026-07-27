@@ -10,9 +10,8 @@ const (
 )
 
 const (
-	ACTOR_CACHE_FLAG  = 1 << 0 // actor缓存数据
-	REDIS_GLOBAL_FLAG = 1 << 1 // 全局数据库
-	REDIS_SHARDS_FLAG = 1 << 2 // 分片数据据库
+	GLOBAL_CACHE_FLAG = 1 << 0 // 全局数据库
+	SHARDS_CACHE_FLAG = 1 << 1 // 分片数据据库
 )
 
 const (
@@ -22,24 +21,19 @@ const (
 )
 
 type IContext interface {
-	ICache
 	ILogger
 	IHead
+	SetCache(string, any)
+	GetCache(string) (any, bool)
+	IsChanged(string) bool
+	Change(string)
+	Reset(string)
 	Destroy()
 	ReadOnly() *packet.Head
 	Header(...func(*packet.Head)) *packet.Head // 转发
 	Clone(...func(*packet.Head)) *packet.Head  // 派生
 	AddDepth(int32) int32
 	GetDepth() int32
-}
-
-type ICache interface {
-	SetCache(string, any, uint32)
-	GetCache(string) (any, bool)
-	DelCache(string)
-	IsChanged(string) bool
-	Reset(string)
-	Change(string)
 }
 
 type ILogger interface {

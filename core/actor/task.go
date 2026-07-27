@@ -33,15 +33,8 @@ type Task struct {
 }
 
 func NewTask(a any, h handler.IHandler, head *packet.Head, args []any) *Task {
-	var ctx define.IContext
-	switch vv := a.(type) {
-	case define.ICache:
-		ctx = context.NewContext(head, vv, fun.TRACE)
-	default:
-		ctx = context.NewContext(head, nil, fun.TRACE)
-	}
 	t := localPool.Get().(*Task)
-	t.IContext = ctx
+	t.IContext = context.NewContext(head, fun.TRACE)
 	t.IHandler = h
 	t.args = args
 	t.actor = a
@@ -91,15 +84,8 @@ type RpcTask struct {
 }
 
 func NewRpcTask(a any, h handler.IHandler, r rpc.IRpc, head *packet.Head, body []byte) *RpcTask {
-	var ctx define.IContext
-	switch vv := a.(type) {
-	case define.ICache:
-		ctx = context.NewContext(head, vv, fun.TRACE)
-	default:
-		ctx = context.NewContext(head, nil, fun.TRACE)
-	}
 	t := rpcPool.Get().(*RpcTask)
-	t.IContext = ctx
+	t.IContext = context.NewContext(head, fun.TRACE)
 	t.IHandler = h
 	t.r = r
 	t.actor = a

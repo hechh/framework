@@ -5,10 +5,8 @@ import (
 	"sync/atomic"
 
 	"github.com/hechh/framework/core/fun"
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/mlog"
 )
@@ -26,17 +24,15 @@ type Value struct {
 
 type Context struct {
 	*packet.Head
-	actor  define.ICache
 	values map[string]*Value
 }
 
-func NewContext(head *packet.Head, act define.ICache, opts ...func(*packet.Head)) *Context {
+func NewContext(head *packet.Head, opts ...func(*packet.Head)) *Context {
 	for _, opt := range opts {
 		opt(head)
 	}
 	obj := ctxPool.Get().(*Context)
 	obj.Head = head
-	obj.actor = act
 	obj.values = make(map[string]*Value)
 	return obj
 }
@@ -46,7 +42,6 @@ func (c *Context) Destroy() {
 		global.PutHead(c.Head)
 		c.Head = nil
 	}
-	c.actor = nil
 	c.values = nil
 	ctxPool.Put(c)
 }
@@ -71,11 +66,7 @@ func (c *Context) Clone(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
-func (c *Context) SetCache(key string, value any, flag uint32) {
-	if logic.Has(flag, define.ACTOR_CACHE_FLAG) && c.actor != nil {
-		c.actor.SetCache(key, value, flag)
-		return
-	}
+func (c *Context) SetCache(key string, value any) {
 	if v, ok := c.values[key]; ok {
 		v.data = value
 		return
@@ -87,46 +78,26 @@ func (c *Context) GetCache(key string) (any, bool) {
 	if v, ok := c.values[key]; ok {
 		return v.data, ok
 	}
-	if c.actor != nil {
-		return c.actor.GetCache(key)
-	}
 	return nil, false
-}
-
-func (c *Context) DelCache(key string) {
-	delete(c.values, key)
-	if c.actor != nil {
-		c.actor.DelCache(key)
-	}
 }
 
 func (c *Context) IsChanged(key string) bool {
 	if v, ok := c.values[key]; ok {
 		return v.times > 0
 	}
-	if c.actor != nil {
-		return c.actor.IsChanged(key)
-	}
 	return false
+}
+
+func (c *Context) Change(key string) {
+	if v, ok := c.values[key]; ok {
+		v.times++
+	}
 }
 
 func (c *Context) Reset(key string) {
 	if v, ok := c.values[key]; ok {
 		v.times = 0
 		return
-	}
-	if c.actor != nil {
-		c.actor.Reset(key)
-	}
-}
-
-func (c *Context) Change(key string) {
-	if v, ok := c.values[key]; ok {
-		v.times++
-		return
-	}
-	if c.actor != nil {
-		c.actor.Change(key)
 	}
 }
 

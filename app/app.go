@@ -108,6 +108,9 @@ func (d *App) Init(filename string, nodeType, nodeId uint32) error {
 	}
 	d.cfg = cfg
 
+	global.Self = cfg.Self
+	global.GatewayNodeType = cfg.Gateway.Type
+
 	for i, comp := range d.comps {
 		if err := comp.Init(d); err != nil {
 			for j := i - 1; j >= 0; j-- {

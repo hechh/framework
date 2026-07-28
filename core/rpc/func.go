@@ -1,12 +1,11 @@
 package rpc
 
 import (
+	"fmt"
+
+	"github.com/hechh/framework/define"
 	"github.com/hechh/library/base/utils"
 )
-
-type Message interface {
-	UnmarshalVT([]byte) error
-}
 
 type R0 struct {
 	nodeType      uint32
@@ -63,10 +62,14 @@ func (d *R1[R]) GetCmd() uint32           { return d.cmd }
 func (d *R1[R]) GetMask() uint32          { return d.flag }
 
 func (d *R1[R]) News(body []byte) ([]any, error) {
-	val := any(new(R)).(Message)
+	val := new(R)
 	var err error
 	if len(body) > 0 {
-		err = val.UnmarshalVT(body)
+		if obj, ok := any(val).(define.Message); ok {
+			err = obj.UnmarshalVT(body)
+		} else {
+			err = fmt.Errorf("Rpc接口交互协议只能使用protobuf")
+		}
 	}
 	return []any{val}, err
 }
@@ -97,13 +100,16 @@ func (d *R2[R, T]) GetCmd() uint32           { return d.cmd }
 func (d *R2[R, T]) GetMask() uint32          { return d.flag }
 
 func (d *R2[R, T]) News(body []byte) ([]any, error) {
-	r := any(new(R)).(Message)
-	t := any(new(T)).(Message)
+	r, t := new(R), new(T)
 	dst := make([]any, 0, 2)
 	dst = append(dst, r, t)
 	var err error
 	if len(body) > 0 {
-		err = r.UnmarshalVT(body)
+		if obj, ok := any(r).(define.Message); ok {
+			err = obj.UnmarshalVT(body)
+		} else {
+			err = fmt.Errorf("Rpc接口交互协议只能使用protobuf")
+		}
 	}
 	return dst, err
 }

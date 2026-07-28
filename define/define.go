@@ -1,6 +1,9 @@
 package define
 
-import "github.com/hechh/framework/packet"
+import (
+	"github.com/hechh/framework/packet"
+	"google.golang.org/protobuf/proto"
+)
 
 const (
 	LOG_MASK        = 1 << 0 // 日志屏蔽模式
@@ -19,6 +22,12 @@ const (
 	GATEWAY_MASK         = (1 << 7)                    // 网关模式 0x80
 	CLUSTER_GATEWAY_MASK = CLUSTER_MASK | GATEWAY_MASK // 集群网关模式 0xC0
 )
+
+type Message interface {
+	proto.Message
+	MarshalVT() ([]byte, error)
+	UnmarshalVT([]byte) error
+}
 
 type IContext interface {
 	ILogger

@@ -107,13 +107,13 @@ func Load(filename string, nodeType uint32, nodeId uint32, conv utils.IConvertor
 			}
 			if cfg.Logger != nil && gcfg.Logger != nil {
 				cfg.Logger = &mlog.Config{
-					Mode:     templ.Or(cfg.Logger.Mode == "", gcfg.Logger.Mode, cfg.Logger.Mode),
-					Path:     templ.Or(cfg.Logger.Path == "", gcfg.Logger.Path, cfg.Logger.Path),
-					Level:    templ.Or(cfg.Logger.Level == "", gcfg.Logger.Level, cfg.Logger.Level),
-					Format:   templ.Or(cfg.Logger.Format == "", gcfg.Logger.Format, cfg.Logger.Format),
-					Name:     cfg.Name,
-					IsCaller: templ.Or(cfg.Logger.IsCaller, cfg.Logger.IsCaller, gcfg.Logger.IsCaller),
-					Cache:    templ.Or(cfg.Logger.Cache == 0, gcfg.Logger.Cache, cfg.Logger.Cache),
+					Mode:      templ.Or(cfg.Logger.Mode == "", gcfg.Logger.Mode, cfg.Logger.Mode),
+					Path:      templ.Or(cfg.Logger.Path == "", gcfg.Logger.Path, cfg.Logger.Path),
+					Level:     templ.Or(cfg.Logger.Level == "", gcfg.Logger.Level, cfg.Logger.Level),
+					Format:    templ.Or(cfg.Logger.Format == "", gcfg.Logger.Format, cfg.Logger.Format),
+					Name:      cfg.Name,
+					IsCaller:  templ.Or(cfg.Logger.IsCaller, cfg.Logger.IsCaller, gcfg.Logger.IsCaller),
+					CacheSize: templ.Or(cfg.Logger.CacheSize == 0, gcfg.Logger.CacheSize, cfg.Logger.CacheSize),
 				}
 			}
 		}

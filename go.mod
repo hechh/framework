@@ -2,11 +2,9 @@ module github.com/hechh/framework
 
 go 1.26.1
 
-replace github.com/hechh/library => ../library
-
 require (
 	github.com/gorilla/websocket v1.5.3
-	github.com/hechh/library v0.0.0-00010101000000-000000000000
+	github.com/hechh/library v1.0.0
 	github.com/nats-io/nats-server/v2 v2.14.3
 	github.com/nats-io/nats.go v1.52.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10

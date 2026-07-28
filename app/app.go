@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/hechh/framework/config"
 	"github.com/hechh/framework/core/cluster"
 	"github.com/hechh/framework/core/cluster/adapter/discovery"
 	"github.com/hechh/framework/core/msgbus"
@@ -29,7 +30,7 @@ import (
 
 // App 应用生命周期管理器
 type App struct {
-	cfg       *Config
+	cfg       *config.Config
 	dbpool    *dbpool.DbPool
 	fwatcher  *fwatcher.Fwatcher
 	gc        *gc.Gc
@@ -64,7 +65,7 @@ func New() *App {
 }
 
 // ==================== Setter（DI 注入，可覆盖默认组件） ====================
-func (d *App) SetConfig(cfg *Config)               { d.cfg = cfg }
+func (d *App) SetConfig(cfg *config.Config)        { d.cfg = cfg }
 func (d *App) SetDbPool(v *dbpool.DbPool)          { d.dbpool = v }
 func (d *App) SetFwatcher(v *fwatcher.Fwatcher)    { d.fwatcher = v }
 func (d *App) SetGc(v *gc.Gc)                      { d.gc = v }
@@ -79,7 +80,7 @@ func (d *App) SetMsgBus(v *msgbus.MsgBus)          { d.msgbus = v }
 func (d *App) SetCluster(v *cluster.Cluster)       { d.cluster = v }
 
 // ==================== Getter ====================
-func (d *App) GetConfig() *Config                 { return d.cfg }
+func (d *App) GetConfig() *config.Config          { return d.cfg }
 func (d *App) GetDbPool() *dbpool.DbPool          { return d.dbpool }
 func (d *App) GetFwatcher() *fwatcher.Fwatcher    { return d.fwatcher }
 func (d *App) GetGc() *gc.Gc                      { return d.gc }
@@ -101,7 +102,7 @@ func (d *App) Register(c IComponent) {
 // Init 按顺序初始化各组件
 func (d *App) Init(filename string, nodeType, nodeId uint32) error {
 	// 1. 加载配置（同时初始化 Types/Node/Self 等）
-	cfg, err := Load(filename, nodeType, nodeId, global.NodeConvertor)
+	cfg, err := config.Load(filename, nodeType, nodeId, global.NodeConvertor)
 	if err != nil {
 		return err
 	}

@@ -29,6 +29,12 @@ func CMD(cmd enum.IEnum, aid uint64) func(*packet.Head) {
 	}
 }
 
+func UID(uid uint64) func(*packet.Head) {
+	return func(head *packet.Head) {
+		head.Uid = uid
+	}
+}
+
 func TRACE(head *packet.Head) {
 	head.CreateTime = datetime.NowUnixNano()
 	head.TraceId = utils.GetTraceId(head.Uid, head.CreateTime)

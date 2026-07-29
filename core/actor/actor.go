@@ -38,6 +38,7 @@ func (d *Actor) Register(ac IActor, c cache.ICache, opts ...msgqueue.Option) {
 	opts = append(opts, msgqueue.WithName(name))
 	d.msgs = msgqueue.NewMsgQueue[msgqueue.ITask](opts...)
 	d.self = ac
+	d.cache = c
 }
 
 func (d *Actor) RegisterTimer(name string, ms time.Duration, times int32) error {

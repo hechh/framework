@@ -1,22 +1,21 @@
 package config
 
 import (
-	"os"
 	"strings"
 
 	"github.com/hechh/framework/core/cluster"
 	"github.com/hechh/framework/core/msgbus"
 	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/enum"
+	"github.com/hechh/library/base/fileutil"
 	"github.com/hechh/library/base/templ"
-	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/dbpool"
 	"github.com/hechh/library/fwatcher"
 	"github.com/hechh/library/httpcli"
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/redispool"
 	"github.com/hechh/library/timer"
-	"go.yaml.in/yaml/v2"
 )
 
 // 节点配置
@@ -57,14 +56,10 @@ type Config struct {
 	Self     *packet.Node                      `yaml:"-"`
 }
 
-func Load(filename string, nodeType uint32, nodeId uint32, conv utils.IConvertor) (*Config, error) {
+func Load(filename string, nodeType uint32, nodeId uint32, conv enum.IConvertor) (*Config, error) {
 	// 加载配置
-	content, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
 	gcfg := new(Config)
-	if err := yaml.Unmarshal(content, gcfg); err != nil {
+	if err := fileutil.LoadYaml(filename, gcfg); err != nil {
 		return nil, err
 	}
 

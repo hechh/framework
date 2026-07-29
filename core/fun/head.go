@@ -3,6 +3,7 @@ package fun
 import (
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/datetime"
+	"github.com/hechh/library/base/enum"
 	"github.com/hechh/library/base/utils"
 )
 
@@ -13,7 +14,7 @@ func ACTOR(name string, aid uint64) func(*packet.Head) {
 	}
 }
 
-func RPC(node utils.IEnum, name string, aid uint64) func(*packet.Head) {
+func RPC(node enum.IEnum, name string, aid uint64) func(*packet.Head) {
 	return func(head *packet.Head) {
 		head.DstType = uint32(node.Number())
 		head.ActorId = aid
@@ -21,7 +22,7 @@ func RPC(node utils.IEnum, name string, aid uint64) func(*packet.Head) {
 	}
 }
 
-func CMD(cmd utils.IEnum, aid uint64) func(*packet.Head) {
+func CMD(cmd enum.IEnum, aid uint64) func(*packet.Head) {
 	return func(head *packet.Head) {
 		head.Cmd = uint32(cmd.Number())
 		head.ActorId = aid

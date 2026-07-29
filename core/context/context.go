@@ -54,7 +54,7 @@ func (c *Context) ReadOnly() *packet.Head {
 	return c.Head
 }
 
-func (c *Context) Header(opts ...func(*packet.Head)) *packet.Head {
+func (c *Context) Clone(opts ...func(*packet.Head)) *packet.Head {
 	head := global.GetHead(fun.COPY(c.Head))
 	for _, opt := range opts {
 		opt(head)
@@ -62,7 +62,7 @@ func (c *Context) Header(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
-func (c *Context) Clone(opts ...func(*packet.Head)) *packet.Head {
+func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 	head := global.GetHead(fun.DERIVE(c.Head))
 	for _, opt := range opts {
 		opt(head)

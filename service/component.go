@@ -1,4 +1,4 @@
-package app
+package service
 
 import (
 	"fmt"
@@ -13,21 +13,25 @@ import (
 	"github.com/hechh/library/gc"
 	"github.com/hechh/library/httpcli"
 	"github.com/hechh/library/mlog"
+	"github.com/hechh/library/msgqueue"
 	"github.com/hechh/library/pprof"
 	"github.com/hechh/library/redispool"
 	"github.com/hechh/library/timer"
 )
 
-type IComponent interface {
-	Init(*App) error
-	Close(*App)
+type Wrapper struct {
+	app  *Service
+	comp IComponent
 }
+
+func (d *Wrapper) Init(...msgqueue.Option) error { return d.comp.Init(d.app) }
+func (d *Wrapper) Close()                        { d.comp.Close(d.app) }
 
 // ==================== DbPool ====================
 
 type DbPool struct{}
 
-func (d *DbPool) Init(a *App) error {
+func (d *DbPool) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetDbPool()
 	if err := obj.Init(cfg.Mysql); err != nil {
@@ -40,7 +44,7 @@ func (d *DbPool) Init(a *App) error {
 	return nil
 }
 
-func (d *DbPool) Close(a *App) {
+func (d *DbPool) Close(a *Service) {
 	a.GetDbPool().Close()
 	mlog.Infof("[dbpool] 模块关闭成功")
 }
@@ -49,7 +53,7 @@ func (d *DbPool) Close(a *App) {
 
 type Logger struct{}
 
-func (d *Logger) Init(a *App) error {
+func (d *Logger) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetLogger()
 	if err := obj.Init(cfg.Logger); err != nil {
@@ -62,7 +66,7 @@ func (d *Logger) Init(a *App) error {
 	return nil
 }
 
-func (d *Logger) Close(a *App) {
+func (d *Logger) Close(a *Service) {
 	a.GetLogger().Close()
 	mlog.Infof("[logger] 日志模块关闭成功")
 }
@@ -71,7 +75,7 @@ func (d *Logger) Close(a *App) {
 
 type Gc struct{}
 
-func (d *Gc) Init(a *App) error {
+func (d *Gc) Init(a *Service) error {
 	obj := a.GetGc()
 	if err := obj.Init(); err != nil {
 		mlog.Errorf("[gc] GC模块初始化失败，error=%v", err)
@@ -83,7 +87,7 @@ func (d *Gc) Init(a *App) error {
 	return nil
 }
 
-func (d *Gc) Close(a *App) {
+func (d *Gc) Close(a *Service) {
 	a.GetGc().Close()
 	mlog.Infof("[gc] GC模块关闭成功")
 }
@@ -92,7 +96,7 @@ func (d *Gc) Close(a *App) {
 
 type HttpCli struct{}
 
-func (d *HttpCli) Init(a *App) error {
+func (d *HttpCli) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetHttpCli()
 	if err := obj.Init(cfg.HttpCli); err != nil {
@@ -105,7 +109,7 @@ func (d *HttpCli) Init(a *App) error {
 	return nil
 }
 
-func (d *HttpCli) Close(a *App) {
+func (d *HttpCli) Close(a *Service) {
 	a.GetHttpCli().Close()
 	mlog.Infof("[httpcli] HTTP客户端关闭成功")
 }
@@ -114,7 +118,7 @@ func (d *HttpCli) Close(a *App) {
 
 type Timer struct{}
 
-func (d *Timer) Init(a *App) error {
+func (d *Timer) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetTimer()
 	if err := obj.Init(cfg.Timer); err != nil {
@@ -127,7 +131,7 @@ func (d *Timer) Init(a *App) error {
 	return nil
 }
 
-func (d *Timer) Close(a *App) {
+func (d *Timer) Close(a *Service) {
 	a.GetTimer().Close()
 	mlog.Infof("[timer] 定时器模块关闭成功")
 }
@@ -136,7 +140,7 @@ func (d *Timer) Close(a *App) {
 
 type Pprof struct{}
 
-func (d *Pprof) Init(a *App) error {
+func (d *Pprof) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetPprof()
 	port := cfg.Node.Port + 10000
@@ -150,7 +154,7 @@ func (d *Pprof) Init(a *App) error {
 	return nil
 }
 
-func (d *Pprof) Close(a *App) {
+func (d *Pprof) Close(a *Service) {
 	a.GetPprof().Close()
 	mlog.Infof("[pprof] pprof模块关闭成功")
 }
@@ -159,7 +163,7 @@ func (d *Pprof) Close(a *App) {
 
 type RedisPool struct{}
 
-func (d *RedisPool) Init(a *App) error {
+func (d *RedisPool) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetRedisPool()
 	if err := obj.Init(cfg.Redis); err != nil {
@@ -172,7 +176,7 @@ func (d *RedisPool) Init(a *App) error {
 	return nil
 }
 
-func (d *RedisPool) Close(a *App) {
+func (d *RedisPool) Close(a *Service) {
 	a.GetRedisPool().Close()
 	mlog.Infof("[redispool] Redis连接池关闭成功")
 }
@@ -181,7 +185,7 @@ func (d *RedisPool) Close(a *App) {
 
 type Fwatcher struct{}
 
-func (d *Fwatcher) Init(a *App) error {
+func (d *Fwatcher) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetFwatcher()
 	if err := obj.Init(cfg.Fwatcher); err != nil {
@@ -194,7 +198,7 @@ func (d *Fwatcher) Init(a *App) error {
 	return nil
 }
 
-func (d *Fwatcher) Close(a *App) {
+func (d *Fwatcher) Close(a *Service) {
 	a.GetFwatcher().Close()
 	mlog.Infof("[fwatcher] 文件监听模块关闭成功")
 }
@@ -203,7 +207,7 @@ func (d *Fwatcher) Close(a *App) {
 
 type Network struct{}
 
-func (d *Network) Init(a *App) error {
+func (d *Network) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetNetwork()
 	addr := fmt.Sprintf(":%d", cfg.Node.Port)
@@ -217,7 +221,7 @@ func (d *Network) Init(a *App) error {
 	return nil
 }
 
-func (d *Network) Close(a *App) {
+func (d *Network) Close(a *Service) {
 	a.GetNetwork().Close()
 	mlog.Infof("[network] 网络模块关闭成功")
 }
@@ -226,7 +230,7 @@ func (d *Network) Close(a *App) {
 
 type Router struct{}
 
-func (d *Router) Init(a *App) error {
+func (d *Router) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetRouter()
 	if err := obj.Init(a.GetTimer(), cfg.Self, templ.Map2List(cfg.Types)); err != nil {
@@ -239,7 +243,7 @@ func (d *Router) Init(a *App) error {
 	return nil
 }
 
-func (d *Router) Close(a *App) {
+func (d *Router) Close(a *Service) {
 	a.GetRouter().Close()
 	mlog.Infof("[router] 路由模块关闭成功")
 }
@@ -248,7 +252,7 @@ func (d *Router) Close(a *App) {
 
 type Cluster struct{}
 
-func (d *Cluster) Init(a *App) error {
+func (d *Cluster) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetCluster()
 	if err := obj.Init(cfg.Cluster, cfg.Self, templ.Map2List(cfg.Types)); err != nil {
@@ -261,7 +265,7 @@ func (d *Cluster) Init(a *App) error {
 	return nil
 }
 
-func (d *Cluster) Close(a *App) {
+func (d *Cluster) Close(a *Service) {
 	a.GetCluster().Close()
 	mlog.Infof("[cluster] 集群模块关闭成功")
 }
@@ -270,7 +274,7 @@ func (d *Cluster) Close(a *App) {
 
 type MsgBus struct{}
 
-func (d *MsgBus) Init(a *App) error {
+func (d *MsgBus) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetMsgBus()
 	if err := obj.Init(cfg.MsgBus, cfg.Node.Type, cfg.Node.Id); err != nil {
@@ -283,7 +287,7 @@ func (d *MsgBus) Init(a *App) error {
 	return nil
 }
 
-func (d *MsgBus) Close(a *App) {
+func (d *MsgBus) Close(a *Service) {
 	a.GetMsgBus().Close()
 	mlog.Infof("[msgbus] 消息总线模块关闭成功")
 }

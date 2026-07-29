@@ -39,8 +39,8 @@ type IContext interface {
 	Reset(string)
 	Destroy()
 	ReadOnly() *packet.Head
-	Header(...func(*packet.Head)) *packet.Head // 转发
-	Clone(...func(*packet.Head)) *packet.Head  // 派生
+	Clone(...func(*packet.Head)) *packet.Head  // 转发
+	Derive(...func(*packet.Head)) *packet.Head // 派生
 	AddDepth(int32) int32
 	GetDepth() int32
 }

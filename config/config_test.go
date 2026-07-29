@@ -9,6 +9,10 @@ type mockConvertor struct {
 	names map[string]uint32
 }
 
+func (m *mockConvertor) Has(val any) bool {
+	return false
+}
+
 func (m *mockConvertor) ToUint32(s string) uint32 {
 	if v, ok := m.names[s]; ok {
 		return v

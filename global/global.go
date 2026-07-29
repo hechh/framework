@@ -4,26 +4,18 @@ import (
 	"sync"
 
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/utils"
+	"github.com/hechh/library/base/enum"
 )
 
 var (
-	CmdConvertor    utils.IConvertor
-	NodeConvertor   utils.IConvertor
+	CmdConvertor    enum.IConvertor
+	NodeConvertor   enum.IConvertor
 	Self            *packet.Node
 	GatewayNodeType uint32
 	headPool        = sync.Pool{
 		New: func() any { return new(packet.Head) },
 	}
 )
-
-func SetNodeConvertor(n map[string]int32, i map[int32]string) {
-	NodeConvertor = utils.WrapConvertor(n, i)
-}
-
-func SetCmdConvertor(n map[string]int32, i map[int32]string) {
-	CmdConvertor = utils.WrapConvertor(n, i)
-}
 
 func GetHead(opts ...func(*packet.Head)) *packet.Head {
 	obj := headPool.Get().(*packet.Head)

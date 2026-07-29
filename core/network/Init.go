@@ -5,7 +5,11 @@ import (
 
 	"github.com/hechh/framework/core/network/internal/domain"
 	"github.com/hechh/framework/core/network/internal/frame"
+	"github.com/hechh/framework/define"
+	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/uerror"
+	"github.com/hechh/library/mlog"
 )
 
 var object *Network
@@ -47,10 +51,31 @@ func Unbind(socketId uint32, uid uint64) {
 	}
 }
 
-// SendToClient 发送消息到客户端（全局便捷方法）
-func Send(head *packet.Head, body []byte) error {
-	if object != nil {
-		return object.Send(head, body)
+func SendToClient(head *packet.Head, err error, rsp define.Message) error {
+	uerror.SetRspHead(rsp, err)
+	body, err := rsp.MarshalVT()
+	if err != nil {
+		mlog.Errorf("SendRspToClient: MarshalVT失败, err=%v", err)
+		return err
 	}
-	return fmt.Errorf("Network未初始化")
+	return SendRawToClient(head, body)
+}
+
+// SendToClient 发送消息到客户端（全局便捷方法）
+func SendRawToClient(head *packet.Head, body []byte) error {
+	if object == nil {
+		return fmt.Errorf("Network未初始化")
+	}
+	if head.Cmd%2 == 0 {
+		if global.CmdConvertor.Has(head.Cmd + 1) {
+			head.Cmd++
+		}
+	}
+	err := object.Send(head, body)
+	if err != nil {
+		mlog.Tracef("SendRawToClient: 向客户端发送响应, cmd=%d, uid=%d, body=%d, error=%v", head.Cmd, head.Uid, len(body), err)
+	} else {
+		mlog.Tracef("SendRawToClient: 向客户端发送响应, cmd=%d, uid=%d, body=%d", head.Cmd, head.Uid, len(body))
+	}
+	return err
 }

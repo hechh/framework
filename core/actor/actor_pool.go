@@ -10,6 +10,7 @@ import (
 	"github.com/hechh/framework/core/rpc"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/gc"
 	"github.com/hechh/library/mlog"
@@ -18,8 +19,9 @@ import (
 )
 
 type ActorPool struct {
-	msgs *msgqueue.MsgQueuePool[msgqueue.ITask]
-	self IActor
+	msgs  *msgqueue.MsgQueuePool[msgqueue.ITask]
+	self  IActor
+	cache cache.ICache
 }
 
 func (d *ActorPool) GetName() string { return d.msgs.GetName() }
@@ -31,11 +33,12 @@ func (d *ActorPool) Stop() {
 	gc.Destroy(d.msgs.Wait)
 }
 
-func (d *ActorPool) Register(ac IActor, opts ...msgqueue.Option) {
+func (d *ActorPool) Register(ac IActor, c cache.ICache, opts ...msgqueue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, msgqueue.WithName(name))
 	d.msgs = msgqueue.NewMsgQueuePool[msgqueue.ITask]()
 	d.self = ac
+	d.cache = c
 }
 
 func (d *ActorPool) RegisterTimer(name string, ms time.Duration, times int32) error {
@@ -53,7 +56,7 @@ func (d *ActorPool) SendMsg(head *packet.Head, args ...any) error {
 	if handler == nil {
 		return fmt.Errorf("Handler(%s)未注册", head.ActorFuncName)
 	}
-	if !d.msgs.Push(NewTask(d.self, handler, head, args)) {
+	if !d.msgs.Push(NewTask(d.self, d.cache, handler, head, args)) {
 		mlog.Errorf("Actor(%s)服务已经停止，请求丢失, head=%v, args=%v", handler.GetActorFuncName(), head, args)
 		return fmt.Errorf("Actor(%s)服务已经停止", handler.GetActorFuncName())
 	}
@@ -69,7 +72,7 @@ func (d *ActorPool) Send(head *packet.Head, body []byte) error {
 	if handler == nil {
 		return fmt.Errorf("Handler(%s)未注册", api.GetActorFuncName())
 	}
-	if !d.msgs.Push(NewRpcTask(d.self, handler, api, head, body)) {
+	if !d.msgs.Push(NewRpcTask(d.self, d.cache, handler, api, head, body)) {
 		mlog.Errorf("Actor(%s)服务已经停止，请求丢失, head=%v, body=%v", handler.GetActorFuncName(), head, body)
 		return fmt.Errorf("Actor(%s)服务已经停止", api.GetActorFuncName())
 	}

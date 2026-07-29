@@ -10,6 +10,7 @@ import (
 	"github.com/hechh/framework/core/rpc"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/gc"
@@ -19,9 +20,10 @@ import (
 )
 
 type ActorGroup struct {
-	head *msgqueue.MsgQueue[msgqueue.ITask]
-	msgs []*msgqueue.MsgQueue[msgqueue.ITask]
-	self IActor
+	head  *msgqueue.MsgQueue[msgqueue.ITask]
+	msgs  []*msgqueue.MsgQueue[msgqueue.ITask]
+	self  IActor
+	cache cache.ICache
 }
 
 func (d *ActorGroup) GetName() string { return d.head.GetName() }
@@ -47,11 +49,12 @@ func (d *ActorGroup) Stop() {
 	}
 }
 
-func (d *ActorGroup) Register(ac IActor, opts ...msgqueue.Option) {
+func (d *ActorGroup) Register(ac IActor, c cache.ICache, opts ...msgqueue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, msgqueue.WithName(name))
 	d.head = msgqueue.NewMsgQueue[msgqueue.ITask](opts...)
 	d.self = ac
+	d.cache = c
 	d.msgs = make([]*msgqueue.MsgQueue[msgqueue.ITask], d.head.GetSize())
 	d.msgs[0] = d.head
 	for i := 1; i < d.head.GetSize(); i++ {
@@ -76,7 +79,7 @@ func (d *ActorGroup) SendMsg(head *packet.Head, args ...any) error {
 	}
 	actorId := templ.Or(head.ActorId > 0, head.ActorId, head.Uid)
 	size := uint64(d.head.GetSize())
-	if !d.msgs[actorId%size].Push(NewTask(d.self, handler, head, args)) {
+	if !d.msgs[actorId%size].Push(NewTask(d.self, d.cache, handler, head, args)) {
 		mlog.Errorf("ActorGroup(%s)服务已经停止，请求丢失, head=%v, args=%v", handler.GetActorFuncName(), head, args)
 		return fmt.Errorf("ActorGroup(%s)服务已经停止", handler.GetActorFuncName())
 	}
@@ -94,7 +97,7 @@ func (d *ActorGroup) Send(head *packet.Head, body []byte) error {
 	}
 	actorId := templ.Or(head.ActorId > 0, head.ActorId, head.Uid)
 	size := uint64(d.head.GetSize())
-	if !d.msgs[actorId%size].Push(NewRpcTask(d.self, handler, api, head, body)) {
+	if !d.msgs[actorId%size].Push(NewRpcTask(d.self, d.cache, handler, api, head, body)) {
 		mlog.Errorf("ActorGroup(%s)服务已经停止，请求丢失, head=%v, body=%v", handler.GetActorFuncName(), head, body)
 		return fmt.Errorf("ActorGroup(%s)服务已经停止", api.GetActorFuncName())
 	}

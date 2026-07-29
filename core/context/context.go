@@ -6,9 +6,12 @@ import (
 	"sync/atomic"
 
 	"github.com/hechh/framework/core/fun"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/datetime"
+	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/mlog"
 )
@@ -21,23 +24,20 @@ var (
 	}
 )
 
-type Value struct {
-	data  any
-	times uint32
-}
-
 type Context struct {
 	*packet.Head
-	values map[string]*Value
+	temp  cache.ICache
+	cache cache.ICache
 }
 
-func NewContext(head *packet.Head, opts ...func(*packet.Head)) *Context {
+func NewContext(head *packet.Head, a cache.ICache, opts ...func(*packet.Head)) *Context {
 	for _, opt := range opts {
 		opt(head)
 	}
 	obj := ctxPool.Get().(*Context)
 	obj.Head = head
-	obj.values = make(map[string]*Value)
+	obj.cache = a
+	obj.temp = cache.New()
 	return obj
 }
 
@@ -46,7 +46,8 @@ func (c *Context) Destroy() {
 		global.PutHead(c.Head)
 		c.Head = nil
 	}
-	c.values = nil
+	c.temp = nil
+	c.cache = nil
 	ctxPool.Put(c)
 }
 
@@ -70,38 +71,52 @@ func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
-func (c *Context) SetCache(key string, value any) {
-	if v, ok := c.values[key]; ok {
-		v.data = value
+func (c *Context) WalkCache(f func(string, any, uint32, uint32)) {
+	c.temp.WalkCache(f)
+	c.cache.WalkCache(f)
+}
+
+func (c *Context) SetCache(key string, value any, flag uint32) {
+	if c.cache != nil && !logic.Has(flag, define.TEMP_CAHCE_FLAG) {
+		c.cache.SetCache(key, value, flag)
 		return
 	}
-	c.values[key] = &Value{data: value}
+	c.temp.SetCache(key, value, flag)
 }
 
 func (c *Context) GetCache(key string) (any, bool) {
-	if v, ok := c.values[key]; ok {
-		return v.data, ok
+	if v, ok := c.temp.GetCache(key); ok {
+		return v, ok
+	}
+	if c.cache != nil {
+		if v, ok := c.cache.GetCache(key); ok {
+			return v, ok
+		}
 	}
 	return nil, false
 }
 
 func (c *Context) IsChanged(key string) bool {
-	if v, ok := c.values[key]; ok {
-		return v.times > 0
+	if c.temp.IsChanged(key) {
+		return true
+	}
+	if c.cache != nil {
+		return c.cache.IsChanged(key)
 	}
 	return false
 }
 
 func (c *Context) Change(key string) {
-	if v, ok := c.values[key]; ok {
-		v.times++
+	c.temp.Change(key)
+	if c.cache != nil {
+		c.cache.Change(key)
 	}
 }
 
 func (c *Context) Reset(key string) {
-	if v, ok := c.values[key]; ok {
-		v.times = 0
-		return
+	c.temp.Reset(key)
+	if c.cache != nil {
+		c.cache.Reset(key)
 	}
 }
 

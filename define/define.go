@@ -2,6 +2,7 @@ package define
 
 import (
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/base/cache"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -15,6 +16,7 @@ const (
 const (
 	GLOBAL_CACHE_FLAG = 1 << 0 // 全局数据库
 	SHARDS_CACHE_FLAG = 1 << 1 // 分片数据据库
+	TEMP_CAHCE_FLAG   = 1 << 2 // 临时缓存
 )
 
 const (
@@ -29,16 +31,8 @@ type Message interface {
 	UnmarshalVT([]byte) error
 }
 
-type ICache interface {
-	SetCache(string, any)
-	GetCache(string) (any, bool)
-	IsChanged(string) bool
-	Change(string)
-	Reset(string)
-}
-
 type IContext interface {
-	ICache
+	cache.ICache
 	ILogger
 	IHead
 	Destroy()

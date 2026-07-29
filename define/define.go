@@ -29,14 +29,18 @@ type Message interface {
 	UnmarshalVT([]byte) error
 }
 
-type IContext interface {
-	ILogger
-	IHead
+type ICache interface {
 	SetCache(string, any)
 	GetCache(string) (any, bool)
 	IsChanged(string) bool
 	Change(string)
 	Reset(string)
+}
+
+type IContext interface {
+	ICache
+	ILogger
+	IHead
 	Destroy()
 	ReadOnly() *packet.Head
 	Clone(...func(*packet.Head)) *packet.Head  // 转发

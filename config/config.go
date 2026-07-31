@@ -50,44 +50,62 @@ type Config struct {
 	Cluster  *cluster.Config                   `yaml:"cluster,omitempty"`
 	Common   *CommonConfig                     `yaml:"common,omitempty"`
 	Nodes    map[string]map[uint32]*NodeConfig `yaml:"nodes,omitempty"`
-	Types    map[uint32]map[uint32]*NodeConfig `yaml:"-"`
-	Node     *NodeConfig                       `yaml:"-"`
-	Gateway  *NodeConfig                       `yaml:"-"`
-	Self     *packet.Node                      `yaml:"-"`
+	types    map[uint32]map[uint32]*NodeConfig `yaml:"-"`
+	node     *NodeConfig                       `yaml:"-"`
+	gateway  *NodeConfig                       `yaml:"-"`
+	self     *packet.Node                      `yaml:"-"`
 }
 
-func Load(filename string, nodeType uint32, nodeId uint32, conv enum.IConvertor) (*Config, error) {
+func (d *Config) GetSelfNode() *packet.Node {
+	return d.self
+}
+
+func (d *Config) GetGateway() *NodeConfig {
+	return d.gateway
+}
+
+func (d *Config) GetSelfConfig() *NodeConfig {
+	return d.node
+}
+
+func (d *Config) GetNodeConfig(nodeType, nodeId uint32) *NodeConfig {
+	if items, ok := d.types[nodeType]; ok {
+		return items[nodeId]
+	}
+	return nil
+}
+
+func (d *Config) Init(filename string, nodeType, nodeId uint32, conv enum.IConvertor) error {
 	// 加载配置
-	gcfg := new(Config)
-	if err := fileutil.LoadYaml(filename, gcfg); err != nil {
-		return nil, err
+	if err := fileutil.LoadYaml(filename, d); err != nil {
+		return err
 	}
 
-	gcfg.Mysql.UidModValue = gcfg.Common.UidModValue
-	gcfg.Redis.UidModValue = gcfg.Common.UidModValue
+	d.Mysql.UidModValue = d.Common.UidModValue
+	d.Redis.UidModValue = d.Common.UidModValue
 
-	gcfg.Types = make(map[uint32]map[uint32]*NodeConfig)
-	for nodeName, items := range gcfg.Nodes {
+	d.types = make(map[uint32]map[uint32]*NodeConfig)
+	for nodeName, items := range d.Nodes {
 		for nodeId, cfg := range items {
 			cfg.Type = conv.ToUint32(strings.ToUpper(nodeName))
 			cfg.Id = nodeId
 			cfg.Name = nodeName
 
 			// 支持的节点类型
-			if _, ok := gcfg.Types[cfg.Type]; !ok {
-				gcfg.Types[cfg.Type] = make(map[uint32]*NodeConfig)
+			if _, ok := d.types[cfg.Type]; !ok {
+				d.types[cfg.Type] = make(map[uint32]*NodeConfig)
 			}
-			gcfg.Types[cfg.Type][cfg.Id] = cfg
+			d.types[cfg.Type][cfg.Id] = cfg
 
 			// 是否为网关节点
 			if cfg.Type&define.GATEWAY_MASK == define.GATEWAY_MASK {
-				gcfg.Gateway = cfg
+				d.gateway = cfg
 			}
 
 			// 当前节点
 			if cfg.Type == nodeType && cfg.Id == nodeId {
-				gcfg.Node = cfg
-				gcfg.Self = &packet.Node{
+				d.node = cfg
+				d.self = &packet.Node{
 					Type: cfg.Type,
 					Id:   cfg.Id,
 					Name: cfg.Name,
@@ -97,21 +115,21 @@ func Load(filename string, nodeType uint32, nodeId uint32, conv enum.IConvertor)
 			}
 
 			// 节点日志
-			if gcfg.Logger != nil && cfg.Logger == nil {
-				cfg.Logger = gcfg.Logger
+			if d.Logger != nil && cfg.Logger == nil {
+				cfg.Logger = d.Logger
 			}
-			if cfg.Logger != nil && gcfg.Logger != nil {
+			if cfg.Logger != nil && d.Logger != nil {
 				cfg.Logger = &mlog.Config{
-					Mode:      templ.Or(cfg.Logger.Mode == "", gcfg.Logger.Mode, cfg.Logger.Mode),
-					Path:      templ.Or(cfg.Logger.Path == "", gcfg.Logger.Path, cfg.Logger.Path),
-					Level:     templ.Or(cfg.Logger.Level == "", gcfg.Logger.Level, cfg.Logger.Level),
-					Format:    templ.Or(cfg.Logger.Format == "", gcfg.Logger.Format, cfg.Logger.Format),
+					Mode:      templ.Or(cfg.Logger.Mode == "", d.Logger.Mode, cfg.Logger.Mode),
+					Path:      templ.Or(cfg.Logger.Path == "", d.Logger.Path, cfg.Logger.Path),
+					Level:     templ.Or(cfg.Logger.Level == "", d.Logger.Level, cfg.Logger.Level),
+					Format:    templ.Or(cfg.Logger.Format == "", d.Logger.Format, cfg.Logger.Format),
 					Name:      cfg.Name,
-					IsCaller:  templ.Or(cfg.Logger.IsCaller, cfg.Logger.IsCaller, gcfg.Logger.IsCaller),
-					CacheSize: templ.Or(cfg.Logger.CacheSize == 0, gcfg.Logger.CacheSize, cfg.Logger.CacheSize),
+					IsCaller:  templ.Or(cfg.Logger.IsCaller, cfg.Logger.IsCaller, d.Logger.IsCaller),
+					CacheSize: templ.Or(cfg.Logger.CacheSize == 0, d.Logger.CacheSize, cfg.Logger.CacheSize),
 				}
 			}
 		}
 	}
-	return gcfg, nil
+	return nil
 }

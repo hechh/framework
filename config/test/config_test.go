@@ -1,8 +1,10 @@
-package config
+package test
 
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/hechh/framework/config"
 )
 
 type mockConvertor struct {
@@ -37,7 +39,8 @@ func TestInit(t *testing.T) {
 		},
 	}
 
-	cfg, err := Load("config.yaml", 1, 1, conv)
+	cfg := new(config.Config)
+	err := cfg.Init("config.yaml", 1, 1, conv)
 
 	buf, _ := json.Marshal(cfg)
 	t.Log(string(buf))

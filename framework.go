@@ -44,8 +44,8 @@ func Register(c any) {
 	object.Register(c)
 }
 
-func Init(filename string, nodeType uint32, nodeId uint32) error {
-	return object.Init(filename, nodeType, nodeId)
+func Init(filename string, nodeType enum.IEnum, nodeId uint32) error {
+	return object.Init(filename, uint32(nodeType.Number()), nodeId)
 }
 
 func Close() {
@@ -66,4 +66,8 @@ func GetConfig() *config.Config {
 
 func GetCommonCfg() *config.CommonConfig {
 	return object.GetConfig().Common
+}
+
+func GetSelfConfig() *config.NodeConfig {
+	return object.GetConfig().Node
 }

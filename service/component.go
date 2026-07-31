@@ -3,10 +3,12 @@ package service
 import (
 	"fmt"
 
+	"github.com/hechh/framework/config"
 	"github.com/hechh/framework/core/cluster"
 	"github.com/hechh/framework/core/msgbus"
 	"github.com/hechh/framework/core/network"
 	"github.com/hechh/framework/core/router"
+	"github.com/hechh/framework/global"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/dbpool"
 	"github.com/hechh/library/fwatcher"
@@ -26,6 +28,29 @@ type Wrapper struct {
 
 func (d *Wrapper) Init(...msgqueue.Option) error { return d.comp.Init(d.app) }
 func (d *Wrapper) Close()                        { d.comp.Close(d.app) }
+
+// ==================== Config ====================
+type Config struct {
+	FileName string
+	NodeType uint32
+	NodeId   uint32
+}
+
+func (d *Config) Init(a *Service) error {
+	// 解析配置
+	cfg := a.GetConfig()
+	if err := cfg.Init(d.FileName, d.NodeType, d.NodeId, global.CmdConvertor); err != nil {
+		mlog.Errorf("[config] 模块初始化失败，error=%v", err)
+		return err
+	}
+	config.SetObject(cfg)
+	mlog.Infof("[config] 模块初始化成功")
+	return nil
+}
+
+func (d *Config) Close(a *Service) {
+	mlog.Infof("[config] 模块关闭成功")
+}
 
 // ==================== DbPool ====================
 

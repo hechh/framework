@@ -60,6 +60,7 @@ type Service struct {
 // NewApp 创建应用实例
 func New() *Service {
 	return &Service{
+		cfg:       new(config.Config),
 		dbpool:    dbpool.NewDbPool(mysql.NewClient),
 		fwatcher:  fwatcher.NewFwatcher(etcdsync.NewEtcdSync),
 		gc:        &gc.Gc{},

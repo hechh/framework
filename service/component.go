@@ -9,6 +9,7 @@ import (
 	"github.com/hechh/framework/core/network"
 	"github.com/hechh/framework/core/router"
 	"github.com/hechh/framework/global"
+	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/enum"
 	"github.com/hechh/library/dbpool"
 	"github.com/hechh/library/fwatcher"
@@ -28,6 +29,23 @@ type Wrapper struct {
 
 func (d *Wrapper) Init(...msgqueue.Option) error { return d.comp.Init(d.app) }
 func (d *Wrapper) Close()                        { d.comp.Close(d.app) }
+
+// ==================== Global ====================
+type Global struct {
+	Cmd  enum.IConvertor
+	Node enum.IConvertor
+}
+
+func (d *Global) Init(a *Service) error {
+	global.CmdConvertor = d.Cmd
+	global.NodeConvertor = d.Node
+	mlog.Infof("[global] 模块初始化成功")
+	return nil
+}
+
+func (d *Global) Close(a *Service) {
+	mlog.Infof("[global] 模块关闭成功")
+}
 
 // ==================== Config ====================
 type Config struct {
@@ -232,11 +250,24 @@ func (d *Fwatcher) Close(a *Service) {
 
 // ==================== Network ====================
 
-type Network struct{}
+type Network struct {
+	Decoder func([]byte) (*packet.Packet, error)
+	Encoder func(*packet.Packet) ([]byte, error)
+	Handler func(*packet.Packet) error
+}
 
 func (d *Network) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetNetwork()
+
+	if d.Decoder != nil {
+		network.SetDecodeFunc(d.Decoder)
+	}
+	if d.Encoder != nil {
+		network.SetEncodeFunc(d.Encoder)
+	}
+	network.SetPacketFunc(d.Handler)
+
 	addr := fmt.Sprintf(":%d", cfg.GetSelfNode().Port)
 	if err := obj.Init(a.GetTimer(), addr); err != nil {
 		mlog.Errorf("[network] 网络模块初始化失败，error=%v", err)
@@ -299,11 +330,16 @@ func (d *Cluster) Close(a *Service) {
 
 // ==================== MsgBus ====================
 
-type MsgBus struct{}
+type MsgBus struct {
+	Handler func(*packet.Packet)
+}
 
 func (d *MsgBus) Init(a *Service) error {
 	cfg := a.GetConfig()
 	selfNode := cfg.GetSelfNode()
+
+	msgbus.SetPacketFunc(d.Handler)
+
 	obj := a.GetMsgBus()
 	if err := obj.Init(cfg.MsgBus, selfNode.Type, selfNode.Id); err != nil {
 		mlog.Errorf("[msgbus] 消息总线模块初始化失败，error=%v", err)

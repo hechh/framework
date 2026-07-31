@@ -10,8 +10,10 @@ import (
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/datetime"
+	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/mlog"
+	"github.com/hechh/library/redispool"
 )
 
 var (
@@ -24,6 +26,7 @@ var (
 
 type Context struct {
 	*packet.Head
+	temp  *Cache
 	cache define.ICache
 }
 
@@ -34,6 +37,7 @@ func NewContext(head *packet.Head, a define.ICache, opts ...func(*packet.Head)) 
 	obj := ctxPool.Get().(*Context)
 	obj.Head = head
 	obj.cache = a
+	obj.temp = NewCache()
 	return obj
 }
 
@@ -42,6 +46,7 @@ func (c *Context) Destroy() {
 		global.PutHead(c.Head)
 		c.Head = nil
 	}
+	c.temp = nil
 	c.cache = nil
 	ctxPool.Put(c)
 }
@@ -67,12 +72,19 @@ func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 }
 
 func (c *Context) SetCache(key string, value any, flag uint32) {
-	if c.cache != nil {
+	// 临时数据写入 temp，其余写入 actor 持久缓存
+	if c.cache != nil && !logic.Has(flag, redispool.TEMP_FLAG) {
 		c.cache.SetCache(key, value, flag)
+		return
 	}
+	c.temp.SetCache(key, value, flag)
 }
 
 func (c *Context) GetCache(key string) (any, bool) {
+	// 临时缓存优先，其次持久缓存
+	if v, ok := c.temp.GetCache(key); ok {
+		return v, ok
+	}
 	if c.cache != nil {
 		return c.cache.GetCache(key)
 	}
@@ -80,6 +92,9 @@ func (c *Context) GetCache(key string) (any, bool) {
 }
 
 func (c *Context) IsChanged(key string) bool {
+	if c.temp.IsChanged(key) {
+		return true
+	}
 	if c.cache != nil {
 		return c.cache.IsChanged(key)
 	}
@@ -87,12 +102,14 @@ func (c *Context) IsChanged(key string) bool {
 }
 
 func (c *Context) Change(key string) {
+	c.temp.Change(key)
 	if c.cache != nil {
 		c.cache.Change(key)
 	}
 }
 
 func (c *Context) Reset(key string) {
+	c.temp.Reset(key)
 	if c.cache != nil {
 		c.cache.Reset(key)
 	}

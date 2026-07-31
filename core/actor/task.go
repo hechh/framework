@@ -11,7 +11,6 @@ import (
 	"github.com/hechh/framework/core/rpc"
 	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/logic"
 )
 
@@ -33,7 +32,7 @@ type Task struct {
 	args  []any
 }
 
-func NewTask(a any, c cache.ICache, h handler.IHandler, head *packet.Head, args []any) *Task {
+func NewTask(a any, c define.ICache, h handler.IHandler, head *packet.Head, args []any) *Task {
 	t := localPool.Get().(*Task)
 	t.IContext = context.NewContext(head, c, fun.TRACE)
 	t.IHandler = h
@@ -84,7 +83,7 @@ type RpcTask struct {
 	body  []byte
 }
 
-func NewRpcTask(a any, c cache.ICache, h handler.IHandler, r rpc.IRpc, head *packet.Head, body []byte) *RpcTask {
+func NewRpcTask(a any, c define.ICache, h handler.IHandler, r rpc.IRpc, head *packet.Head, body []byte) *RpcTask {
 	t := rpcPool.Get().(*RpcTask)
 	t.IContext = context.NewContext(head, c, fun.TRACE)
 	t.IHandler = h

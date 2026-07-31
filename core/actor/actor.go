@@ -8,9 +8,9 @@ import (
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/rpc"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/gc"
 	"github.com/hechh/library/mlog"
@@ -21,7 +21,7 @@ import (
 type Actor struct {
 	msgs  *msgqueue.MsgQueue[msgqueue.ITask]
 	self  IActor
-	cache cache.ICache
+	cache define.ICache
 }
 
 func (d *Actor) GetName() string { return d.msgs.GetName() }
@@ -33,7 +33,7 @@ func (d *Actor) Stop() {
 	gc.Destroy(d.msgs.Wait)
 }
 
-func (d *Actor) Register(ac IActor, c cache.ICache, opts ...msgqueue.Option) {
+func (d *Actor) Register(ac IActor, c define.ICache, opts ...msgqueue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, msgqueue.WithName(name))
 	d.msgs = msgqueue.NewMsgQueue[msgqueue.ITask](opts...)

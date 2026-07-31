@@ -8,9 +8,9 @@ import (
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/rpc"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/gc"
@@ -23,7 +23,7 @@ type ActorGroup struct {
 	head  *msgqueue.MsgQueue[msgqueue.ITask]
 	msgs  []*msgqueue.MsgQueue[msgqueue.ITask]
 	self  IActor
-	cache cache.ICache
+	cache define.ICache
 }
 
 func (d *ActorGroup) GetName() string { return d.head.GetName() }
@@ -49,7 +49,7 @@ func (d *ActorGroup) Stop() {
 	}
 }
 
-func (d *ActorGroup) Register(ac IActor, c cache.ICache, opts ...msgqueue.Option) {
+func (d *ActorGroup) Register(ac IActor, c define.ICache, opts ...msgqueue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, msgqueue.WithName(name))
 	d.head = msgqueue.NewMsgQueue[msgqueue.ITask](opts...)

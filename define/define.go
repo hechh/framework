@@ -2,7 +2,6 @@ package define
 
 import (
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/cache"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -11,12 +10,6 @@ const (
 	UPDATETIME_MASK = 1 << 1 // 时间屏蔽模式
 	CMD_FLAG        = 1 << 2 // 客户端交互命令
 	NOTIFY_FLAG     = 1 << 3 // 推送消息
-)
-
-const (
-	GLOBAL_CACHE_FLAG = 1 << 0 // 全局数据库
-	SHARDS_CACHE_FLAG = 1 << 1 // 分片数据据库
-	TEMP_CAHCE_FLAG   = 1 << 2 // 临时缓存
 )
 
 const (
@@ -32,7 +25,7 @@ type Message interface {
 }
 
 type IContext interface {
-	cache.ICache
+	ICache
 	ILogger
 	IHead
 	Destroy()
@@ -41,6 +34,14 @@ type IContext interface {
 	Derive(...func(*packet.Head)) *packet.Head // 派生
 	AddDepth(int32) int32
 	GetDepth() int32
+}
+
+type ICache interface {
+	SetCache(string, any, uint32)
+	GetCache(string) (any, bool)
+	IsChanged(string) bool
+	Change(string)
+	Reset(string)
 }
 
 type ILogger interface {

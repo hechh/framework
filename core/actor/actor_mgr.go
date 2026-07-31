@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/mlog"
@@ -62,7 +62,7 @@ func (d *ActorMgr[T]) Stop() {
 	}
 }
 
-func (d *ActorMgr[T]) Register(ac IActor, c cache.ICache, opts ...msgqueue.Option) {
+func (d *ActorMgr[T]) Register(ac IActor, c define.ICache, opts ...msgqueue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, msgqueue.WithName(name))
 	d.attr = new(msgqueue.Attribute)

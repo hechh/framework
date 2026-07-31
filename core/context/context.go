@@ -9,9 +9,7 @@ import (
 	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/library/base/cache"
 	"github.com/hechh/library/base/datetime"
-	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/mlog"
 )
@@ -26,18 +24,16 @@ var (
 
 type Context struct {
 	*packet.Head
-	temp  cache.ICache
-	cache cache.ICache
+	cache define.ICache
 }
 
-func NewContext(head *packet.Head, a cache.ICache, opts ...func(*packet.Head)) *Context {
+func NewContext(head *packet.Head, a define.ICache, opts ...func(*packet.Head)) *Context {
 	for _, opt := range opts {
 		opt(head)
 	}
 	obj := ctxPool.Get().(*Context)
 	obj.Head = head
 	obj.cache = a
-	obj.temp = cache.New()
 	return obj
 }
 
@@ -46,7 +42,6 @@ func (c *Context) Destroy() {
 		global.PutHead(c.Head)
 		c.Head = nil
 	}
-	c.temp = nil
 	c.cache = nil
 	ctxPool.Put(c)
 }
@@ -71,35 +66,20 @@ func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
-func (c *Context) WalkCache(f func(string, any, uint32, uint32)) {
-	c.temp.WalkCache(f)
-	c.cache.WalkCache(f)
-}
-
 func (c *Context) SetCache(key string, value any, flag uint32) {
-	if c.cache != nil && !logic.Has(flag, define.TEMP_CAHCE_FLAG) {
+	if c.cache != nil {
 		c.cache.SetCache(key, value, flag)
-		return
 	}
-	c.temp.SetCache(key, value, flag)
 }
 
 func (c *Context) GetCache(key string) (any, bool) {
-	if v, ok := c.temp.GetCache(key); ok {
-		return v, ok
-	}
 	if c.cache != nil {
-		if v, ok := c.cache.GetCache(key); ok {
-			return v, ok
-		}
+		return c.cache.GetCache(key)
 	}
 	return nil, false
 }
 
 func (c *Context) IsChanged(key string) bool {
-	if c.temp.IsChanged(key) {
-		return true
-	}
 	if c.cache != nil {
 		return c.cache.IsChanged(key)
 	}
@@ -107,14 +87,12 @@ func (c *Context) IsChanged(key string) bool {
 }
 
 func (c *Context) Change(key string) {
-	c.temp.Change(key)
 	if c.cache != nil {
 		c.cache.Change(key)
 	}
 }
 
 func (c *Context) Reset(key string) {
-	c.temp.Reset(key)
 	if c.cache != nil {
 		c.cache.Reset(key)
 	}

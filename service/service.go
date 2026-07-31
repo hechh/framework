@@ -13,7 +13,6 @@ import (
 	"github.com/hechh/framework/core/network"
 	"github.com/hechh/framework/core/network/adapter/websocket"
 	"github.com/hechh/framework/core/router"
-	"github.com/hechh/framework/global"
 	"github.com/hechh/library/dbpool"
 	"github.com/hechh/library/dbpool/adapter/mysql"
 	"github.com/hechh/library/fwatcher"
@@ -117,17 +116,7 @@ func (d *Service) GetMsgBus() *msgbus.MsgBus          { return d.msgbus }
 func (d *Service) GetCluster() *cluster.Cluster       { return d.cluster }
 
 // Init 按顺序初始化各组件
-func (d *Service) Init(filename string, nodeType, nodeId uint32) error {
-	// 1. 加载配置（同时初始化 Types/Node/Self 等）
-	cfg, err := config.Load(filename, nodeType, nodeId, global.NodeConvertor)
-	if err != nil {
-		return err
-	}
-	d.cfg = cfg
-
-	global.Self = cfg.Self
-	global.GatewayNodeType = cfg.Gateway.Type
-
+func (d *Service) Init() error {
 	for i, comp := range d.services {
 		if err := comp.Init(); err != nil {
 			for j := i - 1; j >= 0; j-- {

@@ -3,7 +3,6 @@ package framework
 import (
 	"os"
 
-	"github.com/hechh/framework/config"
 	"github.com/hechh/framework/core/msgbus"
 	"github.com/hechh/framework/core/network"
 	"github.com/hechh/framework/global"
@@ -44,8 +43,8 @@ func Register(c any) {
 	object.Register(c)
 }
 
-func Init(filename string, nodeType enum.IEnum, nodeId uint32) error {
-	return object.Init(filename, uint32(nodeType.Number()), nodeId)
+func Init() error {
+	return object.Init()
 }
 
 func Close() {
@@ -58,16 +57,4 @@ func Run(sigs ...os.Signal) {
 
 func GetApp() *service.Service {
 	return object
-}
-
-func GetConfig() *config.Config {
-	return object.GetConfig()
-}
-
-func GetCommonCfg() *config.CommonConfig {
-	return object.GetConfig().Common
-}
-
-func GetSelfConfig() *config.NodeConfig {
-	return object.GetConfig().Node
 }

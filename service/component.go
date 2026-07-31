@@ -9,7 +9,7 @@ import (
 	"github.com/hechh/framework/core/network"
 	"github.com/hechh/framework/core/router"
 	"github.com/hechh/framework/global"
-	"github.com/hechh/library/base/templ"
+	"github.com/hechh/library/base/enum"
 	"github.com/hechh/library/dbpool"
 	"github.com/hechh/library/fwatcher"
 	"github.com/hechh/library/gc"
@@ -31,19 +31,21 @@ func (d *Wrapper) Close()                        { d.comp.Close(d.app) }
 
 // ==================== Config ====================
 type Config struct {
-	FileName string
-	NodeType uint32
-	NodeId   uint32
+	File string
+	Type enum.IEnum
+	Id   int
 }
 
 func (d *Config) Init(a *Service) error {
 	// 解析配置
 	cfg := a.GetConfig()
-	if err := cfg.Init(d.FileName, d.NodeType, d.NodeId, global.CmdConvertor); err != nil {
+	if err := cfg.Init(d.File, uint32(d.Type.Number()), uint32(d.Id), global.NodeConvertor); err != nil {
 		mlog.Errorf("[config] 模块初始化失败，error=%v", err)
 		return err
 	}
 	config.SetObject(cfg)
+	global.Self = cfg.GetSelfNode()
+	global.GatewayNodeType = cfg.GetGateway().Type
 	mlog.Infof("[config] 模块初始化成功")
 	return nil
 }
@@ -168,8 +170,8 @@ type Pprof struct{}
 func (d *Pprof) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetPprof()
-	port := cfg.Node.Port + 10000
-	if err := obj.Init(port); err != nil {
+	port := cfg.GetSelfNode().Port + 10000
+	if err := obj.Init(int(port)); err != nil {
 		mlog.Errorf("[pprof] pprof模块初始化失败，error=%v", err)
 		return err
 	}
@@ -235,7 +237,7 @@ type Network struct{}
 func (d *Network) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetNetwork()
-	addr := fmt.Sprintf(":%d", cfg.Node.Port)
+	addr := fmt.Sprintf(":%d", cfg.GetSelfNode().Port)
 	if err := obj.Init(a.GetTimer(), addr); err != nil {
 		mlog.Errorf("[network] 网络模块初始化失败，error=%v", err)
 		return err
@@ -258,7 +260,7 @@ type Router struct{}
 func (d *Router) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetRouter()
-	if err := obj.Init(a.GetTimer(), cfg.Self, templ.Map2List(cfg.Types)); err != nil {
+	if err := obj.Init(a.GetTimer(), cfg.GetSelfNode(), cfg.GetSupports()); err != nil {
 		mlog.Errorf("[router] 路由模块初始化失败，error=%v", err)
 		return err
 	}
@@ -280,7 +282,7 @@ type Cluster struct{}
 func (d *Cluster) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetCluster()
-	if err := obj.Init(cfg.Cluster, cfg.Self, templ.Map2List(cfg.Types)); err != nil {
+	if err := obj.Init(cfg.Cluster, cfg.GetSelfNode(), cfg.GetSupports()); err != nil {
 		mlog.Errorf("[cluster] 集群模块初始化失败，error=%v", err)
 		return err
 	}
@@ -301,8 +303,9 @@ type MsgBus struct{}
 
 func (d *MsgBus) Init(a *Service) error {
 	cfg := a.GetConfig()
+	selfNode := cfg.GetSelfNode()
 	obj := a.GetMsgBus()
-	if err := obj.Init(cfg.MsgBus, cfg.Node.Type, cfg.Node.Id); err != nil {
+	if err := obj.Init(cfg.MsgBus, selfNode.Type, selfNode.Id); err != nil {
 		mlog.Errorf("[msgbus] 消息总线模块初始化失败，error=%v", err)
 		return err
 	}

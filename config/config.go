@@ -56,12 +56,16 @@ type Config struct {
 	self     *packet.Node                      `yaml:"-"`
 }
 
-func (d *Config) GetSelfNode() *packet.Node {
-	return d.self
+func (d *Config) GetSupports() []uint32 {
+	return templ.Map2List(d.types)
 }
 
 func (d *Config) GetGateway() *NodeConfig {
 	return d.gateway
+}
+
+func (d *Config) GetSelfNode() *packet.Node {
+	return d.self
 }
 
 func (d *Config) GetSelfConfig() *NodeConfig {

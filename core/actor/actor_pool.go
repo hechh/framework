@@ -8,20 +8,20 @@ import (
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/rpc"
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/gc"
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/msgqueue"
+	"github.com/hechh/library/redispool"
 	"github.com/hechh/library/timer"
 )
 
 type ActorPool struct {
 	msgs  *msgqueue.MsgQueuePool[msgqueue.ITask]
 	self  IActor
-	cache define.ICache
+	cache redispool.ICache
 }
 
 func (d *ActorPool) GetName() string { return d.msgs.GetName() }
@@ -33,7 +33,7 @@ func (d *ActorPool) Stop() {
 	gc.Destroy(d.msgs.Wait)
 }
 
-func (d *ActorPool) Register(ac IActor, c define.ICache, opts ...msgqueue.Option) {
+func (d *ActorPool) Register(ac IActor, c redispool.ICache, opts ...msgqueue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, msgqueue.WithName(name))
 	d.msgs = msgqueue.NewMsgQueuePool[msgqueue.ITask]()

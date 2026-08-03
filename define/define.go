@@ -2,6 +2,7 @@ package define
 
 import (
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/library/redispool"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -25,7 +26,7 @@ type Message interface {
 }
 
 type IContext interface {
-	ICache
+	redispool.ICache
 	ILogger
 	IHead
 	Destroy()
@@ -34,14 +35,6 @@ type IContext interface {
 	Derive(...func(*packet.Head)) *packet.Head // 派生
 	AddDepth(int32) int32
 	GetDepth() int32
-}
-
-type ICache interface {
-	SetCache(string, any, uint32)
-	GetCache(string) (any, bool)
-	IsChanged(string) bool
-	Change(string)
-	Reset(string)
 }
 
 type ILogger interface {

@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 
 	"github.com/hechh/framework/core/fun"
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/datetime"
@@ -14,6 +13,7 @@ import (
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/redispool"
+	"github.com/hechh/library/redispool/cache"
 )
 
 var (
@@ -26,18 +26,18 @@ var (
 
 type Context struct {
 	*packet.Head
-	temp  *Cache
-	cache define.ICache
+	temp  redispool.ICache
+	cache redispool.ICache
 }
 
-func NewContext(head *packet.Head, a define.ICache, opts ...func(*packet.Head)) *Context {
+func NewContext(head *packet.Head, a redispool.ICache, opts ...func(*packet.Head)) *Context {
 	for _, opt := range opts {
 		opt(head)
 	}
 	obj := ctxPool.Get().(*Context)
 	obj.Head = head
 	obj.cache = a
-	obj.temp = NewCache()
+	obj.temp = cache.New(nil, nil)
 	return obj
 }
 
@@ -71,8 +71,27 @@ func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
+func (c *Context) GetTypes() []redispool.IData {
+	if c.cache == nil {
+		return c.temp.GetTypes()
+	}
+	list1 := c.cache.GetTypes()
+	list2 := c.temp.GetTypes()
+	rets := make([]redispool.IData, 0, len(list1)+len(list2))
+	rets = append(rets, list1...)
+	rets = append(rets, list2...)
+	return rets
+}
+
+func (c *Context) AddType(t redispool.IData) {
+	if c.cache != nil && logic.Has(t.GetMask(), redispool.PERMANENT_FLAG) {
+		c.cache.AddType(t)
+		return
+	}
+	c.temp.AddType(t)
+}
+
 func (c *Context) SetCache(key string, value any, flag uint32) {
-	// 临时数据写入 temp，其余写入 actor 持久缓存
 	if c.cache != nil && !logic.Has(flag, redispool.TEMP_FLAG) {
 		c.cache.SetCache(key, value, flag)
 		return
@@ -81,7 +100,6 @@ func (c *Context) SetCache(key string, value any, flag uint32) {
 }
 
 func (c *Context) GetCache(key string) (any, bool) {
-	// 临时缓存优先，其次持久缓存
 	if v, ok := c.temp.GetCache(key); ok {
 		return v, ok
 	}

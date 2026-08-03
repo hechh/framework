@@ -57,7 +57,7 @@ type Config struct {
 }
 
 func (d *Config) GetSupports() []uint32 {
-	return templ.Map2List(d.types)
+	return templ.Map2Keys(d.types)
 }
 
 func (d *Config) GetGateway() *NodeConfig {

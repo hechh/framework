@@ -71,16 +71,11 @@ func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
-func (c *Context) GetTypes() []redispool.IData {
+func (c *Context) GetTypes(items ...redispool.IData) []redispool.IData {
 	if c.cache == nil {
-		return c.temp.GetTypes()
+		return c.temp.GetTypes(items...)
 	}
-	list1 := c.cache.GetTypes()
-	list2 := c.temp.GetTypes()
-	rets := make([]redispool.IData, 0, len(list1)+len(list2))
-	rets = append(rets, list1...)
-	rets = append(rets, list2...)
-	return rets
+	return c.temp.GetTypes(c.cache.GetTypes(items...)...)
 }
 
 func (c *Context) AddType(t redispool.IData) {

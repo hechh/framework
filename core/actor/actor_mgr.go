@@ -19,6 +19,11 @@ type Shards struct {
 	actors map[uint64]IActor
 }
 
+func (d *Shards) RLock()   { d.mutex.RLock() }
+func (d *Shards) RUnlock() { d.mutex.RUnlock() }
+func (d *Shards) Lock()    { d.mutex.Lock() }
+func (d *Shards) Unlock()  { d.mutex.Unlock() }
+
 type ActorMgr[T any] struct {
 	attr   *msgqueue.Attribute
 	shards []*Shards
@@ -89,14 +94,11 @@ func (d *ActorMgr[T]) SendMsg(head *packet.Head, args ...any) error {
 		}
 		return err
 	case packet.SendType_BROADCAST:
-		for _, sh := range d.shards {
-			sh.mutex.RLock()
-			for _, act := range sh.actors {
-				act.SendMsg(head, args...)
-			}
-			sh.mutex.RUnlock()
+		err := d.BroadcastMsg(head, args...)
+		if err != nil {
+			mlog.Errorf("%s 广播失败 error=%v", d.GetName(), err)
 		}
-		return nil
+		return err
 	default:
 		return fmt.Errorf("ActorMgr(%s)不支该发送类型(%d)", d.attr.GetName(), head.SendType)
 	}
@@ -112,17 +114,40 @@ func (d *ActorMgr[T]) Send(head *packet.Head, body []byte) error {
 		}
 		return err
 	case packet.SendType_BROADCAST:
-		for _, sh := range d.shards {
-			sh.mutex.RLock()
-			for _, act := range sh.actors {
-				act.Send(head, body)
-			}
-			sh.mutex.RUnlock()
+		err := d.Broadcast(head, body)
+		if err != nil {
+			mlog.Errorf("%s 广播失败 error=%v", d.GetName(), err)
 		}
-		return nil
+		return err
 	default:
 		return fmt.Errorf("ActorMgr(%s)不支该发送类型(%d)", d.attr.GetName(), head.SendType)
 	}
+}
+
+func (d *ActorMgr[T]) BroadcastMsg(head *packet.Head, args ...any) (err error) {
+	for _, sh := range d.shards {
+		sh.mutex.RLock()
+		for _, act := range sh.actors {
+			if reterr := act.SendMsg(head, args...); reterr != nil {
+				err = reterr
+			}
+		}
+		sh.mutex.RUnlock()
+	}
+	return
+}
+
+func (d *ActorMgr[T]) Broadcast(head *packet.Head, body []byte) (err error) {
+	for _, sh := range d.shards {
+		sh.mutex.RLock()
+		for _, act := range sh.actors {
+			if reterr := act.Send(head, body); reterr != nil {
+				err = reterr
+			}
+		}
+		sh.mutex.RUnlock()
+	}
+	return
 }
 
 func (d *ActorMgr[T]) GetActor(id uint64) IActor {

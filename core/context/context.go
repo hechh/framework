@@ -188,5 +188,5 @@ func (c *Context) Fatalf(f string, args ...any) {
 
 func tag(head *packet.Head) string {
 	now := datetime.NowUnixMilli()
-	return fmt.Sprintf("%dms|%s", now-datetime.NanoToMilli(head.CreateTime), head.TraceId)
+	return fmt.Sprintf("%dms|%d", now-datetime.NanoToMilli(head.CreateTime), head.TraceId)
 }

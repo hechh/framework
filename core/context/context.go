@@ -6,14 +6,13 @@ import (
 	"sync/atomic"
 
 	"github.com/hechh/framework/core/fun"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/global"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/datetime"
-	"github.com/hechh/library/base/logic"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/redispool"
-	"github.com/hechh/library/redispool/cache"
 )
 
 var (
@@ -26,27 +25,45 @@ var (
 
 type Context struct {
 	*packet.Head
-	temp  redispool.ICache
-	cache redispool.ICache
+	isFailed bool
+	values   map[string]*redispool.Value
+	cache    define.ICache
 }
 
-func NewContext(head *packet.Head, a redispool.ICache, opts ...func(*packet.Head)) *Context {
+func NewContext(val any, data define.ICache, opts ...func(*packet.Head)) *Context {
+	var head *packet.Head
+	switch vv := val.(type) {
+	case *packet.Head:
+		head = vv
+	case uint64:
+		head = global.GetHead(fun.UID(vv))
+	}
 	for _, opt := range opts {
 		opt(head)
 	}
 	obj := ctxPool.Get().(*Context)
 	obj.Head = head
-	obj.cache = a
-	obj.temp = cache.New(nil, nil)
+	obj.values = make(map[string]*redispool.Value)
+	obj.cache = data
 	return obj
 }
 
 func (c *Context) Destroy() {
+	if !c.isFailed {
+		for k, v := range c.values {
+			if v.IsChanged() {
+				if c.cache.Has(k) {
+					c.cache.SetCache(k, v)
+				}
+				v.Reset()
+			}
+		}
+	}
 	if c.Head != nil {
 		global.PutHead(c.Head)
 		c.Head = nil
 	}
-	c.temp = nil
+	c.values = nil
 	c.cache = nil
 	ctxPool.Put(c)
 }
@@ -71,61 +88,53 @@ func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
-func (c *Context) GetTypes(items ...redispool.IData) []redispool.IData {
-	if c.cache == nil {
-		return c.temp.GetTypes(items...)
+func (c *Context) Values() []*redispool.Value {
+	rets := make([]*redispool.Value, 0, len(c.values))
+	for _, item := range c.values {
+		rets = append(rets, item)
 	}
-	return c.temp.GetTypes(c.cache.GetTypes(items...)...)
+	return rets
 }
 
-func (c *Context) AddType(t redispool.IData) {
-	if c.cache != nil && logic.Has(t.GetMask(), redispool.PERMANENT_FLAG) {
-		c.cache.AddType(t)
-		return
+func (c *Context) Has(key string) bool {
+	if _, ok := c.values[key]; ok {
+		return ok
 	}
-	c.temp.AddType(t)
+	return c.cache.Has(key)
 }
 
-func (c *Context) SetCache(key string, value any, flag uint32) {
-	if c.cache != nil && !logic.Has(flag, redispool.TEMP_FLAG) {
-		c.cache.SetCache(key, value, flag)
-		return
-	}
-	c.temp.SetCache(key, value, flag)
+func (c *Context) SetCache(key string, value *redispool.Value) {
+	c.values[key] = value
 }
 
-func (c *Context) GetCache(key string) (any, bool) {
-	if v, ok := c.temp.GetCache(key); ok {
-		return v, ok
+func (c *Context) GetCache(key string) *redispool.Value {
+	if val, ok := c.values[key]; ok {
+		return val
 	}
-	if c.cache != nil {
-		return c.cache.GetCache(key)
+	// 常驻缓存，GetCache需要深度拷贝
+	if c.cache.Has(key) {
+		vv := c.cache.GetCache(key).Clone()
+		c.values[key] = vv
+		return vv
 	}
-	return nil, false
+	return nil
 }
 
 func (c *Context) IsChanged(key string) bool {
-	if c.temp.IsChanged(key) {
-		return true
-	}
-	if c.cache != nil {
-		return c.cache.IsChanged(key)
+	if val, ok := c.values[key]; ok {
+		return val.IsChanged()
 	}
 	return false
 }
 
 func (c *Context) Change(key string) {
-	c.temp.Change(key)
-	if c.cache != nil {
-		c.cache.Change(key)
+	if val, ok := c.values[key]; ok {
+		val.Change()
 	}
 }
 
-func (c *Context) Reset(key string) {
-	c.temp.Reset(key)
-	if c.cache != nil {
-		c.cache.Reset(key)
-	}
+func (c *Context) Failure() {
+	c.isFailed = true
 }
 
 func (c *Context) AddDepth(val int32) int32      { return atomic.AddInt32(&c.Depth, val) }

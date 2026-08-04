@@ -21,14 +21,25 @@ const (
 
 type Message interface {
 	proto.Message
+	CloneMessageVT() proto.Message
 	MarshalVT() ([]byte, error)
 	UnmarshalVT([]byte) error
 }
 
+type ICache interface {
+	Has(string) bool
+	SetCache(string, *redispool.Value)
+	GetCache(string) *redispool.Value
+	IsChanged(string) bool
+	Change(string)
+}
+
 type IContext interface {
-	redispool.ICache
 	ILogger
 	IHead
+	ICache
+	Failure()
+	Values() []*redispool.Value
 	Destroy()
 	ReadOnly() *packet.Head
 	Clone(...func(*packet.Head)) *packet.Head  // 转发

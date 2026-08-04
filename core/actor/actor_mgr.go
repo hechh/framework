@@ -6,12 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/library/base/templ"
 	"github.com/hechh/library/base/utils"
 	"github.com/hechh/library/mlog"
 	"github.com/hechh/library/msgqueue"
-	"github.com/hechh/library/redispool"
 )
 
 type Shards struct {
@@ -62,7 +62,7 @@ func (d *ActorMgr[T]) Stop() {
 	}
 }
 
-func (d *ActorMgr[T]) Register(ac IActor, c redispool.ICache, opts ...msgqueue.Option) {
+func (d *ActorMgr[T]) Register(ac IActor, c define.ICache, opts ...msgqueue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, msgqueue.WithName(name))
 	d.attr = new(msgqueue.Attribute)

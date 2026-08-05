@@ -70,7 +70,7 @@ msgbus:
     ping_interval: 5
     drain_timeout: 5
 
-cluster:
+discovery:
   etcd:
     prefix: richgame/local
     endpoints:

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/hechh/framework/core/cluster"
@@ -40,20 +41,20 @@ type CommonConfig struct {
 }
 
 type Config struct {
-	Mysql    *dbpool.Config                    `yaml:"mysql,omitempty"`
-	Redis    *redispool.Config                 `yaml:"redis,omitempty"`
-	Fwatcher *fwatcher.Config                  `yaml:"fwatcher,omitempty"`
-	HttpCli  *httpcli.Config                   `yaml:"http_cli,omitempty"`
-	Logger   *mlog.Config                      `yaml:"logger,omitempty"`
-	Timer    *timer.Config                     `yaml:"timer,omitempty"`
-	MsgBus   *msgbus.Config                    `yaml:"msgbus,omitempty"`
-	Cluster  *cluster.Config                   `yaml:"cluster,omitempty"`
-	Common   *CommonConfig                     `yaml:"common,omitempty"`
-	Nodes    map[string]map[uint32]*NodeConfig `yaml:"nodes,omitempty"`
-	types    map[uint32]map[uint32]*NodeConfig `yaml:"-"`
-	node     *NodeConfig                       `yaml:"-"`
-	gateway  *NodeConfig                       `yaml:"-"`
-	self     *packet.Node                      `yaml:"-"`
+	Mysql     *dbpool.Config                    `yaml:"mysql,omitempty"`
+	Redis     *redispool.Config                 `yaml:"redis,omitempty"`
+	Fwatcher  *fwatcher.Config                  `yaml:"fwatcher,omitempty"`
+	HttpCli   *httpcli.Config                   `yaml:"http_cli,omitempty"`
+	Logger    *mlog.Config                      `yaml:"logger,omitempty"`
+	Timer     *timer.Config                     `yaml:"timer,omitempty"`
+	MsgBus    *msgbus.Config                    `yaml:"msgbus,omitempty"`
+	Discovery *cluster.Config                   `yaml:"discovery,omitempty"`
+	Common    *CommonConfig                     `yaml:"common,omitempty"`
+	Nodes     map[string]map[uint32]*NodeConfig `yaml:"nodes,omitempty"`
+	types     map[uint32]map[uint32]*NodeConfig `yaml:"-"`
+	node      *NodeConfig                       `yaml:"-"`
+	gateway   *NodeConfig                       `yaml:"-"`
+	self      *packet.Node                      `yaml:"-"`
 }
 
 func (d *Config) GetSupports() []uint32 {
@@ -128,7 +129,7 @@ func (d *Config) Init(filename string, nodeType, nodeId uint32, conv enum.IConve
 					Path:      templ.Or(cfg.Logger.Path == "", d.Logger.Path, cfg.Logger.Path),
 					Level:     templ.Or(cfg.Logger.Level == "", d.Logger.Level, cfg.Logger.Level),
 					Format:    templ.Or(cfg.Logger.Format == "", d.Logger.Format, cfg.Logger.Format),
-					Name:      cfg.Name,
+					Name:      fmt.Sprintf("%s%d", cfg.Name, cfg.Id),
 					IsCaller:  templ.Or(cfg.Logger.IsCaller, cfg.Logger.IsCaller, d.Logger.IsCaller),
 					CacheSize: templ.Or(cfg.Logger.CacheSize == 0, d.Logger.CacheSize, cfg.Logger.CacheSize),
 				}

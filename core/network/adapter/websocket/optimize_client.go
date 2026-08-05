@@ -94,7 +94,8 @@ func (d *OptimizeClient) GetUid() uint64 {
 }
 
 func (d *OptimizeClient) Send(head *packet.Head, body []byte) error {
-	if d.status.Load() {
+	// status=true 表示连接已启动(活跃)，status=false 表示已停止(关闭)
+	if !d.status.Load() {
 		return fmt.Errorf("会话已关闭")
 	}
 

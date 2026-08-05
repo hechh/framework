@@ -99,7 +99,7 @@ func (d *DbPool) Close(a *Service) {
 type Logger struct{}
 
 func (d *Logger) Init(a *Service) error {
-	cfg := a.GetConfig()
+	cfg := a.GetConfig().GetSelfConfig()
 	obj := a.GetLogger()
 	if err := obj.Init(cfg.Logger); err != nil {
 		mlog.Errorf("[logger] 日志初始化失败，error=%v", err)
@@ -313,7 +313,7 @@ type Cluster struct{}
 func (d *Cluster) Init(a *Service) error {
 	cfg := a.GetConfig()
 	obj := a.GetCluster()
-	if err := obj.Init(cfg.Cluster, cfg.GetSelfNode(), cfg.GetSupports()); err != nil {
+	if err := obj.Init(cfg.Discovery, cfg.GetSelfNode(), cfg.GetSupports()); err != nil {
 		mlog.Errorf("[cluster] 集群初始化失败，error=%v", err)
 		return err
 	}
@@ -338,7 +338,7 @@ func (d *MsgBus) Init(a *Service) error {
 	cfg := a.GetConfig()
 	selfNode := cfg.GetSelfNode()
 
-	msgbus.SetPacketFunc(d.Handler)
+	msgbus.SetPacketFunc(router.RouteHandler(d.Handler))
 
 	obj := a.GetMsgBus()
 	if err := obj.Init(cfg.MsgBus, selfNode.Type, selfNode.Id); err != nil {

@@ -60,9 +60,11 @@ func (d *Entity) Get(nodeType uint32) uint32 {
 
 // Set 设置节点路由ID
 func (d *Entity) Set(nodeType uint32, nodeId uint32) {
-	item := d.nodes[nodeType]
-	if item.Load() != nodeId {
-		item.Store(nodeId)
+	if nodeType > 0 && nodeId > 0 {
+		item := d.nodes[nodeType]
+		if item.Load() != nodeId {
+			item.Store(nodeId)
+		}
 	}
 }
 

@@ -1,5 +1,9 @@
 package router
 
+import (
+	"github.com/hechh/framework/packet"
+)
+
 var object *Router
 
 func SetObject(oj *Router) {
@@ -26,5 +30,20 @@ func GetOrNew(idType uint32, id uint64) *Entity {
 func Remove(idType uint32, id uint64) {
 	if object != nil {
 		object.Remove(idType, id)
+	}
+}
+
+func RouteHandler(f func(*packet.Packet)) func(*packet.Packet) {
+	return func(msg *packet.Packet) {
+		for _, item := range msg.List {
+			if item == nil {
+				continue
+			}
+			route := GetOrNew(item.IdType, item.Id)
+			for _, info := range item.List {
+				route.Set(info.GetType(), info.GetId())
+			}
+		}
+		f(msg)
 	}
 }

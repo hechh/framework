@@ -38,7 +38,7 @@ type IContext interface {
 	ILogger
 	IHead
 	ICache
-	Failure()
+	Refresh()
 	Values() []*redispool.Value
 	Destroy()
 	ReadOnly() *packet.Head

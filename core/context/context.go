@@ -25,9 +25,8 @@ var (
 
 type Context struct {
 	*packet.Head
-	isFailed bool
-	values   map[string]*redispool.Value
-	cache    define.ICache
+	values map[string]*redispool.Value
+	cache  define.ICache
 }
 
 func NewContext(val any, data define.ICache, opts ...func(*packet.Head)) *Context {
@@ -48,17 +47,18 @@ func NewContext(val any, data define.ICache, opts ...func(*packet.Head)) *Contex
 	return obj
 }
 
-func (c *Context) Destroy() {
-	if !c.isFailed {
-		for k, v := range c.values {
-			if v.IsChanged() {
-				if c.cache.Has(k) {
-					c.cache.SetCache(k, v)
-				}
-				v.Reset()
+func (c *Context) Refresh() {
+	for k, v := range c.values {
+		if v.IsChanged() {
+			if c.cache.Has(k) {
+				c.cache.SetCache(k, v)
 			}
+			v.Reset()
 		}
 	}
+}
+
+func (c *Context) Destroy() {
 	if c.Head != nil {
 		global.PutHead(c.Head)
 		c.Head = nil
@@ -131,10 +131,6 @@ func (c *Context) Change(key string) {
 	if val, ok := c.values[key]; ok {
 		val.Change()
 	}
-}
-
-func (c *Context) Failure() {
-	c.isFailed = true
 }
 
 func (c *Context) AddDepth(val int32) int32      { return atomic.AddInt32(&c.Depth, val) }

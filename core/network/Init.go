@@ -71,11 +71,13 @@ func SendRawToClient(head *packet.Head, body []byte) error {
 			head.Cmd++
 		}
 	}
-	err := object.Send(head, body)
-	if err != nil {
-		mlog.Tracef("SendRawToClient: 向客户端发送响应, cmd=%d, uid=%d, body=%d, error=%v", head.Cmd, head.Uid, len(body), err)
-	} else {
-		mlog.Tracef("SendRawToClient: 向客户端发送响应, cmd=%d, uid=%d, body=%d", head.Cmd, head.Uid, len(body))
-	}
-	return err
+	return object.Send(head, body)
+	/*
+		if err != nil {
+			mlog.Tracef("SendRawToClient: 向客户端发送响应, cmd=%d, uid=%d, body=%d, error=%v", head.Cmd, head.Uid, len(body), err)
+		} else {
+			mlog.Tracef("SendRawToClient: 向客户端发送响应, cmd=%d, uid=%d, body=%d", head.Cmd, head.Uid, len(body))
+		}
+		return err
+	*/
 }

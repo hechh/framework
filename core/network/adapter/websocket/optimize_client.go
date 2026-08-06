@@ -105,8 +105,10 @@ func (d *OptimizeClient) Send(head *packet.Head, body []byte) error {
 		mlog.Errorf("编码消息失败 error=%v, packet=%v", err, pack)
 		return err
 	}
-	mlog.Tracef("编码消息成功 traceId=%d, uid=%d, createtime=%d, cmd=%d, seq=%d, version=%d",
-		pack.Head.TraceId, pack.Head.Uid, pack.Head.CreateTime, pack.Head.Cmd, pack.Head.Seq, pack.Head.Version)
+	/*
+		mlog.Tracef("编码消息成功 traceId=%d, uid=%d, createtime=%d, cmd=%d, seq=%d, version=%d",
+			pack.Head.TraceId, pack.Head.Uid, pack.Head.CreateTime, pack.Head.Cmd, pack.Head.Seq, pack.Head.Version)
+	*/
 
 	if err := d.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 		mlog.Tracef("向客户端发送消息失败 error=%v, bodySize=%d", err, len(data))

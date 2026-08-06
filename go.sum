@@ -71,8 +71,8 @@ github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 h1:B+8ClL/kCQkRiU82d9xajR
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3/go.mod h1:NbCUVmiS4foBGBHOYlCT25+YmGpJ32dZPi75pGEUpj4=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 h1:5VipnvEpbqr2gA2VbM+nYVbkIF28c5ZQfqCBQ5g2xfk=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0/go.mod h1:Hyl3n6Twe1hvtd9XUXDec4pTvgMSEixRuQKPTMH2bNs=
-github.com/hechh/library v1.1.0 h1:oFH+25l+SG81uIBTb6LNpmNjQ8k934RdmuI+Hxb4sKU=
-github.com/hechh/library v1.1.0/go.mod h1:9xtvenCyxm6MyiJQKHBd8DMieqTER7UWAi7lgXHq8lM=
+github.com/hechh/library v1.7.0 h1:kwRdHz8JPuCyCslkl+J/OA5qzKvreeT3HqvHBt28HKw=
+github.com/hechh/library v1.7.0/go.mod h1:9xtvenCyxm6MyiJQKHBd8DMieqTER7UWAi7lgXHq8lM=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/jonboulle/clockwork v0.5.0 h1:Hyh9A8u51kptdkR+cqRpT1EebBwTn1oK9YfGYbdFz6I=
 github.com/jonboulle/clockwork v0.5.0/go.mod h1:3mZlmanh0g2NDKO5TWZVJAfofYk64M7XN3SzBPjZF60=

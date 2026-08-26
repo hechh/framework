@@ -2,6 +2,7 @@ package queue
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hechh/framework/library/safe"
@@ -55,12 +56,14 @@ func (d *MsgQueue[T]) Start(except func(string, ...any)) error {
 }
 
 func (d *MsgQueue[T]) Stop() {
-	if d.IsRunning() {
+	// 原子地将 RUNNING → WAITING，仅切换成功者执行关闭动作。
+	// OnDelete 回调（如 PlayerMgr.remove → Actor.Stop）可能在 Waiting 之前
+	// 重入 Stop，或存在并发调用；CAS 保证 exitCh 只被 close 一次，
+	// 避免 "close of closed channel" panic。
+	if atomic.CompareAndSwapInt32(&d.status, RUNNING, WAITING) {
 		close(d.exitCh)
 		// 删除
 		d.OnDelete()
-		// 等待关闭中
-		d.Waiting()
 	}
 }
 

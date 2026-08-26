@@ -67,12 +67,12 @@ func (d *MsgQueuePool[T]) Start(except func(string, ...any)) error {
 }
 
 func (d *MsgQueuePool[T]) Stop() {
-	if d.IsRunning() {
+	// 原子地将 RUNNING → WAITING，仅切换成功者执行关闭动作。
+	// OnDelete 回调可能重入 Stop 或存在并发调用，CAS 保证 exitCh 只 close 一次。
+	if atomic.CompareAndSwapInt32(&d.status, RUNNING, WAITING) {
 		close(d.exitCh)
 		// 删除
 		d.OnDelete()
-		// 等待关闭中
-		d.Waiting()
 	}
 }
 

@@ -152,8 +152,7 @@ type Node struct {
 	Type          uint32                 `protobuf:"varint,1,opt,name=Type,proto3" json:"Type,omitempty"`
 	Id            uint32                 `protobuf:"varint,2,opt,name=Id,proto3" json:"Id,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=Name,proto3" json:"Name,omitempty"`
-	Ip            string                 `protobuf:"bytes,4,opt,name=Ip,proto3" json:"Ip,omitempty"`
-	Port          int32                  `protobuf:"varint,5,opt,name=Port,proto3" json:"Port,omitempty"`
+	Addr          string                 `protobuf:"bytes,4,opt,name=Addr,proto3" json:"Addr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -209,18 +208,11 @@ func (x *Node) GetName() string {
 	return ""
 }
 
-func (x *Node) GetIp() string {
+func (x *Node) GetAddr() string {
 	if x != nil {
-		return x.Ip
+		return x.Addr
 	}
 	return ""
-}
-
-func (x *Node) GetPort() int32 {
-	if x != nil {
-		return x.Port
-	}
-	return 0
 }
 
 // 包信息
@@ -765,13 +757,12 @@ var File_packet_proto protoreflect.FileDescriptor
 
 const file_packet_proto_rawDesc = "" +
 	"\n" +
-	"\fpacket.proto\"b\n" +
+	"\fpacket.proto\"R\n" +
 	"\x04Node\x12\x12\n" +
 	"\x04Type\x18\x01 \x01(\rR\x04Type\x12\x0e\n" +
 	"\x02Id\x18\x02 \x01(\rR\x02Id\x12\x12\n" +
-	"\x04Name\x18\x03 \x01(\tR\x04Name\x12\x0e\n" +
-	"\x02Ip\x18\x04 \x01(\tR\x02Ip\x12\x12\n" +
-	"\x04Port\x18\x05 \x01(\x05R\x04Port\"T\n" +
+	"\x04Name\x18\x03 \x01(\tR\x04Name\x12\x12\n" +
+	"\x04Addr\x18\x04 \x01(\tR\x04Addr\"T\n" +
 	"\x06Packet\x12\x19\n" +
 	"\x04Head\x18\x01 \x01(\v2\x05.HeadR\x04Head\x12\x12\n" +
 	"\x04Body\x18\x02 \x01(\fR\x04Body\x12\x1b\n" +
@@ -839,7 +830,7 @@ const file_packet_proto_rawDesc = "" +
 	"\aCLUSTER\x10\f*$\n" +
 	"\bSendType\x12\t\n" +
 	"\x05POINT\x10\x00\x12\r\n" +
-	"\tBROADCAST\x10\x01B(Z&github.com/hechh/framework/core/packetb\x06proto3"
+	"\tBROADCAST\x10\x01B#Z!github.com/hechh/framework/packetb\x06proto3"
 
 var (
 	file_packet_proto_rawDescOnce sync.Once

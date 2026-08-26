@@ -28,8 +28,7 @@ message Node {
   uint32 Type = 1;
   uint32 Id   = 2;
   string Name = 3;
-  string Ip   = 4;
-  int32  Port = 5;
+  string Addr = 4;
 }
 
 // 包信息

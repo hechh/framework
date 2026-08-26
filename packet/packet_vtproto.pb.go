@@ -27,8 +27,7 @@ func (m *Node) CloneVT() *Node {
 	r.Type = m.Type
 	r.Id = m.Id
 	r.Name = m.Name
-	r.Ip = m.Ip
-	r.Port = m.Port
+	r.Addr = m.Addr
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -237,15 +236,10 @@ func (m *Node) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Port != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Port))
-		i--
-		dAtA[i] = 0x28
-	}
-	if len(m.Ip) > 0 {
-		i -= len(m.Ip)
-		copy(dAtA[i:], m.Ip)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Ip)))
+	if len(m.Addr) > 0 {
+		i -= len(m.Addr)
+		copy(dAtA[i:], m.Addr)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Addr)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -737,12 +731,9 @@ func (m *Node) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Ip)
+	l = len(m.Addr)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	if m.Port != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.Port))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -1039,7 +1030,7 @@ func (m *Node) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ip", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1067,27 +1058,8 @@ func (m *Node) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Ip = string(dAtA[iNdEx:postIndex])
+			m.Addr = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Port", wireType)
-			}
-			m.Port = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Port |= int32(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

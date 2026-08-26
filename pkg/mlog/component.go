@@ -35,9 +35,7 @@ func (d *Component) Init(data map[string]any) error {
 	cfg.CacheSize = tplutil.Or(tmpCfg.CacheSize == 0, cfg.CacheSize, tmpCfg.CacheSize)
 
 	// 初始化模块（obj 未设置时惰性创建）
-	if d.obj == nil {
-		d.obj = NewLogger()
-	}
+	d.obj = NewLogger()
 	if err := d.obj.Init(cfg); err != nil {
 		Errorf("[logger] 初始化失败，error:%v", err)
 		return err

@@ -32,8 +32,7 @@ func (d *Component) Init(data map[string]any) error {
 
 	// 初始化
 	self = d.Node
-	self.Ip = cfg.Ip
-	self.Port = cfg.Port
+	self.Addr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
 	gateway = d.Gateway
 	cmdConvertor = d.CmdConv
 	nodeConvertor = d.NodeConv

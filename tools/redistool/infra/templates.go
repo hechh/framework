@@ -20,7 +20,7 @@ import (
 {{if .NeedsDatabaseImport}}	"richgame/pkg/database"
 {{end}}	"time"
 
-	"github.com/hechh/framework/kernel/define"
+	"github.com/hechh/framework/core/define"
 	"github.com/hechh/framework/library/safe"
 	"github.com/hechh/framework/pkg/redispool"
 )
@@ -144,7 +144,7 @@ import (
 	"richgame/common/pb"
 {{if .NeedsDatabaseImport}}	"richgame/pkg/database"
 {{end}}
-	"github.com/hechh/framework/kernel/define"
+	"github.com/hechh/framework/core/define"
 	"github.com/hechh/framework/library/safe"
 	"github.com/hechh/framework/pkg/redispool"
 )

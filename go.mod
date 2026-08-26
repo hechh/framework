@@ -21,10 +21,10 @@ require (
 	github.com/xuri/excelize/v2 v2.11.0
 	go.etcd.io/etcd/client/v3 v3.7.1
 	go.etcd.io/etcd/server/v3 v3.7.1
-	go.yaml.in/yaml/v2 v2.4.3
 	golang.org/x/time v0.15.0
 	golang.org/x/tools v0.49.0
 	google.golang.org/protobuf v1.36.12
+	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.57.0
 	xorm.io/xorm v1.4.1
 )
@@ -99,6 +99,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.55.0 // indirect

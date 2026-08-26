@@ -15,12 +15,10 @@ type Component struct {
 
 func (d *Component) Init(data map[string]any) error {
 	// 加载服务节点配置
-	id := fmt.Sprintf("%d", d.Node.Id)
+	id := fmt.Sprintf("node%d", d.Node.Id)
 	tmpCfg := &Config{}
-	if err := fileutil.Map2Yaml(data, tmpCfg, d.Node.Name, id, "logger"); err != nil {
-		Errorf("[logger] 配置加载失败 error:%v", err)
-		return err
-	}
+	fileutil.Map2Yaml(data, tmpCfg, d.Node.Name, id, "logger")
+
 	// 加载配置
 	cfg := &Config{}
 	if err := fileutil.Map2Yaml(data, cfg, "logger"); err != nil {
@@ -36,7 +34,10 @@ func (d *Component) Init(data map[string]any) error {
 	cfg.IsCaller = tplutil.Or(tmpCfg.IsCaller, tmpCfg.IsCaller, cfg.IsCaller)
 	cfg.CacheSize = tplutil.Or(tmpCfg.CacheSize == 0, cfg.CacheSize, tmpCfg.CacheSize)
 
-	// 初始化模块
+	// 初始化模块（obj 未设置时惰性创建）
+	if d.obj == nil {
+		d.obj = NewLogger()
+	}
 	if err := d.obj.Init(cfg); err != nil {
 		Errorf("[logger] 初始化失败，error:%v", err)
 		return err

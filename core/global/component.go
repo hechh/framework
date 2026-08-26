@@ -23,7 +23,7 @@ type Component struct {
 
 func (d *Component) Init(data map[string]any) error {
 	// 加载配置
-	id := fmt.Sprintf("%d", d.Node.Id)
+	id := fmt.Sprintf("node%d", d.Node.Id)
 	cfg := &Config{}
 	if err := fileutil.Map2Yaml(data, cfg, d.Node.Name, id); err != nil {
 		mlog.Errorf("[global] 配置加载失败 error:%v", err)

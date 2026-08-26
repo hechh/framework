@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.yaml.in/yaml/v2"
 	"golang.org/x/tools/imports"
+	"gopkg.in/yaml.v3"
 )
 
 // EnsureDir 判断目录是否存在，如果不存在则创建目录

@@ -8,10 +8,31 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/tools/imports"
 	"gopkg.in/yaml.v3"
 )
+
+// fileLocks 按目标文件路径维护互斥锁，保证对同一文件的并发写是串行的。
+// 在 Windows 上 os.Rename 覆盖已存在目标时若被其他写句柄占用会失败，
+// 因此同一文件的原子写必须互斥。
+var (
+	fileLocks   = make(map[string]*sync.Mutex)
+	fileLocksMu sync.Mutex
+)
+
+// lockFile 获取指定路径对应的互斥锁。
+func lockFile(path string) *sync.Mutex {
+	fileLocksMu.Lock()
+	defer fileLocksMu.Unlock()
+	mu, ok := fileLocks[path]
+	if !ok {
+		mu = &sync.Mutex{}
+		fileLocks[path] = mu
+	}
+	return mu
+}
 
 // EnsureDir 判断目录是否存在，如果不存在则创建目录
 func EnsureDir(dir string) error {
@@ -63,16 +84,40 @@ func Save(fileName string, buf []byte) error {
 
 // AtomicSave 原子保存文件（先写临时文件再 rename）。
 // 避免文件监听方在写盘过程中（截断后/写完前）读到半写内容。
+//
+// 并发安全：对同一目标文件的并发写加互斥锁串行化，并使用唯一临时文件名
+// （os.CreateTemp），避免多个 goroutine 同时写同一个固定 .tmp 文件导致
+// 互相覆盖 / rename 失败（Windows 上尤其明显）。
 func AtomicSave(fileName string, buf []byte) error {
+	mu := lockFile(fileName)
+	mu.Lock()
+	defer mu.Unlock()
+
 	dir := filepath.Dir(fileName)
 	if err := os.MkdirAll(dir, os.FileMode(0o755)); err != nil {
 		return err
 	}
-	tmp := fileName + ".tmp"
-	if err := os.WriteFile(tmp, buf, os.FileMode(0o644)); err != nil {
+
+	// 在目标同目录创建唯一临时文件，保证 rename 原子替换
+	tmp, err := os.CreateTemp(dir, filepath.Base(fileName)+".tmp-*")
+	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, fileName)
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName) // 失败时清理残留临时文件
+
+	if _, err := tmp.Write(buf); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Chmod(os.FileMode(0o644)); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpName, fileName)
 }
 
 // ParseFiles 解析go文件

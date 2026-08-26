@@ -7,8 +7,6 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/hechh/framework/library/fileutil"
-	"github.com/hechh/framework/library/logic"
-	"github.com/hechh/framework/library/safe"
 	"github.com/hechh/framework/pkg/fwatcher/internal/parser"
 	"github.com/hechh/framework/pkg/fwatcher/internal/registry"
 	"github.com/hechh/framework/pkg/mlog"
@@ -57,9 +55,7 @@ func NewFWatcher[T ISync](f func() T) *FWatcher {
 	}
 }
 
-func (d *FWatcher) Init(cfg *Config) error {
-	// 确保数据目录存在（远程同步写文件与本地监听都依赖它）
-	var err error
+func (d *FWatcher) Init(cfg *Config) (err error) {
 	d.cfg = cfg
 	if d.abspath, err = filepath.Abs(cfg.DataPath); err != nil {
 		return err
@@ -74,15 +70,6 @@ func (d *FWatcher) Init(cfg *Config) error {
 	if err := d.sync.Init(cfg); err != nil {
 		return err
 	}
-	if cfg.IsSync {
-		if err := d.sync.Clear(); err != nil {
-			return err
-		}
-	}
-	// 建立远程配置变更监听
-	if err := d.sync.Watch(d.save); err != nil {
-		return err
-	}
 
 	// 获取所有变更配置
 	files, err := registry.Glob(d.pattern)
@@ -90,8 +77,12 @@ func (d *FWatcher) Init(cfg *Config) error {
 		return err
 	}
 
-	// 同步配置：先清空 etcd 中所有 kv，再全量上传本地配置，保证 etcd 与本地一致
 	if cfg.IsSync {
+		// 先清空
+		if err := d.sync.Clear(); err != nil {
+			return err
+		}
+		// 同步配置：先清空 etcd 中所有 kv，再全量上传本地配置，保证 etcd 与本地一致
 		for sheet, file := range files {
 			if err := d.sync.Put(sheet, file.GetText()); err != nil {
 				return err
@@ -99,21 +90,27 @@ func (d *FWatcher) Init(cfg *Config) error {
 		}
 	}
 
-	// 建立监听目录
-	if d.fswatcher, err = fsnotify.NewWatcher(); err != nil {
-		return err
+	// 先加载本地配置
+	for sheet, file := range files {
+		if par := registry.GetParser(sheet); par != nil {
+			if err := par.Parse(file.GetText()); err != nil {
+				return err
+			}
+		}
 	}
-	if err = d.fswatcher.Add(d.abspath); err != nil {
+
+	// 然后同步最新配置，并且监听
+	if err := d.sync.Watch(d.save); err != nil {
 		return err
 	}
 
-	// 加载配置
-	if err := registry.Load(files); err != nil {
-		return err
-	}
-	// 监听本地目录文件变更
-	safe.SafeGo(mlog.Fatalf, d.watch)
-	return nil
+	// 检测是否全部加载
+	return registry.WalkParser(func(sheet string, par parser.IParser) error {
+		if !par.IsLoaded() {
+			return fmt.Errorf("配置未加载，sheet:%s", sheet)
+		}
+		return nil
+	})
 }
 
 func (d *FWatcher) save(path string, body []byte) {
@@ -121,6 +118,7 @@ func (d *FWatcher) save(path string, body []byte) {
 	if body == nil {
 		return
 	}
+
 	sheet := strings.TrimPrefix(path, d.cfg.Etcd.Prefix+"/")
 	filename := filepath.Join(d.abspath, sheet+d.cfg.Ext)
 
@@ -148,48 +146,12 @@ func (d *FWatcher) save(path string, body []byte) {
 	if err := fileutil.AtomicSave(filename, body); err != nil {
 		mlog.Errorf("变更配置(%s)保存失败: %v", sheet, err)
 	}
-	return
 }
 
 func (d *FWatcher) Close() {
 	close(d.exitCh)
 	if d.sync != nil {
 		d.sync.Close()
-	}
-}
-
-func (d *FWatcher) watch() {
-	defer d.fswatcher.Close()
-	for {
-		select {
-		case <-d.exitCh:
-			return
-		case event, ok := <-d.fswatcher.Events:
-			if !ok {
-				return
-			}
-			if logic.Has(event.Op, fsnotify.Write) || logic.Has(event.Op, fsnotify.Create) {
-				files, err := registry.Glob(d.pattern)
-				if err != nil {
-					mlog.Errorf("配置文件读取失败 abspath:%s, error=%v", d.abspath, err)
-					continue
-				}
-
-				// 同步：先清空 etcd 中所有 kv，再全量上传本地配置
-				if d.cfg.IsSync {
-					for sheet, file := range files {
-						if err := d.sync.Put(sheet, file.GetText()); err != nil {
-							mlog.Errorf("同步游戏配置失败，sheet:%s, error:%v", sheet, err)
-						}
-					}
-				}
-
-				// 重新加载到内存
-				if err := registry.Load(files); err != nil {
-					mlog.Errorf("游戏配置加载失败 error=%v", err)
-				}
-			}
-		}
 	}
 }
 

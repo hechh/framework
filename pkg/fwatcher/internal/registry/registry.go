@@ -1,7 +1,9 @@
 package registry
 
 import (
-	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/hechh/framework/pkg/fwatcher/internal/parser"
 )
@@ -23,10 +25,6 @@ func RegisterChange(sheet string, changeFunc func()) {
 	}
 }
 
-func GetFileInfo(sheet string) *parser.FileInfo {
-	return files[sheet]
-}
-
 func GetParser(sheet string) parser.IParser {
 	if val, ok := parsers[sheet]; ok {
 		return val
@@ -34,18 +32,17 @@ func GetParser(sheet string) parser.IParser {
 	return nil
 }
 
+func GetFileInfo(sheet string) *parser.FileInfo {
+	return files[sheet]
+}
+
 func RegisterFileInfo(sheet string, info *parser.FileInfo) {
 	files[sheet] = info
 }
 
-// Load 加载配置到内存。
-func Load(files map[string]*parser.FileInfo) error {
+func WalkParser(f func(string, parser.IParser) error) error {
 	for sheet, par := range parsers {
-		file, ok := files[sheet]
-		if !ok {
-			return fmt.Errorf("配置文件不存在 sheet:%s", sheet)
-		}
-		if err := par.Parse(file); err != nil {
+		if err := f(sheet, par); err != nil {
 			return err
 		}
 	}
@@ -53,7 +50,6 @@ func Load(files map[string]*parser.FileInfo) error {
 }
 
 // 获取所有需要上传的配置
-/*
 func Glob(pattern string) (map[string]*parser.FileInfo, error) {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
@@ -76,4 +72,3 @@ func Glob(pattern string) (map[string]*parser.FileInfo, error) {
 	}
 	return result, nil
 }
-*/

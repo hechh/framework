@@ -12,6 +12,7 @@ import (
 type IParser interface {
 	RegisterChange(...func())
 	Sheet() string
+	IsLoaded() bool
 	New([]byte) (proto.Message, error)
 	Parse([]byte) error
 }
@@ -47,6 +48,10 @@ func (p *Parser[T]) New(body []byte) (proto.Message, error) {
 		return nil, err
 	}
 	return val, nil
+}
+
+func (p *Parser[T]) IsLoaded() bool {
+	return p.status.Load() == 1
 }
 
 // Parse 解析配置内容

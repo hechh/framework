@@ -54,3 +54,5 @@ func (d *FileInfo) IsChange(body []byte) bool {
 	value := hex.EncodeToString(d.hash.Sum(nil))
 	return d.hashValue != value
 }
+
+

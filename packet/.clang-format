@@ -1,0 +1,34 @@
+Language: Proto
+BasedOnStyle: Google
+# 缩进
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+
+# 换行
+ColumnLimit: 0
+BreakBeforeBraces: Attach
+
+# 空格
+SpacesBeforeTrailingComments: 2
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInAngles: false
+
+# 对齐
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+
+# 空行
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# 其他
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakBeforeMultilineStrings: true
+
+
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignTrailingComments: true

@@ -61,6 +61,20 @@ func Save(fileName string, buf []byte) error {
 	return os.WriteFile(fileName, buf, os.FileMode(0o644))
 }
 
+// AtomicSave 原子保存文件（先写临时文件再 rename）。
+// 避免文件监听方在写盘过程中（截断后/写完前）读到半写内容。
+func AtomicSave(fileName string, buf []byte) error {
+	dir := filepath.Dir(fileName)
+	if err := os.MkdirAll(dir, os.FileMode(0o755)); err != nil {
+		return err
+	}
+	tmp := fileName + ".tmp"
+	if err := os.WriteFile(tmp, buf, os.FileMode(0o644)); err != nil {
+		return err
+	}
+	return os.Rename(tmp, fileName)
+}
+
 // ParseFiles 解析go文件
 func ParseFiles(v ast.Visitor, files ...string) error {
 	fset := token.NewFileSet()

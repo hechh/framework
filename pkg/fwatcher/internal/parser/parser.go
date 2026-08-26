@@ -12,16 +12,13 @@ import (
 type IParser interface {
 	RegisterChange(...func())
 	Sheet() string
-	GetValue() string
 	New([]byte) (proto.Message, error)
-	Parse(*FileInfo) error
-	IsLoaded() bool // 是否已完成首次加载
+	Parse([]byte) error
 }
 
 // Parser 配置解析器
 type Parser[T any] struct {
 	sheetName   string         // sheet名字
-	info        *FileInfo      // 文件信息
 	status      atomic.Int32   // 配置解析器状态，0=未加载，1=已加载
 	parseFunc   func(*T) error // 配置解析函数
 	changeFuncs []func()       // 变更回调函数列表
@@ -44,18 +41,6 @@ func (p *Parser[T]) Sheet() string {
 	return p.sheetName
 }
 
-func (p *Parser[T]) GetValue() string {
-	if p.info != nil {
-		return p.info.GetValue()
-	}
-	return ""
-}
-
-// IsLoaded 是否已完成首次加载（status: 0=未加载，1=已加载）
-func (p *Parser[T]) IsLoaded() bool {
-	return p.status.Load() == 1
-}
-
 func (p *Parser[T]) New(body []byte) (proto.Message, error) {
 	val := any(new(T)).(proto.Message)
 	if err := json.Unmarshal(body, val); err != nil {
@@ -65,12 +50,10 @@ func (p *Parser[T]) New(body []byte) (proto.Message, error) {
 }
 
 // Parse 解析配置内容
-func (p *Parser[T]) Parse(file *FileInfo) error {
-	p.info = file
-
+func (p *Parser[T]) Parse(body []byte) error {
 	// 解析配置内容（JSON，键名与 pb.go json tag 一致）
 	ary := new(T)
-	if err := json.Unmarshal(file.GetText(), ary); err != nil {
+	if err := json.Unmarshal(body, ary); err != nil {
 		return err
 	}
 	// 加载配置（如果已注册解析函数）

@@ -2,9 +2,6 @@ package registry
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/hechh/framework/pkg/fwatcher/internal/parser"
 )
@@ -30,20 +27,24 @@ func GetFileInfo(sheet string) *parser.FileInfo {
 	return files[sheet]
 }
 
+func GetParser(sheet string) parser.IParser {
+	if val, ok := parsers[sheet]; ok {
+		return val
+	}
+	return nil
+}
+
+func RegisterFileInfo(sheet string, info *parser.FileInfo) {
+	files[sheet] = info
+}
+
 // Load 加载配置到内存。
-// 初始化时 files 为全量集合（所有注册表必须存在，缺失即报错）；
-// 增量热更时 Glob 只返回变更的表，已加载过的表不在集合中则跳过（不重复解析、不触发变更回调）。
 func Load(files map[string]*parser.FileInfo) error {
 	for sheet, par := range parsers {
 		file, ok := files[sheet]
 		if !ok {
-			// 增量热更：非本次变更的表跳过；首次加载（从未加载过）缺失则报错
-			if par.IsLoaded() {
-				continue
-			}
 			return fmt.Errorf("配置文件不存在 sheet:%s", sheet)
 		}
-
 		if err := par.Parse(file); err != nil {
 			return err
 		}
@@ -52,6 +53,7 @@ func Load(files map[string]*parser.FileInfo) error {
 }
 
 // 获取所有需要上传的配置
+/*
 func Glob(pattern string) (map[string]*parser.FileInfo, error) {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
@@ -74,3 +76,4 @@ func Glob(pattern string) (map[string]*parser.FileInfo, error) {
 	}
 	return result, nil
 }
+*/

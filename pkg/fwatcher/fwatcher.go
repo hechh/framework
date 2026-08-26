@@ -1,9 +1,7 @@
 package fwatcher
 
 import (
-	"bytes"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -11,6 +9,7 @@ import (
 	"github.com/hechh/framework/library/fileutil"
 	"github.com/hechh/framework/library/logic"
 	"github.com/hechh/framework/library/safe"
+	"github.com/hechh/framework/pkg/fwatcher/internal/parser"
 	"github.com/hechh/framework/pkg/fwatcher/internal/registry"
 	"github.com/hechh/framework/pkg/mlog"
 )
@@ -55,27 +54,6 @@ func NewFWatcher[T ISync](f func() T) *FWatcher {
 	return &FWatcher{
 		newFunc: func() ISync { return f() },
 		exitCh:  make(chan struct{}),
-	}
-}
-
-func (d *FWatcher) save(path string, body []byte) {
-	// 删除事件（body==nil）：清空等内部操作触发，忽略避免破坏本地文件
-	if body == nil {
-		return
-	}
-	sheet := strings.TrimPrefix(path, d.cfg.Etcd.Prefix+"/")
-	filename := filepath.Join(d.abspath, sheet+d.cfg.Ext)
-
-	// 落地保存：内容一致则跳过，否则（含文件不存在/其他读取错误）统一写入
-	old, err := os.ReadFile(filename)
-	if err == nil && bytes.Equal(old, body) {
-		return
-	}
-	if err != nil && !os.IsNotExist(err) {
-		mlog.Warnf("读取本地配置(%s)失败: %v", filename, err)
-	}
-	if err := fileutil.Save(filename, body); err != nil {
-		mlog.Errorf("收到同步配置，但是保存失败 error=%v", err)
 	}
 }
 
@@ -136,6 +114,41 @@ func (d *FWatcher) Init(cfg *Config) error {
 	// 监听本地目录文件变更
 	safe.SafeGo(mlog.Fatalf, d.watch)
 	return nil
+}
+
+func (d *FWatcher) save(path string, body []byte) {
+	// 删除事件（body==nil）：清空等内部操作触发，忽略避免破坏本地文件
+	if body == nil {
+		return
+	}
+	sheet := strings.TrimPrefix(path, d.cfg.Etcd.Prefix+"/")
+	filename := filepath.Join(d.abspath, sheet+d.cfg.Ext)
+
+	// 判断fileInfo是否存在
+	info := registry.GetFileInfo(sheet)
+	if info != nil && !info.IsChange(body) {
+		return
+	}
+	if info == nil {
+		info = parser.NewFileInfo(filename, body)
+		registry.RegisterFileInfo(sheet, info)
+	}
+
+	// 直接加载配置
+	if par := registry.GetParser(sheet); par != nil {
+		if err := par.Parse(body); err != nil {
+			mlog.Errorf("配置(%s)加载失败 error=%v", sheet, err)
+		} else {
+			// 更新md5值
+			info.Update(body)
+		}
+	}
+
+	// 原子保存文件
+	if err := fileutil.AtomicSave(filename, body); err != nil {
+		mlog.Errorf("变更配置(%s)保存失败: %v", sheet, err)
+	}
+	return
 }
 
 func (d *FWatcher) Close() {

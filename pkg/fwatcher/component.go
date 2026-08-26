@@ -21,11 +21,11 @@ func (d *Component) Init(data map[string]any) error {
 
 	// 初始化模块
 	if err := d.Object.Init(cfg); err != nil {
-		mlog.Errorf("[fwatcher] 文件监听初始化失败，error:%v", err)
+		mlog.Errorf("[fwatcher] 初始化失败，error:%v", err)
 		return err
 	}
 	SetObject(d.Object)
-	mlog.Infof("[fwatcher] 文件监听初始化成功")
+	mlog.Infof("[fwatcher] 初始化成功")
 	return nil
 }
 

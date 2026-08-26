@@ -26,7 +26,7 @@ func (d *Component) Init(data map[string]any) error {
 		return err
 	}
 
-	cfg.Name = d.Node.Name + id
+	cfg.Name = fmt.Sprintf("%s%d", d.Node.Name, d.Node.Id)
 	cfg.Mode = tplutil.Or(tmpCfg.Mode == "", cfg.Mode, tmpCfg.Mode)
 	cfg.Path = tplutil.Or(tmpCfg.Path == "", cfg.Path, tmpCfg.Path)
 	cfg.Level = tplutil.Or(tmpCfg.Level == "", cfg.Level, tmpCfg.Level)

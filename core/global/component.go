@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Addr string `yaml:"addr,omitempty"`
 	Ip   string `yaml:"ip,omitempty"`   // ip 地址
 	Port int32  `yaml:"port,omitempty"` // 端口
 }
@@ -32,7 +33,10 @@ func (d *Component) Init(data map[string]any) error {
 
 	// 初始化
 	self = d.Node
-	self.Addr = fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port)
+	self.Addr = cfg.Addr
+	self.Ip = cfg.Ip
+	self.Port = cfg.Port
+
 	gateway = d.Gateway
 	cmdConvertor = d.CmdConv
 	nodeConvertor = d.NodeConv

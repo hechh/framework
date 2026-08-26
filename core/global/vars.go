@@ -36,3 +36,7 @@ func GetGatewayNodeType() uint32 {
 func GetSupportNodeTypes() []int32 {
 	return nodeTypes
 }
+
+func HasCmd(val uint32) bool {
+	return cmdConvertor.Has(val)
+}

@@ -15,6 +15,7 @@ type IParser interface {
 	GetValue() string
 	New([]byte) (proto.Message, error)
 	Parse(*FileInfo) error
+	IsLoaded() bool // 是否已完成首次加载
 }
 
 // Parser 配置解析器
@@ -48,6 +49,11 @@ func (p *Parser[T]) GetValue() string {
 		return p.info.GetValue()
 	}
 	return ""
+}
+
+// IsLoaded 是否已完成首次加载（status: 0=未加载，1=已加载）
+func (p *Parser[T]) IsLoaded() bool {
+	return p.status.Load() == 1
 }
 
 func (p *Parser[T]) New(body []byte) (proto.Message, error) {

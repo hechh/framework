@@ -30,11 +30,17 @@ func GetFileInfo(sheet string) *parser.FileInfo {
 	return files[sheet]
 }
 
-// 本地加载配置到内存
+// Load 加载配置到内存。
+// 初始化时 files 为全量集合（所有注册表必须存在，缺失即报错）；
+// 增量热更时 Glob 只返回变更的表，已加载过的表不在集合中则跳过（不重复解析、不触发变更回调）。
 func Load(files map[string]*parser.FileInfo) error {
 	for sheet, par := range parsers {
 		file, ok := files[sheet]
 		if !ok {
+			// 增量热更：非本次变更的表跳过；首次加载（从未加载过）缺失则报错
+			if par.IsLoaded() {
+				continue
+			}
 			return fmt.Errorf("配置文件不存在 sheet:%s", sheet)
 		}
 

@@ -3,17 +3,17 @@ package network
 import (
 	"fmt"
 
-	"github.com/hechh/framework/library/enum"
+	"github.com/hechh/framework/core/define"
+	"github.com/hechh/framework/core/global"
+	"github.com/hechh/framework/core/network/internal/domain"
+	"github.com/hechh/framework/core/network/internal/frame"
 	"github.com/hechh/framework/library/uerror"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
-	"github.com/hechh/framework/pkg/network/internal/domain"
-	"github.com/hechh/framework/pkg/network/internal/frame"
 )
 
 var (
-	object       *Network
-	cmdConvertor enum.IConvertor
+	object *Network
 )
 
 func init() {
@@ -24,10 +24,6 @@ func init() {
 // SetObject 注入全局 Network 实例
 func SetObject(obj *Network) {
 	object = obj
-}
-
-func SetCmdConvertor(n map[string]int32, i map[int32]string) {
-	cmdConvertor = enum.WrapConvertor(n, i)
 }
 
 func SetDecodeFunc(f func([]byte) (*packet.Packet, error)) {
@@ -57,7 +53,7 @@ func Unbind(socketId uint32, uid uint64) {
 	}
 }
 
-func SendToClient(head *packet.Head, err error, rsp IMessage) error {
+func SendToClient(head *packet.Head, err error, rsp define.Message) error {
 	uerror.SetRspHead(rsp, err)
 	body, err := rsp.MarshalVT()
 	if err != nil {
@@ -73,7 +69,7 @@ func SendRawToClient(head *packet.Head, body []byte) error {
 		return fmt.Errorf("Network未初始化")
 	}
 	if head.Cmd%2 == 0 {
-		if cmdConvertor.Has(head.Cmd + 1) {
+		if global.HasCmd(head.Cmd + 1) {
 			head.Cmd++
 		}
 	}

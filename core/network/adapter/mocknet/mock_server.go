@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 
 	ws "github.com/gorilla/websocket"
+	"github.com/hechh/framework/core/network/adapter/websocket"
 	"github.com/hechh/framework/pkg/httpcli"
 	"github.com/hechh/framework/pkg/mlog"
-	"github.com/hechh/framework/pkg/network/adapter/websocket"
 )
 
 // Server 测试用 Mock WebSocket 服务端（基于 httptest）

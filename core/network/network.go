@@ -1,20 +1,8 @@
 package network
 
 import (
-	"fmt"
-
 	"github.com/hechh/framework/packet"
 )
-
-type Config struct {
-	Host string `yaml:"network_host,omitempty"` // 地址
-	Port int32  `yaml:"network_port,omitempty"` // 地址
-}
-
-type IMessage interface {
-	MarshalVT() ([]byte, error)
-	UnmarshalVT([]byte) error
-}
 
 // IServer 网络服务端接口
 type INetwork interface {
@@ -36,9 +24,9 @@ func NewNetwork[T INetwork](f func() T) *Network {
 	}
 }
 
-func (d *Network) Init(cfg *Config) error {
+func (d *Network) Init(addr string) error {
 	d.net = d.newFunc()
-	return d.net.Init(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
+	return d.net.Init(addr)
 }
 
 func (d *Network) Close() {

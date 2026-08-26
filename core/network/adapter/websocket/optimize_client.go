@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/hechh/framework/core/network/internal/domain"
 	"github.com/hechh/framework/library/datetime"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
-	"github.com/hechh/framework/pkg/network/internal/domain"
 	"golang.org/x/time/rate"
 )
 

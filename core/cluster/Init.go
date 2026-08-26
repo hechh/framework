@@ -8,6 +8,11 @@ func SetObject(oj *Cluster) {
 	object = oj
 }
 
+// GetObject 获取全局 Cluster 实例（测试中用于手动添加/删除集群节点）
+func GetObject() *Cluster {
+	return object
+}
+
 func Count(nodeType uint32) int {
 	if object != nil {
 		return object.Count(nodeType)

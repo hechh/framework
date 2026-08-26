@@ -2,6 +2,8 @@ package application
 
 import (
 	"os"
+
+	"github.com/hechh/framework/library/fileutil"
 )
 
 var (
@@ -12,7 +14,11 @@ func Register(c IComponent) {
 	app.Register(c)
 }
 
-func Init(data map[string]any) error {
+func Init(filename string) error {
+	data := make(map[string]any)
+	if err := fileutil.LoadYaml(filename, data); err != nil {
+		return err
+	}
 	return app.Init(data)
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/hechh/framework/library/fileutil"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
+	"github.com/hechh/framework/pkg/network/internal/frame"
 )
 
 type Component struct {
@@ -26,6 +27,12 @@ func (d *Component) Init(data map[string]any) error {
 	}
 
 	// 设置处理器
+	if d.Decoder == nil {
+		d.Decoder = frame.Decode
+	}
+	if d.Encoder == nil {
+		d.Encoder = frame.Encode
+	}
 	SetDecodeFunc(d.Decoder)
 	SetEncodeFunc(d.Encoder)
 	SetPacketFunc(d.Handler)

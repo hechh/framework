@@ -7,7 +7,7 @@ import (
 )
 
 type Component struct {
-	obj *Cluster
+	Object *Cluster
 }
 
 func (d *Component) Init(data map[string]any) error {
@@ -18,19 +18,19 @@ func (d *Component) Init(data map[string]any) error {
 		return err
 	}
 
-	if err := d.obj.Init(cfg, global.GetSelf(), global.GetSupportNodeTypes()); err != nil {
+	if err := d.Object.Init(cfg, global.GetSelf(), global.GetSupportNodeTypes()); err != nil {
 		mlog.Errorf("[cluster] 初始化失败，error:%v", err)
 		return err
 	}
-	SetObject(d.obj)
+	SetObject(d.Object)
 	mlog.Infof("[cluster] 初始化成功")
 	return nil
 }
 
 func (d *Component) Close() {
-	if d.obj != nil {
-		d.obj.Close()
+	if d.Object != nil {
+		d.Object.Close()
 	}
 	mlog.Infof("[cluster] 关闭成功")
-	d.obj = nil
+	d.Object = nil
 }

@@ -153,6 +153,8 @@ type Node struct {
 	Id            uint32                 `protobuf:"varint,2,opt,name=Id,proto3" json:"Id,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=Name,proto3" json:"Name,omitempty"`
 	Addr          string                 `protobuf:"bytes,4,opt,name=Addr,proto3" json:"Addr,omitempty"`
+	Ip            string                 `protobuf:"bytes,5,opt,name=Ip,proto3" json:"Ip,omitempty"`
+	Port          int32                  `protobuf:"varint,6,opt,name=Port,proto3" json:"Port,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -213,6 +215,20 @@ func (x *Node) GetAddr() string {
 		return x.Addr
 	}
 	return ""
+}
+
+func (x *Node) GetIp() string {
+	if x != nil {
+		return x.Ip
+	}
+	return ""
+}
+
+func (x *Node) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
 }
 
 // 包信息
@@ -757,12 +773,14 @@ var File_packet_proto protoreflect.FileDescriptor
 
 const file_packet_proto_rawDesc = "" +
 	"\n" +
-	"\fpacket.proto\"R\n" +
+	"\fpacket.proto\"v\n" +
 	"\x04Node\x12\x12\n" +
 	"\x04Type\x18\x01 \x01(\rR\x04Type\x12\x0e\n" +
 	"\x02Id\x18\x02 \x01(\rR\x02Id\x12\x12\n" +
 	"\x04Name\x18\x03 \x01(\tR\x04Name\x12\x12\n" +
-	"\x04Addr\x18\x04 \x01(\tR\x04Addr\"T\n" +
+	"\x04Addr\x18\x04 \x01(\tR\x04Addr\x12\x0e\n" +
+	"\x02Ip\x18\x05 \x01(\tR\x02Ip\x12\x12\n" +
+	"\x04Port\x18\x06 \x01(\x05R\x04Port\"T\n" +
 	"\x06Packet\x12\x19\n" +
 	"\x04Head\x18\x01 \x01(\v2\x05.HeadR\x04Head\x12\x12\n" +
 	"\x04Body\x18\x02 \x01(\fR\x04Body\x12\x1b\n" +

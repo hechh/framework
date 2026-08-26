@@ -7,13 +7,13 @@ enum ComponentType {
   DBPOOL    = 1;   // 数据库连接池
   FWATCHER  = 2;   // 文件监听器
   GC        = 3;   // 垃圾回收器
-  HTTPCLI   = 4;  // http.Client模块
-  LOGGER    = 5;// 日志
-  PPROF     = 6;  // pprof模块
+  HTTPCLI   = 4;   // http.Client模块
+  LOGGER    = 5;   // 日志
+  PPROF     = 6;   // pprof模块
   REDISPOOL = 7;   // redis连接池
   TIMER     = 8;   // 定时器
   ROUTER    = 9;   // 路由器
-  NETWORK   = 10;   // 网络服务
+  NETWORK   = 10;  // 网络服务
   MSGBUS    = 11;  // 消息总线服务
   CLUSTER   = 12;  // 集群服务
 }
@@ -29,6 +29,8 @@ message Node {
   uint32 Id   = 2;
   string Name = 3;
   string Addr = 4;
+  string Ip   = 5;
+  int32  Port = 6;
 }
 
 // 包信息

@@ -34,7 +34,7 @@ func (d *UError) GetMsg() string {
 }
 
 func (d *UError) Error() string {
-	return fmt.Sprintf("%s:%d %s [%d]%s", d.file, d.line, d.fname, d.code, d.msg)
+	return fmt.Sprintf("[%d] %s:%d/%s %s", d.code, d.file, d.line, d.fname, d.msg)
 }
 
 type IRsp interface {
@@ -54,7 +54,7 @@ func SetRspHead(irsp any, err error) {
 }
 
 func Err(code int32, format string, args ...any) *UError {
-	pc, file, line, _ := runtime.Caller(1)
+	pc, file, line, _ := runtime.Caller(2)
 	return &UError{
 		file:  path.Base(file),
 		line:  line,
@@ -68,7 +68,7 @@ func Wrap(code int32, err error) *UError {
 	if uerr, ok := err.(*UError); ok && uerr != nil {
 		return uerr
 	}
-	pc, file, line, _ := runtime.Caller(1)
+	pc, file, line, _ := runtime.Caller(2)
 	return &UError{
 		file:  path.Base(file),
 		line:  line,

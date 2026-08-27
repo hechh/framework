@@ -342,7 +342,7 @@ func TestFWatcher_UpdateSync(t *testing.T) {
 }
 
 // ============================================================
-// 删除：验证 etcd 配置删除后 key 消失（本地文件保留，删除事件不落盘）
+// 删除：验证 etcd 配置删除后 key 消失（本地文件归档为 .deleted）
 // ============================================================
 func TestFWatcher_DeleteSync(t *testing.T) {
 	if testing.Short() {
@@ -408,8 +408,12 @@ func TestFWatcher_DeleteSync(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 	}
 
-	// 消费者本地文件应保留（删除事件 body==nil，save 直接返回，不落盘不删文件）
-	if _, err := os.Stat(downloaded); err != nil {
-		t.Fatalf("删除事件不应删除本地文件: %v", err)
+	// 消费者本地文件应归档为 .deleted（删除事件 body==nil，不覆盖原文件，重命名保留备份）
+	deleted := downloaded + ".deleted"
+	if _, err := os.Stat(deleted); err != nil {
+		t.Fatalf("删除事件应将本地文件归档为 .deleted: %v", err)
+	}
+	if _, err := os.Stat(downloaded); err == nil {
+		t.Fatalf("删除事件后原文件应被重命名为 .deleted")
 	}
 }

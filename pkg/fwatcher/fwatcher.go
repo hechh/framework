@@ -2,6 +2,7 @@ package fwatcher
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -78,10 +79,12 @@ func (d *FWatcher) Init(cfg *Config) (err error) {
 	}
 
 	if cfg.IsSync {
-		// 先清空
-		if err := d.sync.Clear(); err != nil {
-			return err
-		}
+		/*
+			// 先清空
+			if err := d.sync.Clear(); err != nil {
+				return err
+			}
+		*/
 		// 同步配置：先清空 etcd 中所有 kv，再全量上传本地配置，保证 etcd 与本地一致
 		for sheet, file := range files {
 			if err := d.sync.Put(sheet, file); err != nil {
@@ -116,15 +119,21 @@ func (d *FWatcher) Init(cfg *Config) (err error) {
 }
 
 func (d *FWatcher) save(path string, body []byte) {
-	// 删除事件（body==nil）：清空等内部操作触发，忽略避免破坏本地文件
 	sheet := strings.TrimPrefix(path, d.cfg.Etcd.Prefix+"/")
+	filename := filepath.Join(d.abspath, sheet+d.cfg.Ext)
+
+	// 删除事件（body==nil）：清空等内部操作触发，不覆盖原文件，归档为 .deleted 保留备份
 	if body == nil {
-		mlog.Errorf("删除配置%s", sheet)
+		deleted := filename + ".deleted"
+		if err := os.Rename(filename, deleted); err != nil {
+			mlog.Errorf("配置%s删除失败, error:%v", sheet, err)
+		} else {
+			mlog.Infof("配置%s删除成功", sheet)
+		}
 		return
 	}
 
 	// 原子保存文件
-	filename := filepath.Join(d.abspath, sheet+d.cfg.Ext)
 	if err := fileutil.AtomicSave(filename, body); err != nil {
 		mlog.Errorf("变更配置%s保存失败: %v", sheet, err)
 	} else {

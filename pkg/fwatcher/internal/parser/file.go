@@ -7,12 +7,12 @@ import (
 )
 
 type FileInfo struct {
-	hash     hash.Hash
-	value    string
-	filename string
+	hash  hash.Hash
+	value string
+	sheet string
 }
 
-func NewFileInfo(filename string, body []byte) *FileInfo {
+func NewFileInfo(sheet string, body []byte) *FileInfo {
 	hh := md5.New()
 	var value string
 	if body != nil {
@@ -20,10 +20,14 @@ func NewFileInfo(filename string, body []byte) *FileInfo {
 		value = hex.EncodeToString(hh.Sum(nil))
 	}
 	return &FileInfo{
-		hash:     hh,
-		value:    value,
-		filename: filename,
+		hash:  hh,
+		value: value,
+		sheet: sheet,
 	}
+}
+
+func (d *FileInfo) GetSheet() string {
+	return d.sheet
 }
 
 func (d *FileInfo) GetValue() string {

@@ -92,6 +92,8 @@ func (d *FWatcher) Init(cfg *Config) (err error) {
 
 	// 先加载本地配置
 	for sheet, file := range files {
+		registry.RegisterFileInfo(sheet, parser.NewFileInfo(sheet, file))
+
 		if par := registry.GetParser(sheet); par != nil {
 			if err := par.Parse(file); err != nil {
 				return err
@@ -135,7 +137,7 @@ func (d *FWatcher) save(path string, body []byte) {
 		return
 	}
 	if info == nil {
-		info = parser.NewFileInfo(filename, body)
+		info = parser.NewFileInfo(sheet, body)
 		registry.RegisterFileInfo(sheet, info)
 	}
 

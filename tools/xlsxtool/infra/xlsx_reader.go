@@ -33,6 +33,29 @@ func ReadTables(xlsxDir string) []*domain.Table {
 	return tables
 }
 
+// ListTypes 读取指定 xlsx 文件“生成表”指令中声明的结构体类型名（对应生成的 XxxConfig.json）。
+// 用于“发布指定配置”场景：先全量转换保证枚举/结构引用可解析，再按类型名过滤需要下发的 JSON。
+// filenames 中的文件不存在或解析失败时返回错误。
+func ListTypes(xlsxDir string, filenames []string) ([]string, error) {
+	var types []string
+	for _, fn := range filenames {
+		path := filepath.Join(xlsxDir, filepath.Base(fn))
+		if _, err := os.Stat(path); err != nil {
+			return nil, fmt.Errorf("配置文件不存在: %s", filepath.Base(fn))
+		}
+		ts, err := readFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("解析%s失败: %v", filepath.Base(fn), err)
+		}
+		for _, t := range ts {
+			if t.Token == 2 || t.Token == 3 { // @struct / @struct:col 表
+				types = append(types, t.Type)
+			}
+		}
+	}
+	return types, nil
+}
+
 // readFile 读取单个xlsx文件的生成表指令
 func readFile(filename string) ([]*domain.Table, error) {
 	fp, err := excelize.OpenFile(filename)

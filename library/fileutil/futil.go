@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/tools/imports"
 	"gopkg.in/yaml.v3"
@@ -88,6 +89,11 @@ func Save(fileName string, buf []byte) error {
 // 并发安全：对同一目标文件的并发写加互斥锁串行化，并使用唯一临时文件名
 // （os.CreateTemp），避免多个 goroutine 同时写同一个固定 .tmp 文件导致
 // 互相覆盖 / rename 失败（Windows 上尤其明显）。
+//
+// Windows 注意：多个进程共享同一数据目录（如本地多服务同时发布配置）时，
+// 各进程几乎同时 rename 覆盖同一目标文件。目标文件被其他进程瞬时占用
+// （未开 FILE_SHARE_DELETE）会报 “Access is denied”，此类占用是瞬时的，
+// 对 rename 做短退避重试即可恢复，重试仍失败则返回最后一次错误。
 func AtomicSave(fileName string, buf []byte) error {
 	mu := lockFile(fileName)
 	mu.Lock()
@@ -117,7 +123,16 @@ func AtomicSave(fileName string, buf []byte) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(tmpName, fileName)
+
+	// 短退避重试：兼容 Windows 下目标文件被其他进程瞬时占用导致的 rename 失败
+	var renameErr error
+	for attempt := 0; attempt < 5; attempt++ {
+		if renameErr = os.Rename(tmpName, fileName); renameErr == nil {
+			return nil
+		}
+		time.Sleep(time.Duration(50*(attempt+1)) * time.Millisecond) // 50/100/150/200/250ms
+	}
+	return renameErr
 }
 
 // ParseFiles 解析go文件

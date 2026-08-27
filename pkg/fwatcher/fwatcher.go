@@ -145,6 +145,8 @@ func (d *FWatcher) save(path string, body []byte) {
 	// 原子保存文件
 	if err := fileutil.AtomicSave(filename, body); err != nil {
 		mlog.Errorf("变更配置(%s)保存失败: %v", sheet, err)
+	} else {
+		mlog.Infof("变更配置(%s)保存成功", sheet)
 	}
 }
 

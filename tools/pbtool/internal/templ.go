@@ -43,9 +43,8 @@ func(d *{{$st.Name}}) FromDB(val []byte) error {
 
 {{range $cfg := .GetAllConfig -}}
 // {{$cfg.Name}}S 是 {{$cfg.Name}} 的只读包装，通过 Get 方法安全访问内部数据。
-// Reward 及 []*Reward 类型字段：
-//   - GetXxx() 返回 CloneVT 深拷贝，避免业务层修改缓存配置。
-//   - GetXxxReadOnly() 返回内部指针直接引用，适合只读场景（如序列化传递）。
+// Reward 及 []*Reward 类型字段统一返回 CloneVT 深拷贝，避免业务层修改缓存配置
+// （历史教训：GetXxxReadOnly 返回内部指针，被 reward.Merge/Reward 原地修改污染配置表）。
 type {{$cfg.Name}}S struct {
 	inner *{{$cfg.Name}}
 }
@@ -63,24 +62,14 @@ func (s *{{$cfg.Name}}S) Get{{$field.Name}}() {{memberType $field}} {
 	if s.inner.{{$field.Name}} == nil {
 		return nil
 	}
-	rets := make({{memberType $field}}, len(s.inner.{{$field.Name}}))
-	for i, v := range s.inner.{{$field.Name}} {
-		rets[i] = v.CloneVT()
-	}
-	return rets
-}
-
-func (s *{{$cfg.Name}}S) Get{{$field.Name}}ReadOnly() {{memberType $field}} {
-	return s.inner.{{$field.Name}}
+	src := &RewardList{List: s.inner.{{$field.Name}}}
+	dst := src.CloneVT()
+	return dst.List
 }
 
 {{else -}}
 func (s *{{$cfg.Name}}S) Get{{$field.Name}}() {{memberType $field}} {
 	return s.inner.{{$field.Name}}.CloneVT()
-}
-
-func (s *{{$cfg.Name}}S) Get{{$field.Name}}ReadOnly() {{memberType $field}} {
-	return s.inner.{{$field.Name}}
 }
 
 {{end}}

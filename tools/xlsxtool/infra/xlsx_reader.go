@@ -11,16 +11,60 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-// ReadTables 从目录读取所有xlsx文件的表格数据
+// ReadTables 从目录读取所有xlsx文件的表格数据。
+// 递归遍历时跳过隐藏子目录（如 .bak 暂存、.gen 生成），
+// 避免把非正式目录中的 xlsx 当作配置源解析，导致重复表或错误覆盖。
 func ReadTables(xlsxDir string) []*domain.Table {
+	return ReadTablesOverlay(xlsxDir, "")
+}
+
+// ReadTablesOverlay 从 baseDir 读取 xlsx 表格数据，overlayDir 中的同名 xlsx 优先采用。
+// 规则：
+//   - baseDir 与 overlayDir 均递归遍历，跳过隐藏子目录；
+//   - 同一文件名在 overlayDir 存在时，只读取 overlayDir 的版本（覆盖 baseDir）；
+//   - baseDir 中 overlayDir 没有的文件，从 baseDir 读取。
+//
+// 用于"上传暂存覆盖"场景：新上传文件先进 .bak 暂存目录，转换时以 .bak 为准，
+// 未上传（.bak 没有）的文件仍从正式目录加载。
+func ReadTablesOverlay(baseDir, overlayDir string) []*domain.Table {
 	var tables []*domain.Table
 
-	filepath.Walk(xlsxDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
+	// 1. 收集 overlayDir 中存在的 xlsx 文件名（优先采用）
+	overlayNames := make(map[string]bool)
+	if overlayDir != "" {
+		filepath.Walk(overlayDir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				if path != overlayDir && strings.HasPrefix(info.Name(), ".") {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if strings.HasSuffix(path, ".xlsx") {
+				overlayNames[filepath.Base(path)] = true
+			}
+			return nil
+		})
+	}
+
+	// 2. 遍历 baseDir，同名文件在 overlay 中存在时跳过（用 overlay 版本）
+	filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
 			return err
+		}
+		if info.IsDir() {
+			if path != baseDir && strings.HasPrefix(info.Name(), ".") {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		if !strings.HasSuffix(path, ".xlsx") {
 			return nil
+		}
+		if overlayNames[filepath.Base(path)] {
+			return nil // 由 overlay 提供
 		}
 		ts, err := readFile(path)
 		if err != nil {
@@ -30,6 +74,16 @@ func ReadTables(xlsxDir string) []*domain.Table {
 		tables = append(tables, ts...)
 		return nil
 	})
+
+	// 3. 读取 overlay 中的 xlsx（覆盖/新增）
+	for name := range overlayNames {
+		ts, err := readFile(filepath.Join(overlayDir, name))
+		if err != nil {
+			fmt.Printf("[Error] 解析%s失败: %v\n", name, err)
+			continue
+		}
+		tables = append(tables, ts...)
+	}
 	return tables
 }
 

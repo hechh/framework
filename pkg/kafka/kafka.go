@@ -56,7 +56,7 @@ type Kafka struct {
 	started  bool
 }
 
-// NewKafka 创建 Kafka 封装（传入具体适配器，如 confluent.NewConfluent()）。
+// NewKafka 创建 Kafka 封装（传入具体适配器，如 kafkago.NewKafkaGo()）。
 func NewKafka(adapter IKafka) *Kafka {
 	return &Kafka{
 		adapter:  adapter,

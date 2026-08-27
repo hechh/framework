@@ -7,10 +7,9 @@ import (
 )
 
 type FileInfo struct {
-	hash      hash.Hash
-	hashValue string
-	filename  string
-	body      []byte
+	hash     hash.Hash
+	value    string
+	filename string
 }
 
 func NewFileInfo(filename string, body []byte) *FileInfo {
@@ -21,38 +20,28 @@ func NewFileInfo(filename string, body []byte) *FileInfo {
 		value = hex.EncodeToString(hh.Sum(nil))
 	}
 	return &FileInfo{
-		hash:      hh,
-		hashValue: value,
-		filename:  filename,
-		body:      body,
+		hash:     hh,
+		value:    value,
+		filename: filename,
 	}
 }
 
 func (d *FileInfo) GetValue() string {
-	return d.hashValue
+	return d.value
 }
 
-func (d *FileInfo) GetText() []byte {
-	return d.body
-}
-
-func (d *FileInfo) Update(body []byte) bool {
+func (d *FileInfo) Update(body []byte) {
 	d.hash.Reset()
 	d.hash.Write(body)
 	value := hex.EncodeToString(d.hash.Sum(nil))
-	if value != d.hashValue {
-		d.hashValue = value
-		d.body = body
-		return true
+	if value != d.value {
+		d.value = value
 	}
-	return false
 }
 
 func (d *FileInfo) IsChange(body []byte) bool {
 	d.hash.Reset()
 	d.hash.Write(body)
 	value := hex.EncodeToString(d.hash.Sum(nil))
-	return d.hashValue != value
+	return d.value != value
 }
-
-

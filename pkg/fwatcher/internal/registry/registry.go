@@ -50,25 +50,19 @@ func WalkParser(f func(string, parser.IParser) error) error {
 }
 
 // 获取所有需要上传的配置
-func Glob(pattern string) (map[string]*parser.FileInfo, error) {
+func Glob(pattern string) (map[string][]byte, error) {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[string]*parser.FileInfo)
+	result := make(map[string][]byte)
 	for _, filename := range matches {
 		body, err := os.ReadFile(filename)
 		if err != nil {
 			return nil, err
 		}
 		sheet := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
-		if item, ok := files[sheet]; !ok {
-			item := parser.NewFileInfo(filename, body)
-			files[sheet] = item
-			result[sheet] = item
-		} else if item.Update(body) {
-			result[sheet] = item
-		}
+		result[sheet] = body
 	}
 	return result, nil
 }

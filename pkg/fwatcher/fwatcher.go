@@ -84,7 +84,7 @@ func (d *FWatcher) Init(cfg *Config) (err error) {
 		}
 		// 同步配置：先清空 etcd 中所有 kv，再全量上传本地配置，保证 etcd 与本地一致
 		for sheet, file := range files {
-			if err := d.sync.Put(sheet, file.GetText()); err != nil {
+			if err := d.sync.Put(sheet, file); err != nil {
 				return err
 			}
 		}
@@ -93,7 +93,7 @@ func (d *FWatcher) Init(cfg *Config) (err error) {
 	// 先加载本地配置
 	for sheet, file := range files {
 		if par := registry.GetParser(sheet); par != nil {
-			if err := par.Parse(file.GetText()); err != nil {
+			if err := par.Parse(file); err != nil {
 				return err
 			}
 		}
@@ -115,12 +115,19 @@ func (d *FWatcher) Init(cfg *Config) (err error) {
 
 func (d *FWatcher) save(path string, body []byte) {
 	// 删除事件（body==nil）：清空等内部操作触发，忽略避免破坏本地文件
+	sheet := strings.TrimPrefix(path, d.cfg.Etcd.Prefix+"/")
 	if body == nil {
+		mlog.Errorf("删除配置%s", sheet)
 		return
 	}
 
-	sheet := strings.TrimPrefix(path, d.cfg.Etcd.Prefix+"/")
+	// 原子保存文件
 	filename := filepath.Join(d.abspath, sheet+d.cfg.Ext)
+	if err := fileutil.AtomicSave(filename, body); err != nil {
+		mlog.Errorf("变更配置%s保存失败: %v", sheet, err)
+	} else {
+		mlog.Infof("变更配置%s保存成功", sheet)
+	}
 
 	// 判断fileInfo是否存在
 	info := registry.GetFileInfo(sheet)
@@ -140,13 +147,6 @@ func (d *FWatcher) save(path string, body []byte) {
 			// 更新md5值
 			info.Update(body)
 		}
-	}
-
-	// 原子保存文件
-	if err := fileutil.AtomicSave(filename, body); err != nil {
-		mlog.Errorf("变更配置(%s)保存失败: %v", sheet, err)
-	} else {
-		mlog.Infof("变更配置(%s)保存成功", sheet)
 	}
 }
 

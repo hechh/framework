@@ -36,6 +36,7 @@ type IConvertor interface {
 	ToUint32(string) uint32
 	ToString(uint32) string
 	GetTypes() []int32
+	GetNames() []string
 }
 
 type Convertor struct {
@@ -73,4 +74,8 @@ func (d *Convertor) ToString(i uint32) string {
 
 func (d *Convertor) GetTypes() []int32 {
 	return tplutil.Map2Keys(d.numbers)
+}
+
+func (d *Convertor) GetNames() []string {
+	return tplutil.Map2Keys(d.names)
 }

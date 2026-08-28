@@ -47,6 +47,19 @@ func ParseFieldFormat(str string) (format string, fields []*domain.Field) {
 	return
 }
 
+// wrapShardHashTag 为 shards 模式的 key 格式串加 hash tag（{...}），
+// 使 ElastiCache 集群模式（Cluster Mode）下同一 uid 的所有 key 路由到同一 hash slot。
+// 例: "user_data:%d" → "user_data:{%d}"
+// 仅包住第一个占位符（即分片字段 uid），Redis 只对第一个 {...} 内的内容做哈希。
+func wrapShardHashTag(format string) string {
+	for _, verb := range []string{"%d", "%s"} {
+		if i := strings.Index(format, verb); i >= 0 {
+			return format[:i] + "{" + verb + "}" + format[i+len(verb):]
+		}
+	}
+	return format
+}
+
 // ParseDbSpec 解析数据库规格字符串，返回 (DbType, 静态DbName/常量名, ShardField)
 // 支持格式：
 //   - "MyDb"                -> (Static, "MyDb", nil)              静态数据库名

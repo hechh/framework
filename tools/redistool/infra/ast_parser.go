@@ -135,6 +135,11 @@ func (p *ASTParser) buildStringModel(parts []string, structName string) *domain.
 	dbType, dbName, shardField := ParseDbSpec(parts[1])
 	format, keys := ParseFieldFormat(parts[2])
 
+	// shards 模式加 hash tag：ElastiCache 集群模式下同一 uid 的 key 路由到同一分片
+	if dbType == domain.DbTypeShards {
+		format = wrapShardHashTag(format)
+	}
+
 	// shards 模式必须有有效的分片参数（global 常量格式允许 shardField 为 nil）
 	if dbType == domain.DbTypeShards && shardField == nil {
 		fmt.Printf("[redistool] 跳过无效规则: %s (结构体 %s): shards 模式缺少有效的参数声明\n",
@@ -184,6 +189,11 @@ func (p *ASTParser) buildHashModel(parts []string, structName string) *domain.Re
 
 	keyFmt, keys := ParseFieldFormat(parts[2])
 	fieldFmt, fields := ParseFieldFormat(parts[3])
+
+	// shards 模式加 hash tag：ElastiCache 集群模式下同一 uid 的 key 路由到同一分片
+	if dbType == domain.DbTypeShards {
+		keyFmt = wrapShardHashTag(keyFmt)
+	}
 
 	if err := validateFormat(keyFmt, keys, parts[0], structName); err != nil {
 		return nil

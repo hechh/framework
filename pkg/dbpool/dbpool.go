@@ -12,6 +12,7 @@ import (
 
 // Config 数据库分片配置
 type Config struct {
+	DbType   string            `yaml:"db_type,omitempty"`  // 数据库类型，默认为mysql
 	DbName   string            `yaml:"dbname,omitempty"`   // 数据库名称
 	Db       uint32            `yaml:"db,omitempty"`       // 数据库编号
 	User     string            `yaml:"user,omitempty"`     // 数据库用户名
@@ -32,24 +33,24 @@ type IClient interface {
 }
 
 type DbPool struct {
-	newFunc   func() IClient     // new函数
-	pools     map[string]IClient // 全局数据库连接
-	exitCh    chan struct{}      // 关闭通道
-	closeOnce sync.Once          // 确保 Close 只执行一次
+	newFunc   func(string) IClient // new函数
+	pools     map[string]IClient   // 全局数据库连接
+	exitCh    chan struct{}        // 关闭通道
+	closeOnce sync.Once            // 确保 Close 只执行一次
 }
 
-func NewDbPool[T IClient](f func() T) *DbPool {
+func NewDbPool(f func(string) IClient) *DbPool {
 	return &DbPool{
-		newFunc: func() IClient { return f() },
+		newFunc: f,
 		pools:   make(map[string]IClient),
 		exitCh:  make(chan struct{}),
 	}
 }
 
+// 初始化全局数据库
 func (d *DbPool) Init(cfgs map[string]*Config) error {
-	// 初始化全局数据库
 	for name, dbcfg := range cfgs {
-		cli := d.newFunc()
+		cli := d.newFunc(dbcfg.DbType)
 		if err := cli.Init(dbcfg, registry.GetTables(name)...); err != nil {
 			d.Close()
 			return err

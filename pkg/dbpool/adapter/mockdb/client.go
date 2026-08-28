@@ -22,7 +22,7 @@ type Client struct {
 	isAlive int32
 }
 
-func New() *Client {
+func NewClient(_ string) dbpool.IClient {
 	return &Client{}
 }
 

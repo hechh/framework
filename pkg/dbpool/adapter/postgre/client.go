@@ -1,4 +1,4 @@
-package mysql
+package postgre
 
 import (
 	"fmt"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/hechh/framework/pkg/dbpool/internal/base"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/hechh/framework/library/safe"
 	"github.com/hechh/framework/pkg/dbpool"
+	_ "github.com/lib/pq"
 	"xorm.io/xorm"
 )
 
@@ -29,7 +29,7 @@ func NewClient(_ string) dbpool.IClient {
 func (d *Client) Init(cfg *dbpool.Config, tables ...any) error {
 	d.dsn = append(d.dsn,
 		fmt.Sprintf(
-			"%s:%s@tcp(%s:%d)/%s?timeout=3s&readTimeout=10s&writeTimeout=10s&parseTime=true&charset=utf8mb4&loc=Local&tls=false",
+			"postgresql://%s:%s@%s:%d/%s?sslmode=disable",
 			cfg.User,
 			cfg.Password,
 			cfg.Host,
@@ -44,21 +44,21 @@ func (d *Client) Init(cfg *dbpool.Config, tables ...any) error {
 }
 
 func (d *Client) Connect() error {
-	eng, err := xorm.NewEngineGroup("mysql", d.dsn)
+	eng, err := xorm.NewEngineGroup("postgres", d.dsn)
 	if err != nil {
-		return err
+		return fmt.Errorf("create engine error: %w", err)
 	}
 
 	base.SetupEngine(eng)
 
 	if err := base.SyncTables(eng, d.tables, &d.synced); err != nil {
 		_ = eng.Close()
-		return err
+		return fmt.Errorf("sync tables error: %w", err)
 	}
 
 	if err := eng.Ping(); err != nil {
 		_ = eng.Close()
-		return err
+		return fmt.Errorf("ping error: %w", err)
 	}
 
 	// 原子替换旧引擎并关闭，避免“先读后写”的竞争窗口

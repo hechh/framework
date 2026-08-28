@@ -27,7 +27,7 @@ func (m *Node) CloneVT() *Node {
 	r.Type = m.Type
 	r.Id = m.Id
 	r.Name = m.Name
-	r.Addr = m.Addr
+	r.Host = m.Host
 	r.Ip = m.Ip
 	r.Port = m.Port
 	if len(m.unknownFields) > 0 {
@@ -250,10 +250,10 @@ func (m *Node) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x2a
 	}
-	if len(m.Addr) > 0 {
-		i -= len(m.Addr)
-		copy(dAtA[i:], m.Addr)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Addr)))
+	if len(m.Host) > 0 {
+		i -= len(m.Host)
+		copy(dAtA[i:], m.Host)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Host)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -745,7 +745,7 @@ func (m *Node) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Addr)
+	l = len(m.Host)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -1051,7 +1051,7 @@ func (m *Node) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Host", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1079,7 +1079,7 @@ func (m *Node) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Addr = string(dAtA[iNdEx:postIndex])
+			m.Host = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {

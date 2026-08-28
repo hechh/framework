@@ -100,6 +100,55 @@ func (ComponentType) EnumDescriptor() ([]byte, []int) {
 	return file_packet_proto_rawDescGZIP(), []int{0}
 }
 
+type DbType int32
+
+const (
+	DbType_MYSQL      DbType = 0
+	DbType_POSTGRESQL DbType = 1
+	DbType_STARROCKS  DbType = 2
+)
+
+// Enum value maps for DbType.
+var (
+	DbType_name = map[int32]string{
+		0: "MYSQL",
+		1: "POSTGRESQL",
+		2: "STARROCKS",
+	}
+	DbType_value = map[string]int32{
+		"MYSQL":      0,
+		"POSTGRESQL": 1,
+		"STARROCKS":  2,
+	}
+)
+
+func (x DbType) Enum() *DbType {
+	p := new(DbType)
+	*p = x
+	return p
+}
+
+func (x DbType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DbType) Descriptor() protoreflect.EnumDescriptor {
+	return file_packet_proto_enumTypes[1].Descriptor()
+}
+
+func (DbType) Type() protoreflect.EnumType {
+	return &file_packet_proto_enumTypes[1]
+}
+
+func (x DbType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use DbType.Descriptor instead.
+func (DbType) EnumDescriptor() ([]byte, []int) {
+	return file_packet_proto_rawDescGZIP(), []int{1}
+}
+
 type SendType int32
 
 const (
@@ -130,11 +179,11 @@ func (x SendType) String() string {
 }
 
 func (SendType) Descriptor() protoreflect.EnumDescriptor {
-	return file_packet_proto_enumTypes[1].Descriptor()
+	return file_packet_proto_enumTypes[2].Descriptor()
 }
 
 func (SendType) Type() protoreflect.EnumType {
-	return &file_packet_proto_enumTypes[1]
+	return &file_packet_proto_enumTypes[2]
 }
 
 func (x SendType) Number() protoreflect.EnumNumber {
@@ -143,7 +192,7 @@ func (x SendType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SendType.Descriptor instead.
 func (SendType) EnumDescriptor() ([]byte, []int) {
-	return file_packet_proto_rawDescGZIP(), []int{1}
+	return file_packet_proto_rawDescGZIP(), []int{2}
 }
 
 // 节点信息
@@ -152,7 +201,7 @@ type Node struct {
 	Type          uint32                 `protobuf:"varint,1,opt,name=Type,proto3" json:"Type,omitempty"`
 	Id            uint32                 `protobuf:"varint,2,opt,name=Id,proto3" json:"Id,omitempty"`
 	Name          string                 `protobuf:"bytes,3,opt,name=Name,proto3" json:"Name,omitempty"`
-	Addr          string                 `protobuf:"bytes,4,opt,name=Addr,proto3" json:"Addr,omitempty"`
+	Host          string                 `protobuf:"bytes,4,opt,name=Host,proto3" json:"Host,omitempty"`
 	Ip            string                 `protobuf:"bytes,5,opt,name=Ip,proto3" json:"Ip,omitempty"`
 	Port          int32                  `protobuf:"varint,6,opt,name=Port,proto3" json:"Port,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -210,9 +259,9 @@ func (x *Node) GetName() string {
 	return ""
 }
 
-func (x *Node) GetAddr() string {
+func (x *Node) GetHost() string {
 	if x != nil {
-		return x.Addr
+		return x.Host
 	}
 	return ""
 }
@@ -778,7 +827,7 @@ const file_packet_proto_rawDesc = "" +
 	"\x04Type\x18\x01 \x01(\rR\x04Type\x12\x0e\n" +
 	"\x02Id\x18\x02 \x01(\rR\x02Id\x12\x12\n" +
 	"\x04Name\x18\x03 \x01(\tR\x04Name\x12\x12\n" +
-	"\x04Addr\x18\x04 \x01(\tR\x04Addr\x12\x0e\n" +
+	"\x04Host\x18\x04 \x01(\tR\x04Host\x12\x0e\n" +
 	"\x02Ip\x18\x05 \x01(\tR\x02Ip\x12\x12\n" +
 	"\x04Port\x18\x06 \x01(\x05R\x04Port\"T\n" +
 	"\x06Packet\x12\x19\n" +
@@ -845,7 +894,12 @@ const file_packet_proto_rawDesc = "" +
 	"\x12\n" +
 	"\n" +
 	"\x06MSGBUS\x10\v\x12\v\n" +
-	"\aCLUSTER\x10\f*$\n" +
+	"\aCLUSTER\x10\f*2\n" +
+	"\x06DbType\x12\t\n" +
+	"\x05MYSQL\x10\x00\x12\x0e\n" +
+	"\n" +
+	"POSTGRESQL\x10\x01\x12\r\n" +
+	"\tSTARROCKS\x10\x02*$\n" +
 	"\bSendType\x12\t\n" +
 	"\x05POINT\x10\x00\x12\r\n" +
 	"\tBROADCAST\x10\x01B#Z!github.com/hechh/framework/packetb\x06proto3"
@@ -862,26 +916,27 @@ func file_packet_proto_rawDescGZIP() []byte {
 	return file_packet_proto_rawDescData
 }
 
-var file_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_packet_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_packet_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_packet_proto_goTypes = []any{
 	(ComponentType)(0), // 0: ComponentType
-	(SendType)(0),      // 1: SendType
-	(*Node)(nil),       // 2: Node
-	(*Packet)(nil),     // 3: Packet
-	(*Router)(nil),     // 4: Router
-	(*RouteInfo)(nil),  // 5: RouteInfo
-	(*Head)(nil),       // 6: Head
-	(*Callback)(nil),   // 7: Callback
-	(*RspHead)(nil),    // 8: RspHead
-	(*Message)(nil),    // 9: Message
+	(DbType)(0),        // 1: DbType
+	(SendType)(0),      // 2: SendType
+	(*Node)(nil),       // 3: Node
+	(*Packet)(nil),     // 4: Packet
+	(*Router)(nil),     // 5: Router
+	(*RouteInfo)(nil),  // 6: RouteInfo
+	(*Head)(nil),       // 7: Head
+	(*Callback)(nil),   // 8: Callback
+	(*RspHead)(nil),    // 9: RspHead
+	(*Message)(nil),    // 10: Message
 }
 var file_packet_proto_depIdxs = []int32{
-	6, // 0: Packet.Head:type_name -> Head
-	4, // 1: Packet.List:type_name -> Router
-	5, // 2: Router.List:type_name -> RouteInfo
-	1, // 3: Head.SendType:type_name -> SendType
-	7, // 4: Head.Back:type_name -> Callback
+	7, // 0: Packet.Head:type_name -> Head
+	5, // 1: Packet.List:type_name -> Router
+	6, // 2: Router.List:type_name -> RouteInfo
+	2, // 3: Head.SendType:type_name -> SendType
+	8, // 4: Head.Back:type_name -> Callback
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -899,7 +954,7 @@ func file_packet_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_packet_proto_rawDesc), len(file_packet_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,

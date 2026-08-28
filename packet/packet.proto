@@ -18,6 +18,12 @@ enum ComponentType {
   CLUSTER   = 12;  // 集群服务
 }
 
+enum DbType {
+  MYSQL      = 0;
+  POSTGRESQL = 1;
+  STARROCKS  = 2;
+}
+
 enum SendType {
   POINT     = 0;
   BROADCAST = 1;
@@ -28,7 +34,7 @@ message Node {
   uint32 Type = 1;
   uint32 Id   = 2;
   string Name = 3;
-  string Addr = 4;
+  string Host = 4;
   string Ip   = 5;
   int32  Port = 6;
 }

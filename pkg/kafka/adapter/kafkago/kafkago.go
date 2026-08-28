@@ -3,12 +3,16 @@ package kafkago
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"strings"
 	"sync"
 	"time"
 
 	skafka "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl"
+	"github.com/segmentio/kafka-go/sasl/plain"
+	"github.com/segmentio/kafka-go/sasl/scram"
 
 	"github.com/hechh/framework/pkg/kafka"
 	"github.com/hechh/framework/pkg/mlog"
@@ -45,6 +49,10 @@ func (d *KafkaGo) Init(cfg *kafka.Config) error {
 		BatchTimeout:           10 * time.Millisecond,
 		AllowAutoTopicCreation: true,
 	}
+	// 启用 SASL/TLS 认证时注入 Transport（如 Amazon MSK）
+	if tr := d.transport(); tr != nil {
+		d.writer.Transport = tr
+	}
 	return nil
 }
 
@@ -56,6 +64,90 @@ func splitBrokers(s string) []string {
 		}
 	}
 	return out
+}
+
+// saslMechanism 根据配置构造 SASL 认证机制；未配置或机制未知时返回 nil（匿名访问）。
+func (d *KafkaGo) saslMechanism() sasl.Mechanism {
+	if d.cfg == nil {
+		return nil
+	}
+	switch strings.ToUpper(d.cfg.SaslMechanism) {
+	case "PLAIN":
+		return plain.Mechanism{Username: d.cfg.SaslUsername, Password: d.cfg.SaslPassword}
+	case "SCRAM-SHA-256":
+		m, err := scram.Mechanism(scram.SHA256, d.cfg.SaslUsername, d.cfg.SaslPassword)
+		if err != nil {
+			mlog.Errorf("[kafka] 构造 SCRAM-SHA-256 机制失败: %v", err)
+			return nil
+		}
+		return m
+	case "SCRAM-SHA-512":
+		m, err := scram.Mechanism(scram.SHA512, d.cfg.SaslUsername, d.cfg.SaslPassword)
+		if err != nil {
+			mlog.Errorf("[kafka] 构造 SCRAM-SHA-512 机制失败: %v", err)
+			return nil
+		}
+		return m
+	default:
+		return nil
+	}
+}
+
+// useTLS 是否启用 TLS 加密传输（SSL / SASL_SSL 协议）。
+func (d *KafkaGo) useTLS() bool {
+	if d.cfg == nil {
+		return false
+	}
+	switch strings.ToUpper(d.cfg.SecurityProtocol) {
+	case "SSL", "SASL_SSL":
+		return true
+	default:
+		return false
+	}
+}
+
+// tlsConfig 构造 TLS 配置（内网自签场景允许跳过证书校验）。
+func (d *KafkaGo) tlsConfig() *tls.Config {
+	return &tls.Config{
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: d.cfg != nil && d.cfg.TlsSkipVerify, // #nosec G402 -- 内网自签证书场景允许跳过校验
+	}
+}
+
+// needAuth 是否启用了 SASL 或 TLS 认证。
+func (d *KafkaGo) needAuth() bool {
+	return d.saslMechanism() != nil || d.useTLS()
+}
+
+// transport 构造生产端 Writer 的传输层（注入 SASL/TLS）；无需认证时返回 nil（保持默认明文）。
+func (d *KafkaGo) transport() *skafka.Transport {
+	if d.cfg == nil {
+		return nil
+	}
+	mech := d.saslMechanism()
+	if mech == nil && !d.useTLS() {
+		return nil
+	}
+	tr := &skafka.Transport{}
+	if mech != nil {
+		tr.SASL = mech
+	}
+	if d.useTLS() {
+		tr.TLS = d.tlsConfig()
+	}
+	return tr
+}
+
+// dialer 构造消费端 Reader 的拨号器（注入 SASL/TLS）。
+func (d *KafkaGo) dialer() *skafka.Dialer {
+	dl := &skafka.Dialer{Timeout: 10 * time.Second}
+	if mech := d.saslMechanism(); mech != nil {
+		dl.SASLMechanism = mech
+	}
+	if d.useTLS() {
+		dl.TLS = d.tlsConfig()
+	}
+	return dl
 }
 
 // Subscribe 累积订阅主题；主题集合有变化时重建消费 Reader。
@@ -112,6 +204,10 @@ func (d *KafkaGo) rebuildReaderLocked() error {
 		MinBytes:    1,
 		MaxBytes:    10e6,
 		MaxWait:     100 * time.Millisecond,
+	}
+	// 启用 SASL/TLS 认证时注入 Dialer（如 Amazon MSK）
+	if d.needAuth() {
+		rc.Dialer = d.dialer()
 	}
 	// 自动提交：启用时每 1s 提交一次；关闭时禁用（与 confluent enable.auto.commit 语义一致）
 	if d.cfg.EnableAutoCommit {

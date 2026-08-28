@@ -22,6 +22,14 @@ type Config struct {
 	SessionTimeoutMs int64    `yaml:"session_timeout_ms,omitempty"` // 会话超时（毫秒）
 	PollTimeoutMs    int64    `yaml:"poll_timeout_ms,omitempty"`    // 消费轮询超时（毫秒），默认 100
 	SendTimeoutMs    int64    `yaml:"send_timeout_ms,omitempty"`    // 同步发送等待确认超时（毫秒），默认 5000
+
+	// 安全认证（Amazon MSK / 生产环境）：命名对齐 Kafka 客户端标准
+	// security.protocol / sasl.mechanism。
+	SecurityProtocol string `yaml:"security_protocol,omitempty"` // 安全协议：PLAINTEXT/SASL_PLAINTEXT/SSL/SASL_SSL，默认 PLAINTEXT
+	SaslMechanism    string `yaml:"sasl_mechanism,omitempty"`    // SASL 机制：PLAIN/SCRAM-SHA-256/SCRAM-SHA-512
+	SaslUsername     string `yaml:"sasl_username,omitempty"`     // SASL 用户名
+	SaslPassword     string `yaml:"sasl_password,omitempty"`     // SASL 密码
+	TlsSkipVerify    bool   `yaml:"tls_skip_verify,omitempty"`   // 跳过 TLS 证书校验（仅内网自签/测试场景）
 }
 
 // Message Kafka 消息（适配器统一返回给上层的类型）。

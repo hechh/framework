@@ -29,7 +29,9 @@ type INode interface {
 	GetType() uint32
 	GetId() uint32
 	GetName() string
-	GetAddr() string
+	GetHost() string
+	GetIp() string
+	GetPort() int32
 	MarshalVT() ([]byte, error)
 }
 
@@ -127,7 +129,7 @@ func (d *Cluster) handleNodeOnline(data []byte) {
 		mlog.Errorf("添加节点失败:%v", err)
 		return
 	}
-	mlog.Infof("节点上线: Type=%d, Id=%d, Name=%s, Addr=%s", node.Type, node.Id, node.Name, node.Addr)
+	mlog.Infof("节点上线: Type=%d, Id=%d, Name=%s, host=%s, ip=%s, port=%d", node.Type, node.Id, node.Name, node.Host, node.Ip, node.Port)
 }
 
 // handleNodeOffline 处理节点下线

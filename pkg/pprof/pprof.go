@@ -1,6 +1,7 @@
 package pprof
 
 import (
+	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"sync"
@@ -9,7 +10,7 @@ import (
 )
 
 type Config struct {
-	Addr string `yaml:"pprof_addr,omitempty"` // ip 地址
+	PprofPort int32 `yaml:"pprof_port,omitempty"` // ip 地址
 }
 
 type Pprof struct {
@@ -19,12 +20,13 @@ type Pprof struct {
 }
 
 func (p *Pprof) Init(cfg *Config) error {
+	addr := fmt.Sprintf("localhost:%d", cfg.PprofPort)
 	p.server = &http.Server{
-		Addr:    cfg.Addr,
+		Addr:    addr,
 		Handler: http.DefaultServeMux, // 复用 DefaultServeMux（net/http/pprof 已注册）
 	}
 	go func() {
-		mlog.Infof("[pprof] 启动性能分析服务: http://%s/debug/pprof/", cfg.Addr)
+		mlog.Infof("[pprof] 启动性能分析服务: http://%s/debug/pprof/", addr)
 		if err := p.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			mlog.Errorf("[pprof] 启动失败: %v", err)
 		}

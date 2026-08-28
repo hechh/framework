@@ -10,9 +10,9 @@ import (
 )
 
 type Config struct {
-	Addr string `yaml:"addr,omitempty"`
-	Ip   string `yaml:"ip,omitempty"`   // ip 地址
-	Port int32  `yaml:"port,omitempty"` // 端口
+	Host string `yaml:"host,omitempty"`
+	Ip   string `yaml:"ip,omitempty"`
+	Port int32  `yaml:"port,omitempty"`
 }
 
 type Component struct {
@@ -33,7 +33,7 @@ func (d *Component) Init(data map[string]any) error {
 
 	// 初始化
 	self = d.Node
-	self.Addr = cfg.Addr
+	self.Host = cfg.Host
 	self.Ip = cfg.Ip
 	self.Port = cfg.Port
 

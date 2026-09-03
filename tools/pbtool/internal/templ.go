@@ -7,6 +7,12 @@ const templ = `
 
 package {{.GetPkgName}}
 
+{{range $st := .GetAllDBShard -}}
+func (d *{{$st.Name}}) TableName() string {
+	return fmt.Sprintf("{{$st.DBShard.Table}}_%d", d.{{$st.DBShard.GoField}}%{{$st.DBShard.Shard}})
+}
+
+{{end}}
 {{range $st := .GetAllRsp -}}
 {{range $field := $st.Members -}}
 {{if hasSuffix $field.Type.Name ".RspHead" -}}

@@ -12,14 +12,14 @@ type Component struct {
 // 初始化
 func (d *Component) Init(data map[string]any) error {
 	// 加载配置
-	cfg := make(map[string]*Config)
+	cfg := make(map[string][]*Config)
 	if err := fileutil.Map2Yaml(data, cfg, "redispool"); err != nil {
 		mlog.Errorf("[redispool] 配置加载失败 error:%v", err)
 		return err
 	}
 
 	// 模块初始化
-	if err := d.Object.Init(cfg); err != nil {
+	if err := d.Object.Init(cfg["globals"], cfg["shards"]); err != nil {
 		mlog.Errorf("[redispool] 初始化失败，error=%v", err)
 		return err
 	}

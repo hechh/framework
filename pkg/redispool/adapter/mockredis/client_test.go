@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/hechh/framework/pkg/redispool"
+	"github.com/redis/go-redis/v9"
 )
 
 // newTestClient 创建并初始化一个 mockredis.Client，测试失败时自动 t.Fatal
@@ -492,9 +492,9 @@ func TestZSet(t *testing.T) {
 
 	// ZAdd
 	n, err := c.ZAdd("zset1",
-		&redis.Z{Score: 1, Member: "a"},
-		&redis.Z{Score: 2, Member: "b"},
-		&redis.Z{Score: 3, Member: "c"},
+		redis.Z{Score: 1, Member: "a"},
+		redis.Z{Score: 2, Member: "b"},
+		redis.Z{Score: 3, Member: "c"},
 	)
 	if err != nil {
 		t.Fatalf("ZAdd() 失败: %v", err)
@@ -593,7 +593,7 @@ func TestZSet(t *testing.T) {
 
 	// ZRemRangeByRank
 	// 先添加一些元素
-	_, _ = c.ZAdd("zset1", &redis.Z{Score: 10, Member: "x"}, &redis.Z{Score: 20, Member: "y"}, &redis.Z{Score: 30, Member: "z"})
+	_, _ = c.ZAdd("zset1", redis.Z{Score: 10, Member: "x"}, redis.Z{Score: 20, Member: "y"}, redis.Z{Score: 30, Member: "z"})
 	n, err = c.ZRemRangeByRank("zset1", 0, 1)
 	if err != nil {
 		t.Fatalf("ZRemRangeByRank() 失败: %v", err)
@@ -604,9 +604,9 @@ func TestZSet(t *testing.T) {
 
 	// ZRevRangeByScore
 	_, _ = c.ZAdd("zset2",
-		&redis.Z{Score: 1, Member: "a"},
-		&redis.Z{Score: 2, Member: "b"},
-		&redis.Z{Score: 3, Member: "c"},
+		redis.Z{Score: 1, Member: "a"},
+		redis.Z{Score: 2, Member: "b"},
+		redis.Z{Score: 3, Member: "c"},
 	)
 	rangeByScore, err := c.ZRevRangeByScore("zset2", &redis.ZRangeBy{Min: "1", Max: "3"})
 	if err != nil {

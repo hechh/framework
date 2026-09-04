@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/hechh/framework/library/utils"
 	"github.com/hechh/framework/pkg/redispool"
+	"github.com/redis/go-redis/v9"
 )
 
 // Client Redis客户端封装，组合go-redis.Client并添加key前缀支持
 type Client struct {
 	uuid uint32
 	*redis.Client
-	prefix string
+	cfg *redispool.Config
 }
 
 func New() *Client {
@@ -29,26 +29,26 @@ func handleRedisError(err error) error {
 	return fmt.Errorf("redis error: %w", err)
 }
 
+func (d *Client) IsSharded() bool  { return d.cfg.IsSharded }
 func (d *Client) UniqueId() uint32 { return d.uuid }
 
 func (d *Client) Init(cfg *redispool.Config) error {
 	cli := redis.NewClient(&redis.Options{
-		IdleTimeout:        1 * time.Minute,
-		MinIdleConns:       100,
-		DB:                 int(cfg.Db),
-		ReadTimeout:        -1,
-		WriteTimeout:       -1,
-		Addr:               fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port),
-		Username:           cfg.User,
-		Password:           cfg.Password,
-		OnConnect:          func(ctx context.Context, cn *redis.Conn) error { return nil },
-		MaxRetries:         3,
-		MinRetryBackoff:    8 * time.Millisecond,
-		MaxRetryBackoff:    512 * time.Millisecond,
-		PoolSize:           200,
-		MaxConnAge:         0,
-		PoolTimeout:        4 * time.Second,
-		IdleCheckFrequency: 1 * time.Minute,
+		ConnMaxIdleTime: 1 * time.Minute, // v9：对应 v8 的 IdleTimeout
+		MinIdleConns:    100,
+		DB:              int(cfg.Db),
+		ReadTimeout:     -1,
+		WriteTimeout:    -1,
+		Addr:            fmt.Sprintf("%s:%d", cfg.Ip, cfg.Port),
+		Username:        cfg.User,
+		Password:        cfg.Password,
+		OnConnect:       func(ctx context.Context, cn *redis.Conn) error { return nil },
+		MaxRetries:      3,
+		MinRetryBackoff: 8 * time.Millisecond,
+		MaxRetryBackoff: 512 * time.Millisecond,
+		PoolSize:        200,
+		ConnMaxLifetime: 0, // v9：对应 v8 的 MaxConnAge（0 表示不过期）
+		PoolTimeout:     4 * time.Second,
 	})
 
 	// 检查连接是否成功
@@ -60,7 +60,7 @@ func (d *Client) Init(cfg *redispool.Config) error {
 	}
 	d.uuid = utils.GetCrc32(fmt.Sprintf("%s-%d", cfg.DbName, cfg.Db))
 	d.Client = cli
-	d.prefix = cfg.Prefix
+	d.cfg = cfg
 	return nil
 }
 
@@ -72,10 +72,10 @@ func (d *Client) Close() error {
 
 // GetRealKey 获取带前缀的key（供各领域操作使用）
 func (c *Client) GetRealKey(key string) string {
-	if c.prefix == "" {
+	if c.cfg == nil || c.cfg.Prefix == "" {
 		return key
 	}
-	return c.prefix + "_" + key
+	return c.cfg.Prefix + "_" + key
 }
 
 // Ctx 返回默认context（供内部使用）
@@ -162,7 +162,8 @@ func (d *Client) SetNX(key string, val any, expiration time.Duration) (exist boo
 
 // SetEX 设置值并设置过期时间
 func (d *Client) SetEX(key string, val any, expiration time.Duration) (err error) {
-	_, err = d.Client.SetEX(d.Ctx(), d.GetRealKey(key), val, expiration).Result()
+	// v9：方法名为 SetEx
+	_, err = d.Client.SetEx(d.Ctx(), d.GetRealKey(key), val, expiration).Result()
 	return handleRedisError(err)
 }
 
@@ -257,7 +258,7 @@ func (d *Client) SRandMemberN(key string, count int64) ([]string, error) {
 }
 
 // ZAdd 添加有序集合元素
-func (d *Client) ZAdd(key string, members ...*redis.Z) (int64, error) {
+func (d *Client) ZAdd(key string, members ...redis.Z) (int64, error) {
 	flag, err := d.Client.ZAdd(d.Ctx(), d.GetRealKey(key), members...).Result()
 	return flag, handleRedisError(err)
 }
@@ -402,7 +403,8 @@ func (d *Client) HMGet(key string, fields ...string) ([]any, error) {
 
 // HMSet 批量设置hash字段值
 func (d *Client) HMSet(key string, vals ...any) (err error) {
-	_, err = d.Client.HMSet(d.Ctx(), d.GetRealKey(key), vals...).Result()
+	// v9：已移除 HMSet，用 HSet(key, field, value, ...) 等价实现
+	_, err = d.Client.HSet(d.Ctx(), d.GetRealKey(key), vals...).Result()
 	return handleRedisError(err)
 }
 

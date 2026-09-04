@@ -13,3 +13,10 @@ func Get(name string) IClient {
 	}
 	return nil
 }
+
+func GetByHash(seed uint64) IClient {
+	if object != nil {
+		return object.GetByHash(seed)
+	}
+	return nil
+}

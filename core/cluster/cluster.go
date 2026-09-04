@@ -44,15 +44,15 @@ type IDiscovery interface {
 
 type Cluster struct {
 	self     INode
-	disc     IDiscovery                         // 服务发现接口
-	virtuals map[uint32]*consistent.Hash[INode] // 节点类型到一致性哈希的映射
+	disc     IDiscovery                                 // 服务发现接口
+	virtuals map[uint32]*consistent.Hash[uint32, INode] // 节点类型到一致性哈希的映射
 }
 
 // NewCluster 创建集群实例
 func NewCluster(dis IDiscovery) *Cluster {
 	return &Cluster{
 		disc:     dis,
-		virtuals: make(map[uint32]*consistent.Hash[INode]),
+		virtuals: make(map[uint32]*consistent.Hash[uint32, INode]),
 	}
 }
 
@@ -65,7 +65,7 @@ func (d *Cluster) Init(cfg *Config, self INode, types []int32) error {
 
 	// 初始化各节点类型的一致性哈希
 	for _, nodeType := range types {
-		d.virtuals[uint32(nodeType)] = consistent.NewHash[INode](DEFAULT_VIRTUAL_COUNT)
+		d.virtuals[uint32(nodeType)] = consistent.NewHash[uint32, INode](DEFAULT_VIRTUAL_COUNT)
 	}
 
 	// 序列化节点信息并注册
@@ -120,12 +120,12 @@ func (d *Cluster) handleNodeOnline(data []byte) {
 		return
 	}
 
-	if existing := ch.GetNodeByID(node.Id); existing != nil {
-		if err := ch.UpdateNode(node); err != nil {
+	if existing := ch.GetNodeByKey(node.Id); existing != nil {
+		if err := ch.UpdateNode(node.Id, node); err != nil {
 			mlog.Errorf("更新节点失败:%v", err)
 			return
 		}
-	} else if err := ch.AddNode(node); err != nil {
+	} else if err := ch.AddNode(node.Id, node); err != nil {
 		mlog.Errorf("添加节点失败:%v", err)
 		return
 	}
@@ -193,7 +193,7 @@ func (d *Cluster) Get(nodeType, nodeId uint32) INode {
 	if !ok {
 		return nil
 	}
-	return cn.GetNodeByID(nodeId)
+	return cn.GetNodeByKey(nodeId)
 }
 
 // Gets 根据类型获取所有节点
@@ -207,7 +207,7 @@ func (d *Cluster) Gets(nodeType uint32) []INode {
 // Route 根据种子路由到指定节点（一致性哈希）
 func (d *Cluster) Route(nodeType uint32, seed uint64) INode {
 	if ch, ok := d.virtuals[nodeType]; ok {
-		return ch.GetNodeByUint64(seed)
+		return ch.GetNodeByHash(seed)
 	}
 	return nil
 }
@@ -219,7 +219,7 @@ func (d *Cluster) Add(node INode) {
 		mlog.Errorf("节点类型不支持:%v", node)
 		return
 	}
-	if err := ch.AddNode(node); err != nil {
+	if err := ch.AddNode(node.GetId(), node); err != nil {
 		mlog.Errorf("手动添加节点失败:%v", err)
 	}
 }

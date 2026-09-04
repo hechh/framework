@@ -16,9 +16,6 @@ func (d *Component) Init(data map[string]any) error {
 }
 
 func (d *Component) Close() {
-	if d.obj != nil {
-		d.obj.Close()
-	}
 	mlog.Infof("[router] 关闭成功")
 	d.obj = nil
 }

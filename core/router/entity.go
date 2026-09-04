@@ -36,15 +36,19 @@ func NewEntity(idType uint32, id uint64, parent *Router) *Entity {
 func (d *Entity) IsEnable() bool {
 	return true
 }
+
 func (d *Entity) GetTTL() int64 {
 	return d.ttlMs
 }
+
 func (d *Entity) GetExpire() int64 {
 	return d.accessTime.Load() + d.ttlMs
 }
+
 func (d *Entity) Refresh(now int64) {
 	d.accessTime.Store(now)
 }
+
 func (d *Entity) Call() {
 	if d.parent != nil {
 		d.parent.Remove(d.idType, d.id)

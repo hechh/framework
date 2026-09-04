@@ -29,6 +29,7 @@ func handleRedisError(err error) error {
 	return fmt.Errorf("redis error: %w", err)
 }
 
+func (d *Client) DbName() string   { return d.cfg.DbName }
 func (d *Client) IsSharded() bool  { return d.cfg.IsSharded }
 func (d *Client) UniqueId() uint32 { return d.uuid }
 

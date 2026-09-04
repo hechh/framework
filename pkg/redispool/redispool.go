@@ -1,11 +1,15 @@
 package redispool
 
 import (
-	"context"
+	"fmt"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/hechh/framework/library/consistent"
+	"github.com/hechh/framework/library/safe"
 	"github.com/hechh/framework/library/tplutil"
+	"github.com/hechh/framework/pkg/mlog"
+	"github.com/hechh/framework/pkg/redispool/internal/cache"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/proto"
 )
@@ -22,18 +26,19 @@ type Message interface {
 }
 
 type IClient interface {
+	DbName() string
 	IsSharded() bool
 	UniqueId() uint32
 	Init(cfg *Config) error
 	Close() error
 	GetRealKey(key string) string
-	Ctx() context.Context
-	Pipeline() redis.Pipeliner
-	TxPipeline() redis.Pipeliner
 	Run(script *redis.Script, key string, values ...any) (any, error)
-	ClusterNodes() (string, error)
+	//Ctx() context.Context
+	//Pipeline() redis.Pipeliner
+	//TxPipeline() redis.Pipeliner
+	//ClusterNodes() (string, error)
+	//Publish(channel string, message any) (int64, error)
 	Ping() (string, error)
-	Publish(channel string, message any) (int64, error)
 	Del(keys ...string) (int64, error)
 	Exists(key string) (int64, error)
 	Expire(key string, expiration time.Duration) (bool, error)
@@ -55,11 +60,9 @@ type IClient interface {
 	SCard(key string) (int64, error)
 	SRandMemberN(key string, count int64) ([]string, error)
 	ZAdd(key string, members ...redis.Z) (int64, error)
-	ZRemRangeByRank(key string, start, stop int64) (int64, error)
 	ZRem(key string, members ...any) (int64, error)
 	ZCard(key string) (int64, error)
 	ZScore(key, member string) (float64, error)
-	ZRange(key string, start, stop int64) ([]string, error)
 	ZRevRange(key string, start, stop int64) ([]string, error)
 	ZRangeWithScores(key string, start, stop int64) ([]redis.Z, error)
 	ZRevRangeWithScores(key string, start, stop int64) ([]redis.Z, error)
@@ -67,25 +70,27 @@ type IClient interface {
 	ZRevRangeByScoreWithScores(key string, opt *redis.ZRangeBy) ([]redis.Z, error)
 	ZRank(key, member string) (int64, error)
 	ZRevRank(key, member string) (int64, error)
+	//ZRemRangeByRank(key string, start, stop int64) (int64, error)
+	//ZRange(key string, start, stop int64) ([]string, error)
 	LPush(key string, values ...any) (int64, error)
 	RPush(key string, values ...any) (int64, error)
 	LPop(key string) (string, error)
 	RPop(key string) (string, error)
 	LLen(key string) (int64, error)
-	LRange(key string, start, stop int64) ([]string, error)
 	LTrim(key string, start, stop int64) error
 	LRem(key string, count int64, value any) (int64, error)
+	//LRange(key string, start, stop int64) ([]string, error)
 	HGet(key string, field string) (string, error)
 	HSet(key string, field string, val any) error
 	HMGet(key string, fields ...string) ([]any, error)
 	HMSet(key string, vals ...any) error
-	HGetAll(key string) (map[string]string, error)
 	HDel(key string, fields ...string) (int64, error)
 	HExists(key, field string) (bool, error)
 	HIncrBy(key, field string, incr int64) (int64, error)
-	HKeys(key string) ([]string, error)
 	HLen(key string) (int64, error)
 	HSetNX(key, field string, value any) (bool, error)
+	//HGetAll(key string) (map[string]string, error)
+	//HKeys(key string) ([]string, error)
 }
 
 type Value struct {
@@ -128,21 +133,24 @@ func NewValue(cli IClient, obj Message, t uint32, args ...string) *Value {
 
 // Config 数据库分片配置
 type Config struct {
-	IsSharded bool              `yaml:"-"`
-	DbName    string            `yaml:"dbname,omitempty"`   // 数据库名称
-	Db        uint32            `yaml:"db,omitempty"`       // 数据库编号
-	User      string            `yaml:"user,omitempty"`     // 数据库用户名
-	Password  string            `yaml:"password,omitempty"` // 数据库密码
-	Ip        string            `yaml:"ip,omitempty"`       // 数据库IP地址
-	Port      uint32            `yaml:"port,omitempty"`     // 数据库端口
-	Prefix    string            `yaml:"prefix,omitempty"`   // key 前缀
-	Slaves    map[int32]*Config `yaml:"slaves,omitempty"`   // 从库配置列表
+	IsSharded bool              `yaml:"-"`                    // 是否为分片数据库
+	IsMigrate bool              `yaml:"is_migrate,omitempty"` // 是否为缓存
+	DbName    string            `yaml:"dbname,omitempty"`     // 数据库名称
+	Db        uint32            `yaml:"db,omitempty"`         // 数据库编号
+	User      string            `yaml:"user,omitempty"`       // 数据库用户名
+	Password  string            `yaml:"password,omitempty"`   // 数据库密码
+	Ip        string            `yaml:"ip,omitempty"`         // 数据库IP地址
+	Port      uint32            `yaml:"port,omitempty"`       // 数据库端口
+	Prefix    string            `yaml:"prefix,omitempty"`     // key 前缀
+	Slaves    map[int32]*Config `yaml:"slaves,omitempty"`     // 从库配置列表
 }
 
 type RedisPool struct {
-	newFunc  func() IClient                          // new函数
-	pools    map[string]IClient                      // 全局数据库连接池
-	virtuals *consistent.StaticHash[string, IClient] // 一致性哈希
+	newFunc     func() IClient                          // new函数
+	pools       map[string]IClient                      // 全局数据库连接池
+	virtuals    *consistent.StaticHash[string, IClient] // 一致性哈希
+	cache       *cache.MigrateCache                     // 迁移关系缓存
+	cacheClient IClient                                 // 缓存数据库
 }
 
 func NewRedisPool[T IClient](f func() T) *RedisPool {
@@ -150,6 +158,7 @@ func NewRedisPool[T IClient](f func() T) *RedisPool {
 		newFunc:  func() IClient { return f() },
 		virtuals: consistent.NewStaticHash[string, IClient](150),
 		pools:    make(map[string]IClient),
+		cache:    cache.NewMigrateCache(),
 	}
 }
 
@@ -161,6 +170,9 @@ func (d *RedisPool) Init(globals []*Config, shards []*Config) error {
 		if err := cli.Init(dbCfg); err != nil {
 			d.Close()
 			return err
+		}
+		if dbCfg.IsMigrate {
+			d.cacheClient = cli
 		}
 		d.pools[dbCfg.DbName] = cli
 	}
@@ -192,5 +204,22 @@ func (d *RedisPool) Get(name string) IClient {
 
 // 通过hash计算分配节点
 func (d *RedisPool) GetByHash(seed uint64) IClient {
+	migrate := d.cache.Get(seed)
+	if migrate == nil {
+		body, err := d.cacheClient.HGet("migrate_data", fmt.Sprintf("%d", seed))
+		if err != nil {
+			mlog.Errorf("加载migrate data数据失败 error:%v", err)
+			return nil
+		}
+		item := &cache.MigrateData{}
+		if len(body) > 0 {
+			sonic.Unmarshal(safe.StringToBytes(body), item)
+		} else {
+			item.Uid = seed
+			cli := d.virtuals.GetNodeByHash(seed)
+			item.NewDbName = cli.DbName()
+		}
+	}
+
 	return d.virtuals.GetNodeByHash(seed)
 }

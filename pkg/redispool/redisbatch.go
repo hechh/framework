@@ -25,20 +25,21 @@ func unmarshal(values []*Value, results []any) error {
 
 func Load(args ...*Value) error {
 	type data struct {
+		client   IClient
 		typeData uint32
 		key      string
-		cli      IClient
 		values   []*Value
 		args     []string
 	}
-	datas := map[tplutil.Tuple2[uint32, string]]*data{}
+	datas := map[tplutil.Tuple2[uint64, string]]*data{}
 	for _, item := range args {
 		cli, typeData := item.Client(), item.Type()
 		key, field := item.Key(), item.Field()
-		kk := tplutil.T2(cli.UniqueId(), tplutil.Or(typeData == HASH, key, field))
+		uuid := cli.UniqueId()
+		kk := tplutil.T2(uint64(uuid)<<32|uint64(typeData), tplutil.Or(typeData == HASH, key, ""))
 		vv, ok := datas[kk]
 		if !ok {
-			vv = &data{cli: cli, typeData: typeData, key: key}
+			vv = &data{client: cli, typeData: typeData, key: key}
 			datas[kk] = vv
 		}
 		vv.values = append(vv.values, item)
@@ -48,9 +49,9 @@ func Load(args ...*Value) error {
 		var results []any
 		var err error
 		if vv.typeData == STRING {
-			results, err = vv.cli.MGet(vv.args...)
+			results, err = vv.client.MGet(vv.args...)
 		} else {
-			results, err = vv.cli.HMGet(vv.key, vv.args...)
+			results, err = vv.client.HMGet(vv.key, vv.args...)
 		}
 		if err != nil {
 			return err
@@ -60,6 +61,41 @@ func Load(args ...*Value) error {
 		}
 	}
 	return nil
+}
+
+func Remove(args ...*Value) error {
+	type data struct {
+		client   IClient
+		typeData uint32
+		key      string
+		args     []string
+	}
+	datas := map[tplutil.Tuple2[uint64, string]]*data{}
+	for _, item := range args {
+		cli, typeData := item.Client(), item.Type()
+		key, field := item.Key(), item.Field()
+		uuid := cli.UniqueId()
+		kk := tplutil.T2(uint64(uuid)<<32|uint64(typeData), tplutil.Or(typeData == HASH, key, ""))
+		vv, ok := datas[kk]
+		if !ok {
+			vv = &data{client: cli, typeData: typeData, key: key}
+			datas[kk] = vv
+		}
+		vv.args = append(vv.args, tplutil.Or(typeData == HASH, field, key))
+	}
+	var err error
+	for _, vv := range datas {
+		var reterr error
+		if vv.typeData == STRING {
+			_, reterr = vv.client.Del(vv.args...)
+		} else {
+			_, reterr = vv.client.HDel(vv.key, vv.args...)
+		}
+		if reterr != nil {
+			err = reterr
+		}
+	}
+	return err
 }
 
 func Save(args ...*Value) error {
@@ -74,31 +110,27 @@ func Save(args ...*Value) error {
 		if !item.IsChanged() {
 			continue
 		}
-
 		buff, err := item.MarshalVT()
 		if err != nil {
 			return err
 		}
-
 		cli, typeData := item.Client(), item.Type()
 		key, field := item.Key(), item.Field()
-
 		kk := tplutil.T2(cli.UniqueId(), tplutil.Or(typeData == HASH, key, field))
 		vv, ok := datas[kk]
 		if !ok {
 			vv = &data{typeData: typeData, key: key, client: cli}
 			datas[kk] = vv
 		}
-
 		kval := tplutil.Or(typeData == STRING, key, field)
 		vv.args = append(vv.args, kval, safe.BytesToString(buff))
 	}
 	for _, vv := range datas {
 		var err error
-		if vv.typeData == HASH {
-			err = vv.client.HMSet(vv.key, vv.args...)
-		} else {
+		if vv.typeData == STRING {
 			err = vv.client.MSet(vv.args...)
+		} else {
+			err = vv.client.HMSet(vv.key, vv.args...)
 		}
 		if err != nil {
 			return err
@@ -120,17 +152,14 @@ func SaveDirectly(args ...*Value) error {
 		if err != nil {
 			return err
 		}
-
 		cli, typeData := item.Client(), item.Type()
 		key, field := item.Key(), item.Field()
-
 		kk := tplutil.T2(cli.UniqueId(), tplutil.Or(typeData == HASH, key, field))
 		vv, ok := datas[kk]
 		if !ok {
 			vv = &data{typeData: typeData, key: key, client: cli}
 			datas[kk] = vv
 		}
-
 		kval := tplutil.Or(typeData == STRING, key, field)
 		vv.args = append(vv.args, kval, safe.BytesToString(buff))
 	}

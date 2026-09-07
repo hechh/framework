@@ -21,6 +21,7 @@ type Message interface {
 }
 
 type IClient interface {
+	DbName() string
 	UniqueId() uint32
 	Init(cfg *Config) error
 	Close() error
@@ -85,15 +86,15 @@ type Value struct {
 	times uint32
 }
 
-func (d *Value) Client() IClient { return d.cli }
-func (d *Value) Type() uint32    { return d.class }
-func (d *Value) Key() string     { return d.key }
-func (d *Value) Field() string   { return d.field }
-func (d *Value) IsChanged() bool { return d.times > 0 }
-func (d *Value) Change()         { d.times++ }
-func (d *Value) Reset()          { d.times = 0 }
-func (d *Value) Get() any        { return d.Message }
-
+func (d *Value) SetClient(cli IClient) { d.cli = cli }
+func (d *Value) Client() IClient       { return d.cli }
+func (d *Value) Type() uint32          { return d.class }
+func (d *Value) Key() string           { return d.key }
+func (d *Value) Field() string         { return d.field }
+func (d *Value) IsChanged() bool       { return d.times > 0 }
+func (d *Value) Change()               { d.times++ }
+func (d *Value) Reset()                { d.times = 0 }
+func (d *Value) Get() any              { return d.Message }
 func (d *Value) Clone() *Value {
 	return &Value{
 		Message: d.CloneMessageVT().(Message),

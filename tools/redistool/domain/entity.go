@@ -17,7 +17,7 @@ type DbType string
 const (
 	DbTypeStatic DbType = ""       // 静态数据库名（旧格式兼容）：直接使用 GetByName("name")
 	DbTypeGlobal DbType = "global" // 全局数据库（动态名称）：使用 GetByName(param）
-	DbTypeShards DbType = "shards" // 分片数据库：使用 GetByUid / GetById 路由
+	DbTypeShards DbType = "shards" // 分片数据库：使用 GetByHash 一致性哈希路由
 )
 
 // RedisString String类型Redis模型定义
@@ -130,19 +130,33 @@ func (m *RedisString) HasDbConst() bool {
 }
 
 // NeedsDatabaseImport 生成的代码是否需要引入 richgame/pkg/database 包
-// shards→database.REDIS_PLAYER、global 常量→database.REDIS_GLOBAL 会引用该包
+// 仅 global 常量模式（数据库名引用 database 包常量）需要引入该包：
+// shards 模式通过 GetByHash 一致性哈希路由、静态名使用字面量，均不依赖 database 包
 func (m *RedisHash) NeedsDatabaseImport() bool {
-	return m.DbType == DbTypeShards || (m.DbType == DbTypeGlobal && m.ShardField == nil)
+	return m.DbType == DbTypeGlobal && m.ShardField == nil
 }
 
 // NeedsDatabaseImport 生成的代码是否需要引入 richgame/pkg/database 包
-// shards→database.REDIS_PLAYER、global 常量→database.REDIS_GLOBAL 会引用该包
+// 仅 global 常量模式（数据库名引用 database 包常量）需要引入该包：
+// shards 模式通过 GetByHash 一致性哈希路由、静态名使用字面量，均不依赖 database 包
 func (m *RedisString) NeedsDatabaseImport() bool {
-	return m.DbType == DbTypeShards || (m.DbType == DbTypeGlobal && m.ShardField == nil)
+	return m.DbType == DbTypeGlobal && m.ShardField == nil
+}
+
+// getByHashCall 生成分片客户端获取表达式 redispool.GetByHash(...)
+// 分片字段类型为 uint64 时直接传参，其余整数类型自动转换为 uint64 以匹配接口签名
+func getByHashCall(sf *Field) string {
+	if sf == nil {
+		return `redispool.GetByHash(0)`
+	}
+	if sf.Type == "uint64" {
+		return fmt.Sprintf(`redispool.GetByHash(%s)`, sf.Name)
+	}
+	return fmt.Sprintf(`redispool.GetByHash(uint64(%s))`, sf.Name)
 }
 
 // ClientCallExpr 返回内联客户端获取表达式
-// redispool 只负责按名称连接 Redis 服务，业务分片由中间件处理
+// global 按名称获取全局库；shards 通过 GetByHash 一致性哈希路由到具体分片客户端
 func (m *RedisString) ClientCallExpr() string {
 	switch m.DbType {
 	case DbTypeGlobal:
@@ -151,7 +165,7 @@ func (m *RedisString) ClientCallExpr() string {
 		}
 		return `redispool.Get(database.REDIS_GLOBAL)`
 	case DbTypeShards:
-		return `redispool.Get(database.REDIS_PLAYER)`
+		return getByHashCall(m.ShardField)
 	default:
 		return fmt.Sprintf(`redispool.Get("%s")`, m.DbName)
 	}
@@ -163,7 +177,7 @@ func (m *RedisString) ClientFuncRef() string {
 	case DbTypeGlobal:
 		return `redispool.GetByName`
 	case DbTypeShards:
-		return `redispool.GetByUid`
+		return `redispool.GetByHash`
 	default:
 		return `redispool.GetByName`
 	}
@@ -278,7 +292,7 @@ func (m *RedisHash) GetFieldFmtArgs() string {
 }
 
 // ClientCallExpr 返回客户端获取表达式
-// redispool 只负责按名称连接 Redis 服务，业务分片由中间件处理
+// global 按名称获取全局库；shards 通过 GetByHash 一致性哈希路由到具体分片客户端
 func (m *RedisHash) ClientCallExpr() string {
 	switch m.DbType {
 	case DbTypeGlobal:
@@ -287,7 +301,7 @@ func (m *RedisHash) ClientCallExpr() string {
 		}
 		return `redispool.Get(database.REDIS_GLOBAL)`
 	case DbTypeShards:
-		return `redispool.Get(database.REDIS_PLAYER)`
+		return getByHashCall(m.ShardField)
 	default:
 		return fmt.Sprintf(`redispool.Get("%s")`, m.DbName)
 	}
@@ -299,7 +313,7 @@ func (m *RedisHash) ClientFuncRef() string {
 	case DbTypeGlobal:
 		return `redispool.GetByName`
 	case DbTypeShards:
-		return `redispool.GetByUid`
+		return `redispool.GetByHash`
 	default:
 		return `redispool.GetByName`
 	}
@@ -424,7 +438,7 @@ func (m *RedisHash) IsShardFieldSame() bool {
 	return strings.EqualFold(m.ShardField.Name, m.Fields[0].Name)
 }
 
-// BatchClientExpr 批量操作（Remove）的客户端获取表达式，分片模式使用传入的 shardId
+// BatchClientExpr 批量操作的客户端获取表达式，分片模式同样使用 GetByHash 路由
 func (m *RedisString) BatchClientExpr() string {
 	switch m.DbType {
 	case DbTypeGlobal:
@@ -433,7 +447,7 @@ func (m *RedisString) BatchClientExpr() string {
 		}
 		return `redispool.Get(database.REDIS_GLOBAL)`
 	case DbTypeShards:
-		return `redispool.Get(database.REDIS_PLAYER)`
+		return getByHashCall(m.ShardField)
 	default:
 		return fmt.Sprintf(`redispool.Get("%s")`, m.DbName)
 	}
@@ -446,7 +460,7 @@ func (m *RedisHash) BatchClientExpr() string {
 		}
 		return `redispool.Get(database.REDIS_GLOBAL)`
 	case DbTypeShards:
-		return `redispool.Get(database.REDIS_PLAYER)`
+		return getByHashCall(m.ShardField)
 	default:
 		return fmt.Sprintf(`redispool.Get("%s")`, m.DbName)
 	}

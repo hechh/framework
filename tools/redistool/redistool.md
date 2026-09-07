@@ -28,7 +28,7 @@ redistool 扫描 `.pb.go` 中 `@dbtool` 注解，自动生成 Redis String/Hash 
 | `"Name"` | 静态数据库名 | `GetByName("Name")` |
 | `global:ConstName` | 常量引用，需在 `database` 包存在 | `GetByName(database.ConstName)` |
 | `global:Name@string` | 动态名称，参数类型必须为 `string` | `GetByName(Name)` |
-| `shards:field@type` | 分片路由（**必须声明路由字段**） | `GetByUid(field)`，批量用 `GetById(shardId)` |
+| `shards:field@type` | 分片路由（**必须声明路由字段**） | `GetByHash(field)`，一致性哈希路由到具体分片客户端 |
 
 > **参数去重**：当 `shards:field@type` 的 field 与 Keys[0] 或 Fields[0] 同名（忽略大小写）时，生成的函数签名中只输出一次该参数，如 `Get(uid)` 而非 `Get(uid, uid)`。
 

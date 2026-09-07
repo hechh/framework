@@ -44,6 +44,10 @@ func V1({{GetArgs .Keys}}, val *pb.{{.Name}}) *redispool.Value {
 		redispool.STRING,
 		GetKey({{.GetKeyCallArgs}}),
 	)
+}
+
+func V2({{GetArgs .Keys}}, val *pb.{{.Name}}, cli redispool.IClient) *redispool.Value {
+	return redispool.NewValue(cli, val, redispool.STRING, GetKey({{.GetKeyCallArgs}}))
 }`
 
 const StringMethods = `
@@ -167,6 +171,16 @@ func HV({{GetArgs .GetHashFuncExtraParams}}) *redispool.Value {
 func HV1({{GetArgs .GetHashFuncExtraParams}}, val *pb.{{.Name}}) *redispool.Value {
 	return redispool.NewValue(
 		{{.ClientCallExpr}},
+		val,
+		redispool.HASH,
+		{{if .Keys}}GetKey({{.GetKeyCallArgs}}){{else}}KEY{{end}},
+		GetField({{.GetFieldCallArgs}}),
+	)
+}
+
+func HV2({{GetArgs .GetHashFuncExtraParams}}, val *pb.{{.Name}}, cli redispool.IClient) *redispool.Value {
+	return redispool.NewValue(
+		cli,
 		val,
 		redispool.HASH,
 		{{if .Keys}}GetKey({{.GetKeyCallArgs}}){{else}}KEY{{end}},

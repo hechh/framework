@@ -155,15 +155,25 @@ func getByHashCall(sf *Field) string {
 	return fmt.Sprintf(`redispool.GetByHash(uint64(%s))`, sf.Name)
 }
 
+// globalClientExpr 生成全局库客户端获取表达式
+// DbSpec 格式 global:<引用>，其中 <引用> 必须是业务层 database 包自己定义的字符串常量引用
+// （如 database.REDIS_GLOBAL / database.REDIS_PLAYER），生成代码时原样透传给 redispool.Get(...)
+func globalClientExpr(dbName string) string {
+	if dbName == "" {
+		return `redispool.Get(database.REDIS_GLOBAL)`
+	}
+	return fmt.Sprintf(`redispool.Get(%s)`, dbName)
+}
+
 // ClientCallExpr 返回内联客户端获取表达式
-// global 按名称获取全局库；shards 通过 GetByHash 一致性哈希路由到具体分片客户端
+// global 按注解声明的常量引用（如 database.REDIS_GLOBAL）获取全局库；shards 通过 GetByHash 一致性哈希路由到具体分片客户端
 func (m *RedisString) ClientCallExpr() string {
 	switch m.DbType {
 	case DbTypeGlobal:
 		if m.ShardField != nil {
 			return fmt.Sprintf(`redispool.Get(%s)`, m.ShardField.Name)
 		}
-		return `redispool.Get(database.REDIS_GLOBAL)`
+		return globalClientExpr(m.DbName)
 	case DbTypeShards:
 		return getByHashCall(m.ShardField)
 	default:
@@ -292,14 +302,14 @@ func (m *RedisHash) GetFieldFmtArgs() string {
 }
 
 // ClientCallExpr 返回客户端获取表达式
-// global 按名称获取全局库；shards 通过 GetByHash 一致性哈希路由到具体分片客户端
+// global 按注解声明的常量引用（如 database.REDIS_GLOBAL）获取全局库；shards 通过 GetByHash 一致性哈希路由到具体分片客户端
 func (m *RedisHash) ClientCallExpr() string {
 	switch m.DbType {
 	case DbTypeGlobal:
 		if m.ShardField != nil {
 			return fmt.Sprintf(`redispool.Get(%s)`, m.ShardField.Name)
 		}
-		return `redispool.Get(database.REDIS_GLOBAL)`
+		return globalClientExpr(m.DbName)
 	case DbTypeShards:
 		return getByHashCall(m.ShardField)
 	default:
@@ -445,7 +455,7 @@ func (m *RedisString) BatchClientExpr() string {
 		if m.ShardField != nil {
 			return fmt.Sprintf(`redispool.Get(%s)`, m.ShardField.Name)
 		}
-		return `redispool.Get(database.REDIS_GLOBAL)`
+		return globalClientExpr(m.DbName)
 	case DbTypeShards:
 		return getByHashCall(m.ShardField)
 	default:
@@ -458,7 +468,7 @@ func (m *RedisHash) BatchClientExpr() string {
 		if m.ShardField != nil {
 			return fmt.Sprintf(`redispool.Get(%s)`, m.ShardField.Name)
 		}
-		return `redispool.Get(database.REDIS_GLOBAL)`
+		return globalClientExpr(m.DbName)
 	case DbTypeShards:
 		return getByHashCall(m.ShardField)
 	default:

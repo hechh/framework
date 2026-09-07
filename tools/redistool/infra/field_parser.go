@@ -47,10 +47,12 @@ func ParseFieldFormat(str string) (format string, fields []*domain.Field) {
 	return
 }
 
-// ParseDbSpec 解析数据库规格字符串，返回 (DbType, 静态DbName/常量名, ShardField)
+// ParseDbSpec 解析数据库规格字符串，返回 (DbType, 静态DbName/常量引用, ShardField)
 // 支持格式：
-//   - "MyDb"                -> (Static, "MyDb", nil)              静态数据库名
-//   - "global:ConstName"    -> (Global, "ConstName", nil)         全局常量引用（无函数参数）
+//   - "MyDb"                -> (Static, "MyDb", nil)              静态数据库名字面量
+//   - "global:ConstRef"     -> (Global, "ConstRef", nil)         全局常量引用（无函数参数）
+//     例如 global:database.REDIS_GLOBAL，其中 database.REDIS_GLOBAL 必须是业务层
+//     database 包自己定义的字符串常量，生成代码时原样透传为 redispool.Get(database.REDIS_GLOBAL)
 //   - "global:Name@string"  -> (Global, "", &Field{Name:"Name"})  全局运行时参数
 //   - "shards:uid@uint64"   -> (Shards, "", &Field{...})          分片路由参数
 func ParseDbSpec(dbSpec string) (dbType domain.DbType, dbName string, shardField *domain.Field) {
@@ -62,7 +64,8 @@ func ParseDbSpec(dbSpec string) (dbType domain.DbType, dbName string, shardField
 	if strings.HasPrefix(dbSpec, "global:") {
 		rest := strings.TrimPrefix(dbSpec, "global:")
 		if !strings.Contains(rest, "@") {
-			// 无 @ 分隔符：常量格式 global:ConstName，直接使用代码中的常量
+			// 无 @ 分隔符：常量引用格式 global:<常量引用>（如 global:database.REDIS_GLOBAL），
+			// 引用须指向业务层 database 包定义的字符串常量，生成代码时原样透传
 			return domain.DbTypeGlobal, rest, nil
 		}
 		_, fields := ParseFieldFormat(rest)

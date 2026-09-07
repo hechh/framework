@@ -25,9 +25,9 @@ redistool 扫描 `.pb.go` 中 `@dbtool` 注解，自动生成 Redis String/Hash 
 
 | 格式 | 说明 | 生成的 redispool 调用 |
 |------|------|----------------------|
-| `"Name"` | 静态数据库名 | `GetByName("Name")` |
-| `global:ConstName` | 常量引用，需在 `database` 包存在 | `GetByName(database.ConstName)` |
-| `global:Name@string` | 动态名称，参数类型必须为 `string` | `GetByName(Name)` |
+| `"Name"` | 静态数据库名字面量 | `redispool.Get("Name")` |
+| `global:<常量引用>` | 常量引用，如 `global:database.REDIS_GLOBAL`。其中 `database.REDIS_GLOBAL` 必须是由**业务层 `database` 包自己定义**的字符串常量 | `redispool.Get(database.REDIS_GLOBAL)`（引用原样透传，可指向任意业务常量，如 `REDIS_PLAYER`） |
+| `global:Name@string` | 动态名称，参数类型必须为 `string` | `redispool.Get(Name)` |
 | `shards:field@type` | 分片路由（**必须声明路由字段**） | `GetByHash(field)`，一致性哈希路由到具体分片客户端 |
 
 > **参数去重**：当 `shards:field@type` 的 field 与 Keys[0] 或 Fields[0] 同名（忽略大小写）时，生成的函数签名中只输出一次该参数，如 `Get(uid)` 而非 `Get(uid, uid)`。
@@ -63,6 +63,8 @@ redistool 扫描 `.pb.go` 中 `@dbtool` 注解，自动生成 Redis String/Hash 
 
 | 函数 | 说明 |
 |------|------|
+| `V(...)` / `V1(..., val)` | 构造变更追踪 Value（String）：自动解析目标客户端（GetByHash/Get），`val` 为负载 |
+| `V2(..., val, cli)` | 构造 Value 并**显式传入客户端** `cli redispool.IClient`（不再内部路由），便于将数据挂到指定分片/库 |
 | `GetKey(...)` | 构造 Redis Key |
 | `Get(...)` | 读取 → crypto.Unmarshal → 返回 `*pb.Xxx`（优先走 ctx 缓存） |
 | `Read(...)` | 🔴 纯缓存读取，不访问 Redis；缓存未命中直接 panic（必须先 Get/Change） |
@@ -78,6 +80,8 @@ redistool 扫描 `.pb.go` 中 `@dbtool` 注解，自动生成 Redis String/Hash 
 
 | 函数 | 说明 |
 |------|------|
+| `HV(...)` / `HV1(..., val)` | 构造变更追踪 Value（Hash）：自动解析目标客户端，`val` 为负载 |
+| `HV2(..., val, cli)` | 构造 Value 并**显式传入客户端** `cli redispool.IClient`（不再内部路由） |
 | `GetKey(...)` + `GetField(...)` | 构造 Redis Key 和 Hash Field |
 | `HGet(...)` / `HSet(..., data)` / `HDel(...)` | 单 field 读写删 |
 | `Read(...)` | 🔴 纯缓存读取，不访问 Redis；缓存未命中直接 panic（必须先 HGet/Change） |
@@ -174,12 +178,12 @@ user_data.Set(ctx, nil, 0)      // 回写（仅变更时）
 ### String + global 常量
 
 ```protobuf
-// @dbtool:string|global:REDIS_PLAYER_CACHE|admin_session:Username@string
+// @dbtool:string|global:database.REDIS_GLOBAL|admin_session:Username@string
 message AdminSession { string Username = 1; }
 ```
 ```go
-func GetKey(Username string) string                     // "admin_session:{Username}"
-func Get(Username string) (*pb.AdminSession, error)      // GetByName(database.REDIS_PLAYER_CACHE)
+func GetKey(Username string) string                    // "admin_session:{Username}"
+func Get(Username string) (*pb.AdminSession, error)     // redispool.Get(database.REDIS_GLOBAL)
 ```
 
 ### Hash + shards
@@ -198,13 +202,13 @@ func HGetAll(uid uint64) (map[string]*pb.PrizeRecordData, error)
 ### Hash + global + 静态 key
 
 ```protobuf
-// @dbtool:hash|global:REDIS_PLAYER_CACHE|user_profile|uid@uint64
+// @dbtool:hash:cache|global:database.REDIS_GLOBAL|user_profile|uid@uint64
 message UserProfile { uint64 Uid = 1; string Name = 2; }
 ```
 ```go
 func GetKey() string                     // "user_profile"（无参数）
 func GetField(uid uint64) string         // "{uid}"
-func HGetAll() (map[string]*pb.UserProfile, error)
+func HGetAll() (map[string]*pb.UserProfile, error)   // redispool.Get(database.REDIS_GLOBAL)
 ```
 
 ---

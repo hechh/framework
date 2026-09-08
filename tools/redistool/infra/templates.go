@@ -129,11 +129,18 @@ func Read(ctx define.IContext{{if NotUidArgs .Keys}}, {{NotUidArgs .Keys}}{{end}
 }
 
 func Change(ctx define.IContext{{if NotUidArgs .Keys}}, {{NotUidArgs .Keys}}{{end}}) {
-	ctx.Change(GetKey({{CtxCallArgs .Keys}}))
+	key := GetKey({{CtxCallArgs .Keys}})
+	if val := ctx.GetCache(key); val != nil {
+		val.Change()
+	}
 }
 
 func IsChanged(ctx define.IContext{{if NotUidArgs .Keys}}, {{NotUidArgs .Keys}}{{end}}) bool {
-	return ctx.IsChanged(GetKey({{CtxCallArgs .Keys}}))
+	key := GetKey({{CtxCallArgs .Keys}})
+	if val := ctx.GetCache(key); val != nil {
+		return val.IsChanged()
+	}
+	return false
 }
 `
 
@@ -351,10 +358,13 @@ func HGetByCache(ctx define.IContext{{if NotUidArgs .GetHashFuncExtraParams}}, {
 
 func Change(ctx define.IContext{{if NotUidArgs .GetHashFuncExtraParams}}, {{NotUidArgs .GetHashFuncExtraParams}}{{end}}) {
 	{{- if .Keys}}
-	ctx.Change(GetKey({{CtxCallArgs .Keys}}) + GetField({{CtxCallArgs .Fields}}))
+	cacheKey := GetKey({{CtxCallArgs .Keys}}) + GetField({{CtxCallArgs .Fields}})
 	{{- else}}
-	ctx.Change(KEY + GetField({{CtxCallArgs .Fields}}))
+	cacheKey := KEY + GetField({{CtxCallArgs .Fields}})
 	{{- end}}
+	if val := ctx.GetCache(cacheKey); val != nil {
+		val.Change()
+	}
 }
 
 func Read(ctx define.IContext{{if NotUidArgs .GetHashFuncExtraParams}}, {{NotUidArgs .GetHashFuncExtraParams}}{{end}}) *pb.{{.Name}} {
@@ -371,10 +381,14 @@ func Read(ctx define.IContext{{if NotUidArgs .GetHashFuncExtraParams}}, {{NotUid
 
 func IsChanged(ctx define.IContext{{if NotUidArgs .GetHashFuncExtraParams}}, {{NotUidArgs .GetHashFuncExtraParams}}{{end}}) bool {
 	{{- if .Keys}}
-	return ctx.IsChanged(GetKey({{CtxCallArgs .Keys}}) + GetField({{CtxCallArgs .Fields}}))
+	cacheKey := GetKey({{CtxCallArgs .Keys}}) + GetField({{CtxCallArgs .Fields}})
 	{{- else}}
-	return ctx.IsChanged(KEY + GetField({{CtxCallArgs .Fields}}))
+	cacheKey := KEY + GetField({{CtxCallArgs .Fields}})
 	{{- end}}
+	if val := ctx.GetCache(cacheKey); val != nil {
+		return val.IsChanged()
+	}
+	return false
 }
 `
 

@@ -17,6 +17,9 @@ type NatsConfig struct {
 	ReconnectWait int64  `yaml:"reconnect_wait,omitempty"`
 	PingInterval  int64  `yaml:"ping_interval,omitempty"`
 	DrainTimeout  int64  `yaml:"drain_timeout,omitempty"`
+	PointWorkers  int32  `yaml:"point_workers,omitempty"`
+	// PointWorkers 点对点消息分片并发数（>=1）。>1 时按玩家 uid 将单播主题
+	// 分成 PointWorkers 条订阅/连接并行接收，同一 uid 始终落在同一分片以保持顺序。
 }
 
 type Config struct {
@@ -38,6 +41,7 @@ type MsgBus struct {
 	selfPoint     string // 当前节点单播主题
 	selfBroadcast string // 当前节点广播主题
 	selfReply     string // 当前节点回复主题
+	pointWorkers  int32  // 点对点分片数（>=1）
 }
 
 func NewMsgBus(msg IMessage) *MsgBus {
@@ -59,6 +63,12 @@ func (d *MsgBus) Init(cfg *Config) error {
 	d.selfBroadcast = base.BuildBroadcast(nodeType)
 	d.selfReply = base.BuildReply(nodeType, nodeId)
 
+	// 点对点分片并发数：未配置或 <1 时退化为 1（保持旧主题形态，兼容既有部署）
+	d.pointWorkers = 1
+	if cfg.Nats != nil && cfg.Nats.PointWorkers > 1 {
+		d.pointWorkers = cfg.Nats.PointWorkers
+	}
+
 	fun := func(msg *packet.Message) {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
@@ -69,19 +79,37 @@ func (d *MsgBus) Init(cfg *Config) error {
 		base.PacketHandler(pack)
 	}
 
-	// 订阅广播主题
+	// 订阅广播主题（低流量，单订阅即可）
 	if err := d.adapter.Subscribe(d.selfBroadcast, fun); err != nil {
 		return err
 	}
-	// 订阅单播主题
-	if err := d.adapter.Subscribe(d.selfPoint, fun); err != nil {
-		return err
+	// 订阅单播主题：worker<=1 使用原主题（{type}/{id}，兼容既有部署），
+	// 否则分片订阅，每个分片独立连接接收，提升入口并发
+	if d.pointWorkers <= 1 {
+		if err := d.adapter.Subscribe(base.BuildPoint(nodeType, nodeId), fun); err != nil {
+			return err
+		}
+	} else {
+		for s := int32(0); s < d.pointWorkers; s++ {
+			if err := d.adapter.Subscribe(base.BuildPointSlot(nodeType, nodeId, uint32(s)), fun); err != nil {
+				return err
+			}
+		}
 	}
 	// 订阅回复主题
 	if err := d.adapter.Subscribe(d.selfReply, fun); err != nil {
 		return err
 	}
 	return nil
+}
+
+// pointTopic 计算点对点发布主题：worker<=1 使用原主题，否则按玩家 uid 分片。
+// 同 uid 恒落到同一分片，保证单玩家消息顺序。
+func (d *MsgBus) pointTopic(nodeType, nodeId uint32, uid uint64) string {
+	if d.pointWorkers <= 1 {
+		return base.BuildPoint(nodeType, nodeId)
+	}
+	return base.BuildPointSlot(nodeType, nodeId, uint32(uid%uint64(d.pointWorkers)))
 }
 
 func (d *MsgBus) Close() {
@@ -198,7 +226,7 @@ func (d *MsgBus) Send(head *packet.Head, msg []byte, funcs ...func(*packet.Packe
 	}
 
 	// 发送消息
-	return d.adapter.Publish(base.BuildPoint(pack.Head.DstType, pack.Head.DstId), body)
+	return d.adapter.Publish(d.pointTopic(pack.Head.DstType, pack.Head.DstId, pack.Head.Uid), body)
 }
 
 // 发送通知

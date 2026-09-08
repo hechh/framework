@@ -42,6 +42,11 @@ func BuildPoint(nodeType, nodeId uint32) string {
 	return fmt.Sprintf("%d/%d", nodeType, nodeId)
 }
 
+// BuildPointSlot 构建分片后的单播主题：{type}/{id}/{slot}
+func BuildPointSlot(nodeType, nodeId uint32, slot uint32) string {
+	return fmt.Sprintf("%d/%d/%d", nodeType, nodeId, slot)
+}
+
 // 构建回复主题
 func BuildReply(nodeType, nodeId uint32) string {
 	return fmt.Sprintf("%d/%d/reply", nodeType, nodeId)

@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 
-	"github.com/hechh/framework/core/define"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
 )
 

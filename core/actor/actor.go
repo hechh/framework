@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hechh/framework/core/define"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/rpc"

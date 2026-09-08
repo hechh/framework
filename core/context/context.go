@@ -5,7 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/hechh/framework/core/define"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/library/datetime"
 	"github.com/hechh/framework/library/tplutil"

@@ -3,7 +3,7 @@ package network
 import (
 	"fmt"
 
-	"github.com/hechh/framework/core/define"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/global"
 	"github.com/hechh/framework/core/network/internal/domain"
 	"github.com/hechh/framework/core/network/internal/frame"

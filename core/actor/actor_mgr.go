@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hechh/framework/core/define"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/queue"
 	"github.com/hechh/framework/library/tplutil"
 	"github.com/hechh/framework/library/utils"

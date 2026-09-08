@@ -3,7 +3,7 @@ package rpc
 import (
 	"fmt"
 
-	"github.com/hechh/framework/core/define"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/utils"
 )
 

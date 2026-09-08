@@ -88,7 +88,14 @@ func (d *ActorMgr[T]) SendMsg(head *packet.Head, args ...any) error {
 	switch head.SendType {
 	case packet.SendType_POINT:
 		id := tplutil.Or(head.ActorId > 0, head.ActorId, head.Uid)
-		err := d.GetActor(id).SendMsg(head, args...)
+		act := d.GetActor(id)
+		if act == nil {
+			// 目标 actor 不存在或已被删除(如在途消息晚于登出/下线到达)，
+			// 按“消息丢弃”处理，避免 nil 解引用导致进程崩溃。
+			mlog.Warnf("Actor(%d)不存在或已停止，消息丢弃, head=%v", id, head)
+			return nil
+		}
+		err := act.SendMsg(head, args...)
 		if err != nil {
 			mlog.Errorf("ActorId(%d)消息转发失败 error=%v", id, err)
 		}
@@ -108,7 +115,14 @@ func (d *ActorMgr[T]) Send(head *packet.Head, body []byte) error {
 	switch head.SendType {
 	case packet.SendType_POINT:
 		id := tplutil.Or(head.ActorId > 0, head.ActorId, head.Uid)
-		err := d.GetActor(id).Send(head, body)
+		act := d.GetActor(id)
+		if act == nil {
+			// 目标 actor 不存在或已被删除(如在途消息晚于登出/下线到达)，
+			// 按“消息丢弃”处理，避免 nil 解引用导致进程崩溃。
+			mlog.Warnf("Actor(%d)不存在或已停止，消息丢弃, head=%v", id, head)
+			return nil
+		}
+		err := act.Send(head, body)
 		if err != nil {
 			mlog.Errorf("ActorId(%d)消息转发失败 error=%v", id, err)
 		}

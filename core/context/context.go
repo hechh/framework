@@ -5,13 +5,12 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/fun"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/datetime"
 	"github.com/hechh/framework/library/tplutil"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
-	"github.com/hechh/framework/pkg/redispool"
 )
 
 var (
@@ -24,8 +23,8 @@ var (
 
 type Context struct {
 	*packet.Head
-	values map[string]*redispool.Value
-	cache  define.ICache
+	temps map[string]define.IValue
+	cache define.ICache
 }
 
 func NewContext(val any, data define.ICache, opts ...func(*packet.Head)) *Context {
@@ -41,20 +40,9 @@ func NewContext(val any, data define.ICache, opts ...func(*packet.Head)) *Contex
 	}
 	obj := ctxPool.Get().(*Context)
 	obj.Head = head
-	obj.values = make(map[string]*redispool.Value)
+	obj.temps = make(map[string]define.IValue)
 	obj.cache = data
 	return obj
-}
-
-func (c *Context) Refresh() {
-	for k, v := range c.values {
-		if v.IsChanged() {
-			if c.cache.Has(k) {
-				c.cache.SetCache(k, v)
-			}
-			v.Reset()
-		}
-	}
 }
 
 func (c *Context) Destroy() {
@@ -62,7 +50,7 @@ func (c *Context) Destroy() {
 		packet.PutHead(c.Head)
 		c.Head = nil
 	}
-	c.values = nil
+	c.temps = nil
 	c.cache = nil
 	ctxPool.Put(c)
 }
@@ -87,48 +75,42 @@ func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
 	return head
 }
 
-func (c *Context) Values() []*redispool.Value {
-	rets := make([]*redispool.Value, 0, len(c.values))
-	for _, item := range c.values {
-		rets = append(rets, item)
-	}
-	return rets
-}
-
 func (c *Context) Has(key string) bool {
-	if _, ok := c.values[key]; ok {
+	if _, ok := c.temps[key]; ok {
 		return ok
 	}
 	return c.cache.Has(key)
 }
 
-func (c *Context) SetCache(key string, value *redispool.Value) {
-	c.values[key] = value
+func (c *Context) SetCache(key string, value define.IValue) {
+	c.temps[key] = value
 }
 
-func (c *Context) GetCache(key string) *redispool.Value {
-	if val, ok := c.values[key]; ok {
+func (c *Context) GetCache(key string) define.IValue {
+	if val, ok := c.temps[key]; ok {
 		return val
 	}
 	// 常驻缓存，GetCache需要深度拷贝
 	if c.cache.Has(key) {
 		vv := c.cache.GetCache(key).Clone()
-		c.values[key] = vv
+		c.temps[key] = vv
 		return vv
 	}
 	return nil
 }
 
-func (c *Context) IsChanged(key string) bool {
-	if val, ok := c.values[key]; ok {
-		return val.IsChanged()
-	}
-	return false
+func (c *Context) GetAllCache() map[string]define.IValue {
+	return c.temps
 }
 
-func (c *Context) Change(key string) {
-	if val, ok := c.values[key]; ok {
-		val.Change()
+func (c *Context) Refresh() {
+	for k, v := range c.temps {
+		if v.IsChanged() {
+			if c.cache.Has(k) {
+				c.cache.SetCache(k, v)
+			}
+			v.Reset()
+		}
 	}
 }
 

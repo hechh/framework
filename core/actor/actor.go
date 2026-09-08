@@ -5,10 +5,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/rpc"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/queue"
 	"github.com/hechh/framework/library/utils"
 	"github.com/hechh/framework/packet"

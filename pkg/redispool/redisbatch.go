@@ -1,6 +1,7 @@
 package redispool
 
 import (
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/safe"
 	"github.com/hechh/framework/library/tplutil"
 )
@@ -33,8 +34,8 @@ func Load(args ...*Value) error {
 	}
 	datas := map[tplutil.Tuple2[uint64, string]]*data{}
 	for _, item := range args {
-		cli, typeData := item.Client(), item.Type()
-		key, field := item.Key(), item.Field()
+		cli, typeData := item.GetClient(), item.GetType()
+		key, field := item.GetKey(), item.GetField()
 		uuid := cli.UniqueId()
 		kk := tplutil.T2(uint64(uuid)<<32|uint64(typeData), tplutil.Or(typeData == HASH, key, ""))
 		vv, ok := datas[kk]
@@ -72,8 +73,8 @@ func Remove(args ...*Value) error {
 	}
 	datas := map[tplutil.Tuple2[uint64, string]]*data{}
 	for _, item := range args {
-		cli, typeData := item.Client(), item.Type()
-		key, field := item.Key(), item.Field()
+		cli, typeData := item.GetClient(), item.GetType()
+		key, field := item.GetKey(), item.GetField()
 		uuid := cli.UniqueId()
 		kk := tplutil.T2(uint64(uuid)<<32|uint64(typeData), tplutil.Or(typeData == HASH, key, ""))
 		vv, ok := datas[kk]
@@ -98,6 +99,24 @@ func Remove(args ...*Value) error {
 	return err
 }
 
+func SaveByCtx(ctx define.IContext) error {
+	vals := Map2Values(ctx.GetAllCache())
+	if err := Save(vals...); err != nil {
+		return err
+	}
+	ctx.Refresh()
+	return nil
+}
+
+func SaveDirectlyByCtx(ctx define.IContext) error {
+	vals := Map2Values(ctx.GetAllCache())
+	if err := SaveDirectly(vals...); err != nil {
+		return err
+	}
+	ctx.Refresh()
+	return nil
+}
+
 func Save(args ...*Value) error {
 	type data struct {
 		client   IClient
@@ -114,8 +133,8 @@ func Save(args ...*Value) error {
 		if err != nil {
 			return err
 		}
-		cli, typeData := item.Client(), item.Type()
-		key, field := item.Key(), item.Field()
+		cli, typeData := item.GetClient(), item.GetType()
+		key, field := item.GetKey(), item.GetField()
 		kk := tplutil.T2(cli.UniqueId(), tplutil.Or(typeData == HASH, key, field))
 		vv, ok := datas[kk]
 		if !ok {
@@ -152,8 +171,8 @@ func SaveDirectly(args ...*Value) error {
 		if err != nil {
 			return err
 		}
-		cli, typeData := item.Client(), item.Type()
-		key, field := item.Key(), item.Field()
+		cli, typeData := item.GetClient(), item.GetType()
+		key, field := item.GetKey(), item.GetField()
 		kk := tplutil.T2(cli.UniqueId(), tplutil.Or(typeData == HASH, key, field))
 		vv, ok := datas[kk]
 		if !ok {

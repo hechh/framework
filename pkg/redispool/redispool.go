@@ -4,21 +4,8 @@ import (
 	"time"
 
 	"github.com/hechh/framework/library/consistent"
-	"github.com/hechh/framework/library/tplutil"
 	"github.com/redis/go-redis/v9"
-	"google.golang.org/protobuf/proto"
 )
-
-const (
-	HASH   = 1
-	STRING = 2
-)
-
-type Message interface {
-	CloneMessageVT() proto.Message
-	MarshalVT() ([]byte, error)
-	UnmarshalVT([]byte) error
-}
 
 type IClient interface {
 	DbName() string
@@ -75,44 +62,6 @@ type IClient interface {
 	HIncrBy(key, field string, incr int64) (int64, error)
 	HLen(key string) (int64, error)
 	HSetNX(key, field string, value any) (bool, error)
-}
-
-type Value struct {
-	Message
-	cli   IClient
-	class uint32
-	key   string
-	field string
-	times uint32
-}
-
-func (d *Value) SetClient(cli IClient) { d.cli = cli }
-func (d *Value) Client() IClient       { return d.cli }
-func (d *Value) Type() uint32          { return d.class }
-func (d *Value) Key() string           { return d.key }
-func (d *Value) Field() string         { return d.field }
-func (d *Value) IsChanged() bool       { return d.times > 0 }
-func (d *Value) Change()               { d.times++ }
-func (d *Value) Reset()                { d.times = 0 }
-func (d *Value) Get() any              { return d.Message }
-func (d *Value) Clone() *Value {
-	return &Value{
-		Message: d.CloneMessageVT().(Message),
-		cli:     d.cli,
-		class:   d.class,
-		key:     d.key,
-		field:   d.field,
-	}
-}
-
-func NewValue(cli IClient, obj Message, t uint32, args ...string) *Value {
-	return &Value{
-		Message: obj,
-		cli:     cli,
-		class:   t,
-		key:     tplutil.Index(args, 0, ""),
-		field:   tplutil.Index(args, 1, ""),
-	}
 }
 
 // Config 数据库分片配置

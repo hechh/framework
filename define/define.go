@@ -2,7 +2,6 @@ package define
 
 import (
 	"github.com/hechh/framework/packet"
-	"github.com/hechh/framework/pkg/redispool"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -13,20 +12,26 @@ type Message interface {
 	UnmarshalVT([]byte) error
 }
 
+type IValue interface {
+	Clone() IValue
+	Get() any
+	IsChanged() bool
+	Change()
+	Reset()
+}
+
 type ICache interface {
 	Has(string) bool
-	SetCache(string, *redispool.Value)
-	GetCache(string) *redispool.Value
-	IsChanged(string) bool
-	Change(string)
+	SetCache(string, IValue)
+	GetCache(string) IValue
+	GetAllCache() map[string]IValue
+	Refresh()
 }
 
 type IContext interface {
 	ILogger
 	IHead
 	ICache
-	Refresh()
-	Values() []*redispool.Value
 	Destroy()
 	ReadOnly() *packet.Head
 	Clone(...func(*packet.Head)) *packet.Head  // 转发

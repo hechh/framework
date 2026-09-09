@@ -1,96 +1,120 @@
 package redispool
 
 import (
+	"github.com/bytedance/sonic"
 	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/safe"
 	"github.com/hechh/framework/library/tplutil"
+	"github.com/hechh/framework/pkg/mlog"
 )
-
-func unmarshal(values []*Value, results []any) error {
-	for i, val := range results {
-		var err error
-		switch vv := val.(type) {
-		case string:
-			err = values[i].UnmarshalVT(safe.StringToBytes(vv))
-		case []byte:
-			err = values[i].UnmarshalVT(vv)
-		default:
-			err = values[i].UnmarshalVT(nil)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 func Load(args ...*Value) error {
 	type data struct {
-		client   IClient
-		typeData uint32
-		key      string
-		values   []*Value
-		args     []string
+		*Value
+		values []*Value
+		args   []string
 	}
-	datas := map[tplutil.Tuple2[uint64, string]]*data{}
+	datas := map[string]*data{}
 	for _, item := range args {
-		cli, typeData := item.GetClient(), item.GetType()
-		key, field := item.GetKey(), item.GetField()
-		uuid := cli.UniqueId()
-		kk := tplutil.T2(uint64(uuid)<<32|uint64(typeData), tplutil.Or(typeData == HASH, key, ""))
-		vv, ok := datas[kk]
+		cliType, dataType, key, field := item.GetGroupId(), item.GetDataType(), item.GetKey(), item.GetField()
+		vv, ok := datas[cliType]
 		if !ok {
-			vv = &data{client: cli, typeData: typeData, key: key}
-			datas[kk] = vv
+			vv = &data{Value: item}
+			datas[cliType] = vv
 		}
 		vv.values = append(vv.values, item)
-		vv.args = append(vv.args, tplutil.Or(typeData == STRING, key, field))
+		vv.args = append(vv.args, tplutil.Or(dataType == STRING, key, field))
 	}
 	for _, vv := range datas {
 		var results []any
 		var err error
-		if vv.typeData == STRING {
-			results, err = vv.client.MGet(vv.args...)
+		if vv.GetDataType() == STRING {
+			results, err = vv.GetClient().MGet(vv.args...)
 		} else {
-			results, err = vv.client.HMGet(vv.key, vv.args...)
+			results, err = vv.GetClient().HMGet(vv.GetKey(), vv.args...)
 		}
 		if err != nil {
 			return err
 		}
-		if err := unmarshal(vv.values, results); err != nil {
-			return err
+		for i, val := range vv.values {
+			if err = val.Unmarshal(results[i]); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func Remove(args ...*Value) error {
+func Save(args ...*Value) error {
 	type data struct {
-		client   IClient
-		typeData uint32
-		key      string
-		args     []string
+		*Value
+		args   []any
+		values []*Value
 	}
-	datas := map[tplutil.Tuple2[uint64, string]]*data{}
+	datas := map[string]*data{}
 	for _, item := range args {
-		cli, typeData := item.GetClient(), item.GetType()
-		key, field := item.GetKey(), item.GetField()
-		uuid := cli.UniqueId()
-		kk := tplutil.T2(uint64(uuid)<<32|uint64(typeData), tplutil.Or(typeData == HASH, key, ""))
+		if !item.IsChanged() {
+			continue
+		}
+		buff, err := item.Marshal()
+		if err != nil {
+			return err
+		}
+		kk, dataType, key, field := item.GetGroupId(), item.GetDataType(), item.GetKey(), item.GetField()
 		vv, ok := datas[kk]
 		if !ok {
-			vv = &data{client: cli, typeData: typeData, key: key}
+			vv = &data{Value: item}
 			datas[kk] = vv
 		}
-		vv.args = append(vv.args, tplutil.Or(typeData == HASH, field, key))
+		vv.args = append(vv.args, tplutil.Or(dataType == STRING, key, field), safe.BytesToString(buff))
+		vv.values = append(vv.values, item)
 	}
 	var err error
 	for _, vv := range datas {
 		var reterr error
-		if vv.typeData == STRING {
-			_, reterr = vv.client.Del(vv.args...)
+		if vv.GetDataType() == STRING {
+			reterr = vv.GetClient().MSet(vv.args...)
 		} else {
-			_, reterr = vv.client.HDel(vv.key, vv.args...)
+			reterr = vv.GetClient().HMSet(vv.GetKey(), vv.args...)
+		}
+		if reterr != nil {
+			err = reterr
+		}
+	}
+	if err != nil {
+		for _, item := range args {
+			if !item.IsChanged() {
+				continue
+			}
+			buff, _ := sonic.Marshal(item.Get())
+			mlog.Errorf("保存Redis数据失败 key:%s, field:%s, msg:%s, error:%s", item.GetKey(), item.GetField(), safe.BytesToString(buff), err)
+		}
+	}
+	return err
+}
+
+func Remove(args ...*Value) error {
+	type data struct {
+		*Value
+		args []string
+	}
+	datas := map[string]*data{}
+	for _, item := range args {
+		kk, dataType, key, field := item.GetGroupId(), item.GetDataType(), item.GetKey(), item.GetField()
+		vv, ok := datas[kk]
+		if !ok {
+			vv = &data{Value: item}
+			datas[kk] = vv
+		}
+		vv.args = append(vv.args, tplutil.Or(dataType == STRING, key, field))
+	}
+	var err error
+	for _, vv := range datas {
+		var reterr error
+		if vv.GetDataType() == STRING {
+			_, reterr = vv.GetClient().Del(vv.args...)
+		} else {
+			_, reterr = vv.GetClient().HDel(vv.GetKey(), vv.args...)
 		}
 		if reterr != nil {
 			err = reterr
@@ -100,7 +124,7 @@ func Remove(args ...*Value) error {
 }
 
 func SaveByCtx(ctx define.IContext) error {
-	vals := Map2Values(ctx.GetAllCache())
+	vals := tplutil.Map3Values[*Value](ctx.GetAllCache())
 	if err := Save(vals...); err != nil {
 		return err
 	}
@@ -109,7 +133,7 @@ func SaveByCtx(ctx define.IContext) error {
 }
 
 func SaveDirectlyByCtx(ctx define.IContext) error {
-	vals := Map2Values(ctx.GetAllCache())
+	vals := tplutil.Map3Values[*Value](ctx.GetAllCache())
 	if err := SaveDirectly(vals...); err != nil {
 		return err
 	}
@@ -117,81 +141,47 @@ func SaveDirectlyByCtx(ctx define.IContext) error {
 	return nil
 }
 
-func Save(args ...*Value) error {
-	type data struct {
-		client   IClient
-		typeData uint32
-		key      string
-		args     []any
-	}
-	datas := map[tplutil.Tuple2[uint32, string]]*data{}
-	for _, item := range args {
-		if !item.IsChanged() {
-			continue
-		}
-		buff, err := item.MarshalVT()
-		if err != nil {
-			return err
-		}
-		cli, typeData := item.GetClient(), item.GetType()
-		key, field := item.GetKey(), item.GetField()
-		kk := tplutil.T2(cli.UniqueId(), tplutil.Or(typeData == HASH, key, field))
-		vv, ok := datas[kk]
-		if !ok {
-			vv = &data{typeData: typeData, key: key, client: cli}
-			datas[kk] = vv
-		}
-		kval := tplutil.Or(typeData == STRING, key, field)
-		vv.args = append(vv.args, kval, safe.BytesToString(buff))
-	}
-	for _, vv := range datas {
-		var err error
-		if vv.typeData == STRING {
-			err = vv.client.MSet(vv.args...)
-		} else {
-			err = vv.client.HMSet(vv.key, vv.args...)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func SaveDirectly(args ...*Value) error {
 	type data struct {
-		client   IClient
-		typeData uint32
-		key      string
-		args     []any
+		*Value
+		args   []any
+		values []*Value
 	}
-	datas := map[tplutil.Tuple2[uint32, string]]*data{}
+	datas := map[string]*data{}
 	for _, item := range args {
-		buff, err := item.MarshalVT()
+		buff, err := item.Marshal()
 		if err != nil {
 			return err
 		}
-		cli, typeData := item.GetClient(), item.GetType()
-		key, field := item.GetKey(), item.GetField()
-		kk := tplutil.T2(cli.UniqueId(), tplutil.Or(typeData == HASH, key, field))
+		kk, dataType, key, field := item.GetGroupId(), item.GetDataType(), item.GetKey(), item.GetField()
 		vv, ok := datas[kk]
 		if !ok {
-			vv = &data{typeData: typeData, key: key, client: cli}
+			vv = &data{Value: item}
 			datas[kk] = vv
 		}
-		kval := tplutil.Or(typeData == STRING, key, field)
-		vv.args = append(vv.args, kval, safe.BytesToString(buff))
+		vv.args = append(vv.args, tplutil.Or(dataType == STRING, key, field), safe.BytesToString(buff))
+		vv.values = append(vv.values, item)
 	}
+	var err error
 	for _, vv := range datas {
-		var err error
-		if vv.typeData == HASH {
-			err = vv.client.HMSet(vv.key, vv.args...)
+		var reterr error
+		if vv.GetDataType() == STRING {
+			reterr = vv.GetClient().MSet(vv.args...)
 		} else {
-			err = vv.client.MSet(vv.args...)
+			reterr = vv.GetClient().HMSet(vv.GetKey(), vv.args...)
 		}
-		if err != nil {
-			return err
+		if reterr != nil {
+			err = reterr
 		}
 	}
-	return nil
+	if err != nil {
+		for _, item := range args {
+			if !item.IsChanged() {
+				continue
+			}
+			buff, _ := sonic.Marshal(item.Get())
+			mlog.Errorf("保存Redis数据失败 key:%s, field:%s, msg:%s, error:%s", item.GetKey(), item.GetField(), safe.BytesToString(buff), err)
+		}
+	}
+	return err
 }

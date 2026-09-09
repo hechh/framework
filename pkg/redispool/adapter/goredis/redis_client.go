@@ -5,39 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hechh/framework/library/utils"
 	"github.com/hechh/framework/pkg/redispool"
 	"github.com/redis/go-redis/v9"
 )
 
 // Client Redis客户端封装，组合go-redis.Client并添加key前缀支持
 type Client struct {
-	uuid uint32
 	*redis.Client
 	cfg *redispool.Config
 }
 
-func New() *Client {
-	return new(Client)
-}
-
-// handleRedisError 将 redis.Nil 转换为 nil，避免上层误判
-func handleRedisError(err error) error {
-	if err == nil || err == redis.Nil {
-		return nil
-	}
-	return fmt.Errorf("redis error: %w", err)
-}
-
-func (d *Client) DbName() string {
-	return d.cfg.DbName
-}
-
-func (d *Client) UniqueId() uint32 {
-	return d.uuid
-}
-
-func (d *Client) Init(cfg *redispool.Config) error {
+func New(cfg *redispool.Config) (*Client, error) {
 	cli := redis.NewClient(&redis.Options{
 		ConnMaxIdleTime: 1 * time.Minute, // v9：对应 v8 的 IdleTimeout
 		MinIdleConns:    100,
@@ -61,18 +39,31 @@ func (d *Client) Init(cfg *redispool.Config) error {
 	defer cancel()
 	if _, err := cli.Ping(ctx).Result(); err != nil {
 		cli.Close()
-		return fmt.Errorf("redis ping: %w", err)
+		return nil, fmt.Errorf("redis ping: %w", err)
 	}
-	d.uuid = utils.GetCrc32(fmt.Sprintf("%s-%d", cfg.DbName, cfg.Db))
-	d.Client = cli
-	d.cfg = cfg
-	return nil
+
+	return &Client{Client: cli, cfg: cfg}, nil
 }
 
 // Close 关闭连接，将redis.Nil转换为nil
 func (d *Client) Close() error {
 	err := d.Client.Close()
 	return handleRedisError(err)
+}
+
+// handleRedisError 将 redis.Nil 转换为 nil，避免上层误判
+func handleRedisError(err error) error {
+	if err == nil || err == redis.Nil {
+		return nil
+	}
+	return fmt.Errorf("redis error: %w", err)
+}
+
+func (d *Client) DbName() string {
+	if d.cfg.Db == 0 {
+		return d.cfg.DbName
+	}
+	return fmt.Sprintf("%s%d", d.cfg.DbName, d.cfg.Db)
 }
 
 // GetRealKey 获取带前缀的key（供各领域操作使用）

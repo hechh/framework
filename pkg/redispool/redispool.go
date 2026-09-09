@@ -1,68 +1,8 @@
 package redispool
 
 import (
-	"time"
-
 	"github.com/hechh/framework/library/consistent"
-	"github.com/redis/go-redis/v9"
 )
-
-type IClient interface {
-	DbName() string
-	UniqueId() uint32
-	Init(cfg *Config) error
-	Close() error
-	GetRealKey(key string) string
-	Run(script *redis.Script, key string, values ...any) (any, error)
-	Ping() (string, error)
-	Del(keys ...string) (int64, error)
-	Exists(key string) (int64, error)
-	Expire(key string, expiration time.Duration) (bool, error)
-	TTL(key string) (time.Duration, error)
-	Get(key string) (string, error)
-	Set(key string, val any, expiration time.Duration) error
-	SetNX(key string, val any, expiration time.Duration) (bool, error)
-	SetEX(key string, val any, expiration time.Duration) error
-	Incr(key string) (int64, error)
-	IncrBy(key string, val int64) (int64, error)
-	Decr(key string) (int64, error)
-	DecrBy(key string, value int64) (int64, error)
-	MGet(keys ...string) ([]any, error)
-	MSet(args ...any) error
-	SAdd(key string, members ...any) (int64, error)
-	SRem(key string, members ...any) (int64, error)
-	SMembers(key string) ([]string, error)
-	SIsMember(key string, member any) (bool, error)
-	SCard(key string) (int64, error)
-	SRandMemberN(key string, count int64) ([]string, error)
-	ZAdd(key string, members ...redis.Z) (int64, error)
-	ZRem(key string, members ...any) (int64, error)
-	ZCard(key string) (int64, error)
-	ZScore(key, member string) (float64, error)
-	ZRevRange(key string, start, stop int64) ([]string, error)
-	ZRangeWithScores(key string, start, stop int64) ([]redis.Z, error)
-	ZRevRangeWithScores(key string, start, stop int64) ([]redis.Z, error)
-	ZRevRangeByScore(key string, opt *redis.ZRangeBy) ([]string, error)
-	ZRevRangeByScoreWithScores(key string, opt *redis.ZRangeBy) ([]redis.Z, error)
-	ZRank(key, member string) (int64, error)
-	ZRevRank(key, member string) (int64, error)
-	LPush(key string, values ...any) (int64, error)
-	RPush(key string, values ...any) (int64, error)
-	LPop(key string) (string, error)
-	RPop(key string) (string, error)
-	LLen(key string) (int64, error)
-	LTrim(key string, start, stop int64) error
-	LRem(key string, count int64, value any) (int64, error)
-	HGet(key string, field string) (string, error)
-	HSet(key string, field string, val any) error
-	HMGet(key string, fields ...string) ([]any, error)
-	HMSet(key string, vals ...any) error
-	HDel(key string, fields ...string) (int64, error)
-	HExists(key, field string) (bool, error)
-	HIncrBy(key, field string, incr int64) (int64, error)
-	HLen(key string) (int64, error)
-	HSetNX(key, field string, value any) (bool, error)
-}
 
 // Config 数据库分片配置
 type Config struct {
@@ -77,14 +17,14 @@ type Config struct {
 }
 
 type RedisPool struct {
-	newFunc  func() IClient                          // new函数
+	newFunc  func(*Config) (IClient, error)          // new函数
 	pools    map[string]IClient                      // 全局数据库连接池
 	virtuals *consistent.StaticHash[string, IClient] // 一致性哈希
 }
 
-func NewRedisPool[T IClient](f func() T) *RedisPool {
+func NewRedisPool[T IClient](f func(*Config) (T, error)) *RedisPool {
 	return &RedisPool{
-		newFunc:  func() IClient { return f() },
+		newFunc:  func(cfg *Config) (IClient, error) { return f(cfg) },
 		pools:    make(map[string]IClient),
 		virtuals: consistent.NewStaticHash[string, IClient](150),
 	}
@@ -93,22 +33,22 @@ func NewRedisPool[T IClient](f func() T) *RedisPool {
 func (d *RedisPool) Init(globals []*Config, shards []*Config) error {
 	// 初始化全局数据库
 	for _, dbCfg := range globals {
-		cli := d.newFunc()
-		if err := cli.Init(dbCfg); err != nil {
+		cli, err := d.newFunc(dbCfg)
+		if err != nil {
 			d.Close()
 			return err
 		}
-		d.pools[dbCfg.DbName] = cli
+		d.pools[cli.DbName()] = cli
 	}
 	// 初始化分片
 	for _, dbCfg := range shards {
-		cli := d.newFunc()
-		if err := cli.Init(dbCfg); err != nil {
+		cli, err := d.newFunc(dbCfg)
+		if err != nil {
 			d.Close()
 			return err
 		}
-		d.pools[dbCfg.DbName] = cli
-		if err := d.virtuals.AddNode(dbCfg.DbName, cli); err != nil {
+		d.pools[cli.DbName()] = cli
+		if err := d.virtuals.AddNode(cli.DbName(), cli); err != nil {
 			return err
 		}
 	}

@@ -13,25 +13,23 @@ type Client struct {
 	miniredis *miniredis.Miniredis
 }
 
-func New() *Client {
-	return new(Client)
-}
-
-func (m *Client) Init(cfg *redispool.Config) error {
-	m.Client = &goredis.Client{}
+func New(cfg *redispool.Config) (*Client, error) {
 	s, err := miniredis.Run()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.miniredis = s
 
 	port, _ := strconv.Atoi(s.Port())
-	return m.Client.Init(&redispool.Config{
+	client, err := goredis.New(&redispool.Config{
 		Ip:     s.Host(),
 		Port:   uint32(port),
 		Db:     0,
 		Prefix: "mock",
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &Client{Client: client, miniredis: s}, nil
 }
 
 func (m *Client) Close() error {

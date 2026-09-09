@@ -59,10 +59,30 @@ func Map2Keys[K comparable, V any](vals map[K]V) (rets []K) {
 	return
 }
 
+func Map3Keys[T any, K comparable, V any](vals map[K]V) (rets []T) {
+	rets = make([]T, 0, len(vals))
+	for k := range vals {
+		if vvv, ok := any(k).(T); ok {
+			rets = append(rets, vvv)
+		}
+	}
+	return
+}
+
 func Map2Values[K comparable, V any](vals map[K]V) (rets []V) {
 	rets = make([]V, 0, len(vals))
 	for _, v := range vals {
 		rets = append(rets, v)
+	}
+	return
+}
+
+func Map3Values[T any, K comparable, V any](vals map[K]V) (rets []T) {
+	rets = make([]T, 0, len(vals))
+	for _, v := range vals {
+		if vvv, ok := any(v).(T); ok {
+			rets = append(rets, vvv)
+		}
 	}
 	return
 }

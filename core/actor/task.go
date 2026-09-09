@@ -5,11 +5,11 @@ import (
 	"sync"
 
 	"github.com/hechh/framework/core/context"
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/msgbus"
 	"github.com/hechh/framework/core/rpc"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/logic"
 	"github.com/hechh/framework/packet"
 )

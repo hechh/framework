@@ -66,9 +66,11 @@ func (d *Server) Init(addr string) error {
 		client := NewOptimizeClient(d, conn, httpcli.GetRealIP(r))
 		d.Add(client)
 
-		// 加入定时器中
+		// 加入定时器中（闲置超时由 OptimizeClient.Call 主动断开连接）
 		client.Refresh(datetime.NowUnixMilli())
-		timer.Register(client)
+		if err := timer.Register(client); err != nil {
+			mlog.Errorf("WebSocket连接注册闲置超时任务失败, socketId=%d, error=%v", client.GetId(), err)
+		}
 
 		// 阻塞等待消息处理
 		client.Start()

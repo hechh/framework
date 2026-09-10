@@ -6,6 +6,7 @@ import (
 
 	"github.com/hechh/framework/core/global"
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/framework/pkg/gc"
 )
 
 type Entity struct {
@@ -15,6 +16,7 @@ type Entity struct {
 	nodes      map[uint32]*atomic.Uint32 // 节点类型到路由ID的映射
 	accessTime atomic.Int64              // 最后访问时间
 	ttlMs      int64                     // 有效时长
+	times      int32                     // 任务执行次数
 }
 
 // NewEntity 创建路由实体
@@ -25,6 +27,7 @@ func NewEntity(idType uint32, id uint64, parent *Router) *Entity {
 		id:     id,
 		nodes:  make(map[uint32]*atomic.Uint32, len(nodeTypes)),
 		ttlMs:  int64(30 * time.Second / time.Millisecond),
+		times:  1,
 	}
 	for _, nodeType := range nodeTypes {
 		ret.nodes[uint32(nodeType)] = new(atomic.Uint32)
@@ -34,7 +37,7 @@ func NewEntity(idType uint32, id uint64, parent *Router) *Entity {
 
 // 实现定时器的 Iask 接口
 func (d *Entity) IsEnable() bool {
-	return true
+	return atomic.LoadInt32(&d.times) > 0
 }
 
 func (d *Entity) GetTTL() int64 {
@@ -50,9 +53,12 @@ func (d *Entity) Refresh(now int64) {
 }
 
 func (d *Entity) Call() {
-	if d.parent != nil {
-		d.parent.Remove(d.idType, d.id)
-	}
+	atomic.AddInt32(&d.times, -1)
+	gc.Destroy(func() {
+		if d.parent != nil {
+			d.parent.Remove(d.idType, d.id)
+		}
+	})
 }
 
 // Get 获取节点路由ID

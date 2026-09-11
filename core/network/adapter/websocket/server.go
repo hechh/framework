@@ -104,13 +104,14 @@ func (d *Server) Close() {
 		d.server.Shutdown(ctx)
 	}
 
-	// 关闭所有连接
+	// 关闭所有连接（每个连接的读写协程随 Stop 退出）
 	d.mutex.Lock()
 	for id, cli := range d.links {
 		cli.Stop()
 		mlog.Infof("删除连接. socketId=%d, uid=%d", id, cli.GetUid())
 	}
 	d.mutex.Unlock()
+
 	mlog.Infof("WebSocket服务器已停止")
 }
 

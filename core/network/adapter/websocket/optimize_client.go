@@ -265,6 +265,10 @@ func (d *OptimizeClient) decodePacket(data []byte) error {
 	if pack.Head != nil {
 		pack.Head.SocketId = d.socketId
 		pack.Head.ClientIp = d.ip
+		// 帧头 uid 由客户端提供、不可信：一律以本连接绑定的 uid 为准（未登录为 0），
+		// 否则客户端可伪造 uid 冒充其他在线玩家，让受害者 actor 执行任意 CMD。
+		// 绑定发生在登录流程中 token 校验通过之后（network.Bind → SetUid）。
+		pack.Head.Uid = d.GetUid()
 	}
 
 	mlog.Tracef("解码消息成功 traceId=%d, uid=%d, createtime=%d, cmd=%d, seq=%d, version=%d",

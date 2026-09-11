@@ -132,3 +132,124 @@ func TestSendQueueFullReturnsError(t *testing.T) {
 		t.Fatal("队列达到软上限时 Send 应返回错误")
 	}
 }
+
+// TestDecodePacket_ClearsForgedUidWhenUnbound 验证未登录连接伪造帧头 uid 会被清零。
+//
+// 背景：帧头 uid 由客户端提供。修复前网络层只覆写 SocketId/ClientIp，未覆写 Uid，
+// 攻击者把帧头 uid 改成受害者 uid 即可让网关按受害者 uid 选择 actor，执行提现、
+// 回收卡牌、消费道具甚至踢人下线。修复后未绑定连接一律为 0，只有登录流程中
+// token 校验通过（network.Bind → SetUid）才会绑定真实 uid。
+func TestDecodePacket_ClearsForgedUidWhenUnbound(t *testing.T) {
+	domain.SetDecodeFunc(frame.Decode)
+	domain.SetEncodeFunc(frame.Encode)
+
+	got := make(chan uint64, 1)
+	domain.SetPacketFunc(func(pack *packet.Packet) error {
+		got <- pack.Head.Uid
+		return nil
+	})
+	defer domain.SetPacketFunc(nil)
+
+	client, cli := dialTestClient(t)
+	defer cli.Close()
+	defer client.Stop()
+
+	const forgedUid uint64 = 5250000000 // 客户端自称的 uid（冒充受害者）
+	writeTestFrame(t, cli, forgedUid, 100012)
+
+	select {
+	case uid := <-got:
+		if uid != 0 {
+			t.Fatalf("未绑定连接伪造帧头 uid 未被清除: got=%d, want=0", uid)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("等待服务端处理消息超时")
+	}
+}
+
+// TestDecodePacket_UsesBoundUidOverForgedUid 验证已登录连接始终以连接绑定的 uid 为准：
+// 即使客户端伪造他人 uid，处理时也必须被覆写为自己的绑定 uid。
+func TestDecodePacket_UsesBoundUidOverForgedUid(t *testing.T) {
+	domain.SetDecodeFunc(frame.Decode)
+	domain.SetEncodeFunc(frame.Encode)
+
+	got := make(chan uint64, 1)
+	domain.SetPacketFunc(func(pack *packet.Packet) error {
+		got <- pack.Head.Uid
+		return nil
+	})
+	defer domain.SetPacketFunc(nil)
+
+	client, cli := dialTestClient(t)
+	defer cli.Close()
+	defer client.Stop()
+
+	// 模拟登录 token 校验通过后的连接绑定
+	const boundUid uint64 = 1001
+	if !client.SetUid(boundUid) {
+		t.Fatalf("绑定 uid 失败: uid=%d", boundUid)
+	}
+
+	writeTestFrame(t, cli, 5250000000, 100012) // 伪造受害者 uid
+
+	select {
+	case uid := <-got:
+		if uid != boundUid {
+			t.Fatalf("已绑定连接伪造 uid 未被覆写: got=%d, want=%d", uid, boundUid)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("等待服务端处理消息超时")
+	}
+}
+
+// dialTestClient 建立一条真实 WebSocket 测试连接，返回服务端连接对象与客户端连接
+func dialTestClient(t *testing.T) (*OptimizeClient, *websocket.Conn) {
+	t.Helper()
+
+	server := NewServer()
+	t.Cleanup(server.Close)
+
+	clientCh := make(chan *OptimizeClient, 1)
+	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		client := NewOptimizeClient(server, conn, "127.0.0.1")
+		server.Add(client)
+		clientCh <- client
+		client.Start() // 阻塞在读循环，连接关闭后返回
+	}))
+	t.Cleanup(httpServer.Close)
+
+	wsURL := "ws" + strings.TrimPrefix(httpServer.URL, "http")
+	cli, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("连接 WebSocket 失败: %v", err)
+	}
+
+	select {
+	case client := <-clientCh:
+		return client, cli
+	case <-time.After(3 * time.Second):
+		t.Fatal("等待服务端连接就绪超时")
+		return nil, nil
+	}
+}
+
+// writeTestFrame 以客户端身份发送一帧（帧头 uid 由调用方伪造，模拟攻击者构造的帧）
+func writeTestFrame(t *testing.T, cli *websocket.Conn, uid uint64, cmd uint32) {
+	t.Helper()
+
+	data, err := domain.EncodeFrame(&packet.Packet{
+		Head: &packet.Head{Cmd: cmd, Uid: uid, Version: 1, Seq: 1},
+		Body: []byte("payload"),
+	})
+	if err != nil {
+		t.Fatalf("编码测试帧失败: %v", err)
+	}
+	if err := cli.WriteMessage(websocket.BinaryMessage, data); err != nil {
+		t.Fatalf("发送测试帧失败: %v", err)
+	}
+}

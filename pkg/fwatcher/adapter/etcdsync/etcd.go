@@ -15,10 +15,11 @@ import (
 )
 
 type EtcdSync struct {
-	wg     sync.WaitGroup
-	client *clientv3.Client
-	exitCh chan struct{}
-	prefix string
+	wg        sync.WaitGroup
+	client    *clientv3.Client
+	exitCh    chan struct{}
+	closeOnce sync.Once // Close 幂等：避免 close(exitCh) 二次执行 panic
+	prefix    string
 
 	// lastRev 已处理到的 etcd revision：Fetch 后置为快照 revision，监听中随每个响应推进。
 	// 重连时从 lastRev+1 续传，使「快照与建流之间」以及「断线期间」的变更都能被重放，
@@ -48,9 +49,12 @@ func (d *EtcdSync) Init(cfg *fwatcher.Config) error {
 }
 
 func (d *EtcdSync) Close() {
-	close(d.exitCh)
-	d.wg.Wait()
-	d.client.Close()
+	// 幂等：初始化失败路径与组件 Close 都可能调用，重复 close 会 panic
+	d.closeOnce.Do(func() {
+		close(d.exitCh)
+		d.wg.Wait()
+		d.client.Close()
+	})
 }
 
 func (d *EtcdSync) Put(sheet string, body []byte) error {

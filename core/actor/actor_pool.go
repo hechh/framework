@@ -5,10 +5,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/rpc"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/queue"
 	"github.com/hechh/framework/library/utils"
 	"github.com/hechh/framework/packet"
@@ -35,7 +35,12 @@ func (d *ActorPool) Stop() {
 func (d *ActorPool) Register(ac IActor, c define.ICache, opts ...queue.Option) {
 	name := utils.ParseName(reflect.TypeOf(ac))
 	opts = append(opts, queue.WithName(name))
-	d.msgs = queue.NewMsgQueuePool[queue.ITask]()
+	// opts 必须传给协程池：否则 size 默认 0 → 无缓冲队列且 0 个 worker，
+	// 首个任务会永久阻塞在 taskCh，连带卡死 gc 单协程的全进程清理
+	d.msgs = queue.NewMsgQueuePool[queue.ITask](opts...)
+	if d.msgs.GetSize() <= 0 {
+		panic(fmt.Sprintf("ActorPool(%s)协程池大小必须大于 0，请用 queue.WithSize 设置", name))
+	}
 	d.self = ac
 	d.cache = c
 }

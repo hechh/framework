@@ -75,6 +75,12 @@ func (d *MsgBus) Init(cfg *Config) error {
 			mlog.Errorf("[nats] 反序列化消息失败: %v", err)
 			return
 		}
+		// 空 body 或"合法但不含 Head 字段"的 body 反序列化会返回 nil error，
+		// 此时 pack.Head 为 nil；不判空会在此协程 nil 解引用 panic（无 recover → 整进程崩溃）
+		if pack.Head == nil {
+			mlog.Errorf("[nats] 消息缺少 Head 字段, bodySize=%d", len(msg.Body))
+			return
+		}
 		pack.Head.Reply = msg.Reply
 		base.PacketHandler(pack)
 	}
@@ -122,6 +128,11 @@ func (d *MsgBus) Subscribe(topic string, f func(*packet.Packet)) error {
 		pack := &packet.Packet{}
 		if err := proto.Unmarshal(msg.Body, pack); err != nil {
 			mlog.Errorf("[nats] 反序列化消息失败: %v", err)
+			return
+		}
+		// 同 Init 的订阅回调：Head 为 nil 时直接丢弃，避免 nil 解引用 panic
+		if pack.Head == nil {
+			mlog.Errorf("[nats] 消息缺少 Head 字段, topic=%s, bodySize=%d", topic, len(msg.Body))
 			return
 		}
 		pack.Head.Reply = msg.Reply

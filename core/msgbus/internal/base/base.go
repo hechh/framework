@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/hechh/framework/packet"
+	"github.com/hechh/framework/pkg/mlog"
 )
 
 var (
@@ -32,6 +33,11 @@ func SetPacketFunc(f func(*packet.Packet)) {
 }
 
 func PacketHandler(msg *packet.Packet) {
+	// 兜底：非法包（nil 或缺少 Head）在此丢弃，避免下游任意位置 nil 解引用
+	if msg == nil || msg.Head == nil {
+		mlog.Errorf("[nats] PacketHandler 收到无效消息, msg=%v", msg)
+		return
+	}
 	if packetFunc != nil {
 		packetFunc(msg)
 	}

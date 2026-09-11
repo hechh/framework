@@ -14,11 +14,12 @@ import (
 )
 
 type Etcd struct {
-	wg     sync.WaitGroup
-	client *clientv3.Client
-	exitCh chan struct{}
-	prefix string
-	ttl    int64
+	wg        sync.WaitGroup
+	client    *clientv3.Client
+	exitCh    chan struct{}
+	closeOnce sync.Once // Close 幂等：避免 close(exitCh) 二次执行 panic
+	prefix    string
+	ttl       int64
 }
 
 func NewEtcd() *Etcd {
@@ -45,9 +46,12 @@ func (e *Etcd) Init(cfg *cluster.Config) error {
 }
 
 func (e *Etcd) Close() {
-	close(e.exitCh)
-	e.wg.Wait()
-	e.client.Close()
+	// 幂等：初始化失败路径与 Cluster.Close() 都可能调用，重复 close 会 panic
+	e.closeOnce.Do(func() {
+		close(e.exitCh)
+		e.wg.Wait()
+		e.client.Close()
+	})
 }
 
 func (e *Etcd) Register(key string, body []byte) error {

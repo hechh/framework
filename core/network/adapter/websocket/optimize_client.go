@@ -14,13 +14,9 @@ import (
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/gc"
 	"github.com/hechh/framework/pkg/mlog"
-	"golang.org/x/time/rate"
 )
 
 const (
-	SEND_RATE_LIMIT = 100 // 每秒最多发送次数（optimize_client 使用）
-	SEND_RATE_BURST = 20  // 突发允许量（optimize_client 使用）
-
 	// SEND_QUEUE_MAX_BYTES 单连接待发队列软上限（字节）。
 	// 队列把网络写从调用方协程（NATS 派发 / actor）解耦；达到上限即拒绝入队并显式报错，
 	// 避免慢客户端让待发帧无界堆积。按「每连接预算 × 连接数」估算：128KB × 5000 连接 ≈ 640MB 上界，
@@ -44,36 +40,34 @@ const (
 // 下行帧一律经本连接待发队列交由写协程串行写出，满足 gorilla「同一连接只有一个协程写」的约束，
 // 同时调用方（NATS 派发 / actor）不再被网络写阻塞。
 type OptimizeClient struct {
-	parent      *Server              // 上级指针
-	sendLimiter *rate.Limiter        // 发送限流器
-	sendQ       *queue.Queue[[]byte] // 待发帧队列（Send 入队，本连接写协程出队）
-	sendWake    chan struct{}        // 写协程唤醒信号（缓冲 1，避免通知无界积压）
-	conn        *websocket.Conn      // WebSocket 连接
-	socketId    uint32               // 连接 ID
-	ip          string               // 客户端真实 IP（IPv4 字符串）
-	exitCh      chan struct{}        // 退出信号
-	uid         atomic.Uint64        // 绑定的用户 ID
-	updateTime  atomic.Int64         // 最后活跃时间（Unix 毫秒）
-	sendBytes   atomic.Int64         // 队列中待发字节数（软上限控制）
-	dropped     atomic.Uint32        // 因队列满被丢弃的帧数（限频告警用）
-	status      atomic.Bool          // 关闭标记
-	ttlMs       int64                // 闲置超时时长（毫秒）
-	times       int32                // 任务执行次数
+	parent     *Server              // 上级指针
+	sendQ      *queue.Queue[[]byte] // 待发帧队列（Send 入队，本连接写协程出队）
+	sendWake   chan struct{}        // 写协程唤醒信号（缓冲 1，避免通知无界积压）
+	conn       *websocket.Conn      // WebSocket 连接
+	socketId   uint32               // 连接 ID
+	ip         string               // 客户端真实 IP（IPv4 字符串）
+	exitCh     chan struct{}        // 退出信号
+	uid        atomic.Uint64        // 绑定的用户 ID
+	updateTime atomic.Int64         // 最后活跃时间（Unix 毫秒）
+	sendBytes  atomic.Int64         // 队列中待发字节数（软上限控制）
+	dropped    atomic.Uint32        // 因队列满被丢弃的帧数（限频告警用）
+	status     atomic.Bool          // 关闭标记
+	ttlMs      int64                // 闲置超时时长（毫秒）
+	times      int32                // 任务执行次数
 }
 
 // NewOptimizeClient 创建客户端（每连接自带一条待发队列，写协程在 Start 时启动）
 func NewOptimizeClient(parent *Server, conn *websocket.Conn, ip string) *OptimizeClient {
 	return &OptimizeClient{
-		parent:      parent,
-		sendLimiter: rate.NewLimiter(SEND_RATE_LIMIT, SEND_RATE_BURST),
-		sendQ:       queue.NewQueue[[]byte](),
-		sendWake:    make(chan struct{}, 1),
-		conn:        conn,
-		socketId:    domain.GenSocketId(),
-		ip:          ip,
-		exitCh:      make(chan struct{}),
-		ttlMs:       CLIENT_IDLE_TTL_MS,
-		times:       1,
+		parent:   parent,
+		sendQ:    queue.NewQueue[[]byte](),
+		sendWake: make(chan struct{}, 1),
+		conn:     conn,
+		socketId: domain.GenSocketId(),
+		ip:       ip,
+		exitCh:   make(chan struct{}),
+		ttlMs:    CLIENT_IDLE_TTL_MS,
+		times:    1,
 	}
 }
 

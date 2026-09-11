@@ -23,6 +23,7 @@ type Entity struct {
 func NewEntity(idType uint32, id uint64, parent *Router) *Entity {
 	nodeTypes := global.GetSupportNodeTypes()
 	ret := &Entity{
+		parent: parent,
 		idType: idType,
 		id:     id,
 		nodes:  make(map[uint32]*atomic.Uint32, len(nodeTypes)),

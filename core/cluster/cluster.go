@@ -94,9 +94,11 @@ func (d *Cluster) Init(cfg *Config, self INode, types []int32) error {
 	if err != nil {
 		mlog.Errorf("启动服务发现监听失败: %v", err)
 		d.disc.Close()
-	} else {
-		mlog.Infof("集群初始化成功")
+		// 不能吞掉错误：否则组件初始化被判成功，服务带着已关闭的 discovery 运行，
+		// HashRoute 恒为 nil、跨服消息静默失效
+		return err
 	}
+	mlog.Infof("集群初始化成功")
 	return nil
 }
 

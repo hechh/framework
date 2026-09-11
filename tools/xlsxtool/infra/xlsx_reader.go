@@ -12,8 +12,8 @@ import (
 )
 
 // ReadTables 从目录读取所有xlsx文件的表格数据。
-// 递归遍历时跳过隐藏子目录（如 .bak 暂存、.gen 生成），
-// 避免把非正式目录中的 xlsx 当作配置源解析，导致重复表或错误覆盖。
+// 递归遍历时跳过隐藏子目录（如 .bak 暂存），避免把非正式目录中的 xlsx 当作配置源解析，导致重复表或错误覆盖。
+// 生成目录 <XlsxPath>/json 非隐藏，但其中只有 .json，由下方 .xlsx 后缀过滤跳过。
 func ReadTables(xlsxDir string) []*domain.Table {
 	return ReadTablesOverlay(xlsxDir, "")
 }

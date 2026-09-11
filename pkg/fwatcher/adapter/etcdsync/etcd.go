@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hechh/framework/library/safe"
@@ -18,6 +19,11 @@ type EtcdSync struct {
 	client *clientv3.Client
 	exitCh chan struct{}
 	prefix string
+
+	// lastRev 已处理到的 etcd revision：Fetch 后置为快照 revision，监听中随每个响应推进。
+	// 重连时从 lastRev+1 续传，使「快照与建流之间」以及「断线期间」的变更都能被重放，
+	// 避免配置静默漏更（etcd watch 不带 WithRev 时只收建流之后的新事件）。
+	lastRev atomic.Uint64
 }
 
 func NewEtcdSync() *EtcdSync {
@@ -129,6 +135,10 @@ func (d *EtcdSync) Fetch(f func(string, []byte)) error {
 	for _, ev := range rsp.Kvs {
 		f(string(ev.Key), ev.Value)
 	}
+
+	// 记录快照 revision 作为续传基线：后续 watch 从该 revision 之后开始，
+	// 保证「Fetch 快照」与「建流」之间发生的变更也能被 etcd 重放，不会漏更。
+	d.lastRev.Store(uint64(rsp.Header.Revision))
 	return nil
 }
 
@@ -170,12 +180,14 @@ func (e *EtcdSync) watch(f func(string, []byte)) (clientv3.WatchChan, error) {
 		return nil, fmt.Errorf("etcd prefix 为空，拒绝监听")
 	}
 
-	// 先拉取一次全量配置并回调（初始同步）
-	if err := e.Fetch(f); err != nil {
-		return nil, err
+	// 按 revision 续传：从 lastRev+1 开始监听，使 etcd 重放续传点之后的变更（不丢不重）。
+	// lastRev==0 表示尚无基线（未 Fetch 过），此时从当前 revision 开始监听。
+	opts := []clientv3.OpOption{clientv3.WithPrefix()}
+	if rev := e.lastRev.Load(); rev > 0 {
+		opts = append(opts, clientv3.WithRev(int64(rev+1)))
 	}
 
-	watchCh := e.client.Watch(context.Background(), e.prefix, clientv3.WithPrefix())
+	watchCh := e.client.Watch(context.Background(), e.prefix, opts...)
 	if watchCh == nil {
 		return nil, fmt.Errorf("watch channel is nil")
 	}
@@ -188,14 +200,36 @@ func (e *EtcdSync) monitor(watchCh clientv3.WatchChan, f func(string, []byte)) {
 		case <-e.exitCh:
 			return
 		case rsp, ok := <-watchCh:
-			if !ok || rsp.Canceled {
-				mlog.Errorf("配置监听(%s)被取消，尝试重新连接", e.prefix)
+			if !ok {
+				// 通道关闭（如 etcd 重启导致 gRPC 流断开）：由 Watch 循环按 lastRev+1 续传重连
+				mlog.Errorf("配置监听(%s)通道关闭，尝试重连并续传", e.prefix)
 				return
 			}
-			if rsp.Err() != nil {
-				mlog.Errorf("配置监听(%s)错误: %v", e.prefix, rsp.Err())
-				continue
+			// 续传点已被压缩：etcd 无法重放断线期间的变更，回退全量拉取重建基线
+			if rsp.CompactRevision != 0 {
+				mlog.Warnf("配置监听(%s)续传点已被压缩(compact_revision=%d)，回退全量拉取重建基线",
+					e.prefix, rsp.CompactRevision)
+				if err := e.Fetch(f); err != nil {
+					mlog.Errorf("配置监听(%s)回退全量拉取失败: %v", e.prefix, err)
+				}
+				return
 			}
+			if rsp.Canceled {
+				// 服务端取消（非压缩，如续传 revision 超出可服务范围）：续传点不可用，
+				// 回退全量拉取重建基线，避免陷入「续传即被取消」的重连空转
+				mlog.Errorf("配置监听(%s)被服务端取消，回退全量拉取重建基线", e.prefix)
+				if err := e.Fetch(f); err != nil {
+					mlog.Errorf("配置监听(%s)回退全量拉取失败: %v", e.prefix, err)
+				}
+				return
+			}
+			if err := rsp.Err(); err != nil {
+				mlog.Errorf("配置监听(%s)错误: %v", e.prefix, err)
+				return
+			}
+
+			// 推进续传点：本批事件均已包含在该 revision 内，重连从其后继续
+			e.lastRev.Store(uint64(rsp.Header.Revision))
 			for _, event := range rsp.Events {
 				switch event.Type {
 				case clientv3.EventTypePut:

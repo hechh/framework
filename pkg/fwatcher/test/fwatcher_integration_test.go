@@ -164,18 +164,21 @@ func TestFWatcher_UploadConfig(t *testing.T) {
 
 	_, cfg := setupSharedEtcd(t, prefix)
 
-	// 本地数据目录写两个配置，验证全量上传
-	dataPath := t.TempDir()
-	writeDataFile(t, dataPath, sheet, ext, body)
+	// 发布者（IsSync=true）的上传源是 xlsx 生成目录 <XlsxPath>/json，消费者缓存目录 DataPath 另置，
+	// 两者分离可避免消费者的 etcd 落盘覆盖发布者的真源快照（见 fwatcher.Init）。
+	xlsxPath := t.TempDir()
+	genPath := filepath.Join(xlsxPath, "json")
+	writeDataFile(t, genPath, sheet, ext, body)
 	sheet2 := "UploadExtraConfig"
 	body2 := []byte(`{"client_version":2,"enable":false,"items":{}}`)
-	writeDataFile(t, dataPath, sheet2, ext, body2)
+	writeDataFile(t, genPath, sheet2, ext, body2)
 
-	// 生产者 fwatcher：IsSync=true，Init 时清空并全量上传
+	// 生产者 fwatcher：IsSync=true，Init 时把生成目录中的配置全量上传
 	producer := fwatcher.NewFWatcher(func() fwatcher.ISync { return etcdsync.NewEtcdSync() })
 	producerCfg := &fwatcher.Config{
 		IsSync:   true,
-		DataPath: dataPath,
+		XlsxPath: xlsxPath,
+		DataPath: t.TempDir(),
 		Ext:      ext,
 		Etcd: &fwatcher.EtcdConfig{
 			Prefix:    prefix,
@@ -415,5 +418,74 @@ func TestFWatcher_DeleteSync(t *testing.T) {
 	}
 	if _, err := os.Stat(downloaded); err == nil {
 		t.Fatalf("删除事件后原文件应被重命名为 .deleted")
+	}
+}
+
+// ============================================================
+// 按 revision 续传：验证「快照与建流之间」以及「断线期间」的变更不会丢失
+// ============================================================
+//
+// etcd watch 不带 WithRev 时只收建流之后的新事件。若不记录 revision 续传，
+// Fetch 快照与建流之间（重连时则是断线期间）发生的 Put/Delete 会被静默丢弃，
+// 表现为「运营改了配置，部分实例长期不生效」。本用例固定该行为。
+func TestEtcdSync_ResumeFromRevision(t *testing.T) {
+	if testing.Short() {
+		t.Skip("集成测试需要嵌入式 etcd，-short 模式下跳过")
+	}
+
+	prefix := fmt.Sprintf("/test/resume-%d", time.Now().UnixNano())
+	_, cfg := setupSharedEtcd(t, prefix)
+
+	remote := etcdsync.NewEtcdSync()
+	if err := remote.Init(&fwatcher.Config{
+		Etcd: &fwatcher.EtcdConfig{Prefix: prefix, Endpoints: cfg.Etcd.Endpoints},
+	}); err != nil {
+		t.Fatalf("EtcdSync 初始化失败: %v", err)
+	}
+	defer remote.Close()
+
+	// 1. 建立基线快照（此时 prefix 下无配置）
+	snapshot := make(map[string]string)
+	if err := remote.Fetch(func(key string, body []byte) { snapshot[key] = string(body) }); err != nil {
+		t.Fatalf("Fetch 失败: %v", err)
+	}
+	if len(snapshot) != 0 {
+		t.Fatalf("基线快照应为空，实际 %v", snapshot)
+	}
+
+	// 2. 快照之后、建流之前写入配置（等价于断线期间发生的变更）
+	sheet := "ResumeGlobalConfig"
+	body := []byte(`{"client_version":9,"enable":true,"items":{"k":"v"}}`)
+	if err := remote.Put(sheet, body); err != nil {
+		t.Fatalf("Put 失败: %v", err)
+	}
+
+	// 3. 再写入一次无关配置，把 etcd 当前 revision 推后：
+	//    若只写 2 中这一笔，watch(rev=0) 恰好会带上「最近一次提交」而掩盖缺陷，
+	//    推后 revision 后才能真实区分「续传」与「只收建流之后的新事件」。
+	if err := remote.Put("ResumeFillerConfig", []byte(`{"client_version":1,"enable":true,"items":{}}`)); err != nil {
+		t.Fatalf("写入无关配置失败: %v", err)
+	}
+
+	// 4. 开始监听：应从快照 revision 之后续传，立即收到 2 中的变更
+	got := make(chan string, 1)
+	if err := remote.Watch(func(key string, value []byte) {
+		if key == prefix+"/"+sheet {
+			select {
+			case got <- string(value):
+			default:
+			}
+		}
+	}); err != nil {
+		t.Fatalf("Watch 失败: %v", err)
+	}
+
+	select {
+	case v := <-got:
+		if v != string(body) {
+			t.Fatalf("续传内容不一致: want=%s got=%s", body, v)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("续传失败：快照之后、建流之前写入的配置未被重放（断线期间的变更会静默丢失）")
 	}
 }

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -78,6 +79,20 @@ func (ctx *ParseContext) parseEnum(table *Table) {
 
 // parseStruct 解析结构体表格
 func (ctx *ParseContext) parseStruct(table *Table) {
+	// 字段名/类型/说明 三行表头是解析前提；excelize 的 GetRows 会裁掉行尾空单元格，
+	// "给某列补了类型但字段名留空"这类常见编辑动作会让后两行比类型行短，直接按下标取会 panic
+	if len(table.Rows) < 3 {
+		fmt.Printf("[xlsxtool] 跳过无效配置表 %s(%s): 至少需要 字段名/类型/说明 三行表头，实际 %d 行\n",
+			table.Sheet, table.Type, len(table.Rows))
+		return
+	}
+
+	names, types, descs := table.Rows[0], table.Rows[1], table.Rows[2]
+	if err := checkHeader(names, types); err != nil {
+		fmt.Printf("[xlsxtool] 跳过无效配置表 %s(%s): %v\n", table.Sheet, table.Type, err)
+		return
+	}
+
 	st := &Struct{
 		Type:     table.Type,
 		FieldMap: make(map[string]*Field),
@@ -85,15 +100,16 @@ func (ctx *ParseContext) parseStruct(table *Table) {
 		Rows:     table.Rows[3:],
 	}
 
-	for i, fieldType := range table.Rows[1] {
+	for i, fieldType := range types {
 		if len(fieldType) <= 0 {
 			continue
 		}
+		// 类型非空的列已由 checkHeader 保证字段名存在，可直接按下标取
 		item := &Field{
-			Name:       table.Rows[0][i],
+			Name:       names[i],
 			Type:       ParseType(fieldType), // 规范化类型（repeated/枚举/标量）
 			OriginType: fieldType,            // 保存原始类型
-			Desc:       table.Rows[2][i],
+			Desc:       cellOr(descs, i, ""), // 说明行缺失只影响注释，按空串处理
 			Position:   int32(i) + 1,
 		}
 		st.FieldMap[item.Name] = item
@@ -104,6 +120,11 @@ func (ctx *ParseContext) parseStruct(table *Table) {
 		var parent *Index
 		for _, str := range strings.Split(vrule, "@") {
 			vals := strings.Split(str, ":")
+			// 规则段必须为 类型:字段[,字段]，缺冒号时取 vals[1] 会越界
+			if len(vals) < 2 {
+				fmt.Printf("[xlsxtool] 跳过无效索引规则 %q (表 %s): 缺少 ':' 分隔，应为 类型:字段[,字段]\n", str, table.Sheet)
+				continue
+			}
 			idx := &Index{
 				Type: vals[0],
 				Name: strings.ReplaceAll(vals[1], ",", ""),
@@ -124,6 +145,36 @@ func (ctx *ParseContext) parseStruct(table *Table) {
 	}
 	ctx.Structs = append(ctx.Structs, st)
 	ctx.StructMap[st.Type] = st
+}
+
+// checkHeader 校验表头：类型非空但字段名缺失属于编辑错误（会生成无名字段），
+// 报出具体列号并跳过整表，避免生成残缺结构体后 JSON 数据静默丢列
+func checkHeader(names, types []string) error {
+	for i, fieldType := range types {
+		if len(fieldType) == 0 {
+			continue // 类型为空的列是既有的"跳过该列"约定
+		}
+		if name, ok := cell(names, i); !ok || name == "" {
+			return fmt.Errorf("第 %d 列类型为 %q 但缺少字段名（字段名行已被 excelize 裁掉或留空）", i+1, fieldType)
+		}
+	}
+	return nil
+}
+
+// cell 按下标取单元格；越界（行尾空单元格被 Excel 引擎裁掉）时返回 ok=false
+func cell(row []string, i int) (string, bool) {
+	if i < 0 || i >= len(row) {
+		return "", false
+	}
+	return row[i], true
+}
+
+// cellOr 按下标取单元格，越界时返回默认值
+func cellOr(row []string, i int, def string) string {
+	if val, ok := cell(row, i); ok {
+		return val
+	}
+	return def
 }
 
 // ParseType 类型名称规范化：[] 前缀 → repeated，&/* 前缀去掉，其余按注册的 proto 类型映射

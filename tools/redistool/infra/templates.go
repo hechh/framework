@@ -299,7 +299,7 @@ func HMGet({{if HasAnyFields .GetHashKeyParams}}{{GetArgs .GetHashKeyParams}}, {
 		}
 		result[fields[i]] = item
 	}
-	return result, nil
+	return result, err
 }
 
 func HMSet({{if HasAnyFields .GetHashKeyParams}}{{GetArgs .GetHashKeyParams}}, {{end}}data map[string]*pb.{{.Name}}) error {

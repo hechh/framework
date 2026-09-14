@@ -157,3 +157,96 @@ func TestParseStructSkipEmptyType(t *testing.T) {
 		t.Fatalf("期望2个字段(空类型列跳过), 实际%d", len(st.FieldList))
 	}
 }
+
+// TestParseStructMissingHeaderRows 验证表头不足 3 行时跳过整表而不是越界崩溃。
+//
+// expertize 的 GetRows 会裁掉行尾空单元格，仅填了类型行的表格会少于 3 行，
+// 修复前 table.Rows[3:] / table.Rows[1] 直接 panic（make xlsx 崩栈且无可读报错）。
+func TestParseStructMissingHeaderRows(t *testing.T) {
+	cases := map[string][][]string{
+		"完全空表":  {},
+		"只有名称行": {{"RoomId", "MaxPlayers"}},
+		"只有两行":  {{"RoomId", "MaxPlayers"}, {"uint32", "int32"}},
+	}
+	for name, rows := range cases {
+		t.Run(name, func(t *testing.T) {
+			ctx := NewParseContext()
+			ctx.ParseTable(&Table{Sheet: "房间配置", Type: "PveRoomConfig", Token: 2, Rows: rows})
+			if st := ctx.StructMap["PveRoomConfig"]; st != nil {
+				t.Fatalf("表头不足必须跳过该表, 实际解析出 %d 个字段", len(st.FieldList))
+			}
+		})
+	}
+}
+
+// TestParseStructTypedColumnWithoutName 验证"有类型但缺字段名"被拦下而不是生成无名字段。
+//
+// 典型编辑动作：给某列补了类型，字段名/说明行仍为空（excelize 裁掉行尾空单元格后
+// 名称行比类型行短），修复前 table.Rows[0][i] 越界 panic。
+func TestParseStructTypedColumnWithoutName(t *testing.T) {
+	ctx := NewParseContext()
+	ctx.ParseTable(&Table{
+		Sheet: "房间配置",
+		Type:  "PveRoomConfig",
+		Token: 2,
+		Rows: [][]string{
+			{"RoomId", "MaxPlayers"},      // 第 3 列缺字段名
+			{"uint32", "int32", "string"}, // 但补了类型
+			{"房间ID", "最大玩家数"},             // 说明行同样被裁短
+		},
+	})
+	if st := ctx.StructMap["PveRoomConfig"]; st != nil {
+		t.Fatalf("缺字段名的列必须整表跳过, 实际解析出 %d 个字段", len(st.FieldList))
+	}
+}
+
+// TestParseStructMissingDesc 验证仅缺"说明"（纯注释行）时不影响解析：
+// 说明只用于文档，按空串处理，避免只改注释就整表丢失
+func TestParseStructMissingDesc(t *testing.T) {
+	ctx := NewParseContext()
+	ctx.ParseTable(&Table{
+		Sheet: "房间配置",
+		Type:  "PveRoomConfig",
+		Token: 2,
+		Rows: [][]string{
+			{"RoomId", "MaxPlayers"},
+			{"uint32", "int32"},
+			{"房间ID"}, // 第 2 列说明留空被裁掉
+			{"5001", "5"},
+		},
+	})
+	st := ctx.StructMap["PveRoomConfig"]
+	if st == nil {
+		t.Fatal("仅缺说明不应跳过整表")
+	}
+	if len(st.FieldList) != 2 {
+		t.Fatalf("期望2个字段, 实际%d", len(st.FieldList))
+	}
+	if st.FieldList[1].Desc != "" {
+		t.Fatalf("缺失的说明应为空串, 实际 %q", st.FieldList[1].Desc)
+	}
+}
+
+// TestParseStructInvalidRule 验证索引规则缺 ':' 时跳过该规则而不是越界崩溃。
+func TestParseStructInvalidRule(t *testing.T) {
+	ctx := NewParseContext()
+	ctx.ParseTable(&Table{
+		Sheet: "房间配置",
+		Type:  "PveRoomConfig",
+		Token: 2,
+		Rules: []string{"map", "group:MaxPlayers"}, // 首条规则缺 "类型:字段" 形式
+		Rows: [][]string{
+			{"RoomId", "MaxPlayers"},
+			{"uint32", "int32"},
+			{"房间ID", "最大玩家数"},
+			{"5001", "5"},
+		},
+	})
+	st := ctx.StructMap["PveRoomConfig"]
+	if st == nil {
+		t.Fatal("结构体未解析")
+	}
+	if len(st.IndexList) != 1 || st.IndexList[0].Name != "MaxPlayers" {
+		t.Fatalf("非法规则应被跳过、合法规则应保留, 实际 %+v", st.IndexList)
+	}
+}

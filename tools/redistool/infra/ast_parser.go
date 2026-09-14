@@ -108,7 +108,16 @@ func countFmtVerbs(fmtStr string) int {
 // validateFormat 校验格式串中的占位符数量与参数列表是否匹配，不匹配返回错误
 func validateFormat(format string, fields []*domain.Field, rule, structName string) error {
 	if len(fields) == 0 {
-		return nil // 无参数时跳过校验（纯静态key）
+		// 无参数本应跳过校验（纯静态 key），但格式串里若仍有 %s/%d 等占位符，
+		// 解析器拿不到任何参数、模板会退化成返回字面量 key（见 templates.go 的 GetKey）：
+		// 所有 uid 共用同一把 key 互相覆盖（串号 + 数据丢失），必须拦下
+		if n := countFmtVerbs(format); n > 0 {
+			fmt.Printf("[redistool] 跳过无效规则: %s (结构体 %s): 格式串 %q 含 %d 个占位符但未声明任何参数；"+
+				"参数须写成 前缀:Name@type（多参数用逗号分隔），如 user_info:%%d:%%s 应写成 user_info:uid@uint64,name@string 或 user_info:uid@uint64\n",
+				rule, structName, format, n)
+			return fmt.Errorf("format has verbs but no args")
+		}
+		return nil // 纯静态key
 	}
 	expected := countFmtVerbs(format)
 	if expected != len(fields) {
@@ -130,8 +139,20 @@ func fieldNames(fields []*domain.Field) []string {
 // buildStringModel 构建String类型领域模型
 // 格式: @dbtool:string|DbSpec|keyFormat
 //
-//	例: @dbtool:string|shards:uid@uint64|user_info:%d:%s
+//	例: @dbtool:string|shards:uid@uint64|user_info:uid@uint64                    → key "user_info:%d"
+//	    @dbtool:string|shards:uid@uint64|user_data:uid@uint64,name@string        → key "user_data:%d:%s"
+//	    @dbtool:string|global:database.REDIS_GLOBAL|static_key                   → key "static_key"（无参数）
+//
+// 🔴 keyFormat 必须用 "前缀:Name@type" 声明参数，不能直接写 "user_info:%d:%s"：
+// 占位符没有参数来源，模板会退化成所有 uid 共用的字面量 key（互相覆盖）。
+// 同理 DbSpec 段不可省略，extractModels 只保证 parts[0]（规则类型）存在。
 func (p *ASTParser) buildStringModel(parts []string, structName string) *domain.RedisString {
+	if len(parts) < 3 {
+		fmt.Printf("[redistool] 跳过无效规则: %s (结构体 %s): String 类型必须使用3段格式 @dbtool:string|DbSpec|keyFmt\n",
+			parts[0], structName)
+		return nil
+	}
+
 	dbType, dbName, shardField := ParseDbSpec(parts[1])
 	format, keys := ParseFieldFormat(parts[2])
 

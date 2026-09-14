@@ -145,10 +145,22 @@ func (d *Attribute) OnLock() error {
 }
 
 func (d *Attribute) OnUnlock() error {
+	return d.onUnlockWith(d.GetId())
+}
+
+// onUnlockWith 用指定 id 解锁。
+// 队列收尾阶段必须传入启动时快照的 id：Wait() 在等待结束后会 SetId(0)，
+// 此时若仍从共享字段读 id，解锁会作用到 actor_locker:0，真实的 actor_locker:<uid> 无人释放。
+func (d *Attribute) onUnlockWith(id uint64) error {
 	if d.unlocker != nil {
 		return d.unlocker(d.GetId())
 	}
 	return nil
+}
+
+// CompareAndSwapStatus 原子迁移状态（old → val）。用于 Start 这类"并发只能有一个成功"的状态迁移。
+func (d *Attribute) CompareAndSwapStatus(old, val int32) bool {
+	return atomic.CompareAndSwapInt32(&d.status, old, val)
 }
 
 func (d *Attribute) OnDelete() {

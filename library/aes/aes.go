@@ -11,6 +11,9 @@ import (
 
 // AesEncrypto AES-ECB 加密 + PKCS7 填充，输出 Base64 字符串。
 // secretKey 长度须为 16/24/32 字节（AES-128/192/256）。
+//
+// ⚠️ 旧协议兼容专用，不要用于新代码：ECB 无 IV（相同明文恒产生相同密文，可做块级模式分析），
+// 且不带 MAC（无法发现密文被重排/复制/篡改）。需要机密性 + 完整性请用 AesGcmEncrypto。
 func AesEncrypto(body, secretKey []byte) (string, error) {
 	block, err := aes.NewCipher(secretKey)
 	if err != nil {
@@ -29,6 +32,9 @@ func AesEncrypto(body, secretKey []byte) (string, error) {
 
 // AesDecrypto 解密 AES-ECB + PKCS7 密文。
 // 自动识别输入：Base64 字符串 或 原始密文字节。
+//
+// ⚠️ 旧协议兼容专用，不要用于新代码：ECB 无 IV、无 MAC，解密成功**不代表密文未被篡改**
+// （重排/复制 16 字节块仍能通过 PKCS7 校验）。需要完整性保护请用 AesGcmDecrypto。
 func AesDecrypto(body []byte, secretKey []byte) ([]byte, error) {
 	data := body
 	if decoded, err := base64.StdEncoding.DecodeString(safe.BytesToString(body)); err == nil {

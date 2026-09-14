@@ -14,6 +14,9 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+// watchRetryInterval watch 重连失败后的重试间隔
+const watchRetryInterval = 3 * time.Second
+
 type EtcdSync struct {
 	wg        sync.WaitGroup
 	client    *clientv3.Client
@@ -166,16 +169,38 @@ func (e *EtcdSync) Watch(f func(string, []byte)) error {
 			default:
 			}
 
-			// watch 断开，重新建立
-			var watchErr error
-			if watchCh, watchErr = e.watch(f); watchErr != nil {
-				mlog.Errorf("配置监听(%s)重新注册失败: %v", e.prefix, watchErr)
-				time.Sleep(3 * time.Second)
+			// watch 断开，重新建立（重连失败时绝不把 watchCh 置空：
+			// nil channel 会让下一轮 monitor 永久阻塞，配置热更静默死亡）
+			reconnectCh, ok := e.reconnect(watchCh, f)
+			if !ok {
+				return
 			}
+			watchCh = reconnectCh
 		}
 	})
 
 	return nil
+}
+
+// reconnect 重连 watch 直到成功或收到退出信号。
+// 返回的通道在失败重试期间保持为传入的原通道（可能是已关闭通道），调用方只在成功时替换。
+func (e *EtcdSync) reconnect(oldCh clientv3.WatchChan, f func(string, []byte)) (clientv3.WatchChan, bool) {
+	for attempt := 1; ; attempt++ {
+		newCh, err := e.watch(f)
+		if err == nil {
+			if attempt > 1 {
+				mlog.Warnf("配置监听(%s)第%d次重连成功", e.prefix, attempt)
+			}
+			return newCh, true
+		}
+		mlog.Errorf("配置监听(%s)重连失败(连续第%d次): %v", e.prefix, attempt, err)
+
+		select {
+		case <-e.exitCh:
+			return oldCh, false
+		case <-time.After(watchRetryInterval):
+		}
+	}
 }
 
 func (e *EtcdSync) watch(f func(string, []byte)) (clientv3.WatchChan, error) {

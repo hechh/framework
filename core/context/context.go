@@ -103,14 +103,28 @@ func (c *Context) GetAllCache() map[string]define.IValue {
 	return c.temps
 }
 
-func (c *Context) Refresh() {
-	for k, v := range c.temps {
-		if v.IsChanged() {
-			if c.cache.Has(k) {
-				c.cache.SetCache(k, v)
-			}
-			v.Reset()
+// Refresh 把临时缓存中已变更的值提交到常驻缓存；except 中的 key 不提交。
+// 部分写入失败（如某个 Redis 分组失败）时要把失败数据排除在外：常驻缓存必须与
+// Redis 保持一致，否则下次 Save 会用未持久化的新值覆盖已写成功的分组。
+func (c *Context) Refresh(except ...string) {
+	var skip map[string]struct{}
+	if len(except) > 0 {
+		skip = make(map[string]struct{}, len(except))
+		for _, k := range except {
+			skip[k] = struct{}{}
 		}
+	}
+	for k, v := range c.temps {
+		if !v.IsChanged() {
+			continue
+		}
+		if _, ok := skip[k]; ok {
+			continue
+		}
+		if c.cache.Has(k) {
+			c.cache.SetCache(k, v)
+		}
+		v.Reset()
 	}
 }
 

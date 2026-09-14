@@ -2,6 +2,7 @@ package lockfree_timer
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -142,8 +143,8 @@ func (d *Timer) consume() {
 				continue
 			}
 
-			// 指定任务
-			item.Call()
+			// 指定任务（panic 已内部捕获）
+			d.call(item)
 
 			// 判断任务是否
 			if item.IsEnable() {
@@ -152,4 +153,16 @@ func (d *Timer) consume() {
 			}
 		}
 	}
+}
+
+// call 执行任务回调并捕获 panic：回调 panic 若逃逸会终止当前 worker goroutine，
+// 每个 panic 永久少一个 worker（size=5 打光后全进程定时器静默停摆），
+// 且该任务已从轮中弹出不会重入；捕获后 worker 循环继续。
+func (d *Timer) call(item timer.ITask) {
+	defer func() {
+		if err := recover(); err != nil {
+			mlog.Errorf("定时任务执行panic, task:%T, error:%v\n%s", item, err, string(debug.Stack()))
+		}
+	}()
+	item.Call()
 }

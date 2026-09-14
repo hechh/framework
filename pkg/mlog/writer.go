@@ -68,6 +68,9 @@ const (
 	RollingByDay                         // 按天滚动
 )
 
+// logFallbackInterval 日志写失败告警的限流间隔：第 1 次立即告警，之后每 N 次告警一次
+const logFallbackInterval = 1000
+
 // RotateWriter 按小时滚动的日志写入器
 type RotateWriter struct {
 	strategy      RollingStrategy     // 滚动策略
@@ -86,6 +89,7 @@ type RotateWriter struct {
 	lastMonth     time.Month          // 缓存最后一次月份
 	lastYear      int                 // 缓存最后一次年份
 	dataPool      sync.Pool           // Data对象池
+	errCount      atomic.Int64        // 写失败次数（限流降级告警）
 }
 
 // New 创建按小时滚动的日志写入器
@@ -162,7 +166,7 @@ func (d *RotateWriter) run() {
 	defer func() {
 		tt.Stop()
 		d.handler()
-		d.cache.Flush()
+		d.flush()
 		d.cache.Close()
 		d.wg.Done()
 	}()
@@ -173,9 +177,9 @@ func (d *RotateWriter) run() {
 			atomic.StoreInt32(&d.pendingCount, 0)
 			d.handler()
 		case <-tt.C:
-			d.cache.Flush()
+			d.flush()
 		case <-d.flushChan:
-			d.cache.Flush()
+			d.flush()
 		case <-d.exitChan:
 			return
 		}
@@ -189,9 +193,39 @@ func (d *RotateWriter) handler() {
 			return
 		}
 		if d.isRotate(item.now) {
-			d.cache.Set(d.getFilename(item.now))
+			// 目录不可写/磁盘满/文件被占用时文件无法打开：降级到 stderr，不静默丢日志
+			if err := d.cache.Set(d.getFilename(item.now)); err != nil {
+				d.fallback(item.buff.Bytes(), err)
+				d.dataPool.Put(item)
+				continue
+			}
 		}
-		d.cache.Write(item.buff.Bytes())
+		if _, err := d.cache.Write(item.buff.Bytes()); err != nil {
+			d.fallback(item.buff.Bytes(), err)
+		}
 		d.dataPool.Put(item)
+	}
+}
+
+// flush 刷新缓冲区；失败时缓冲区内容保留待下次重试（fileutil.Buffer 只在成功后清零），
+// 但必须告警，否则日志静默丢失
+func (d *RotateWriter) flush() {
+	if err := d.cache.Flush(); err != nil {
+		d.warn("日志刷盘失败", err)
+	}
+}
+
+// fallback 文件写入失败时把日志降级输出到 stderr：日志目录不可写、磁盘满等故障下
+// 日志不能静默丢弃（事故时无日志可查），告警按次数限流避免 stderr 被刷爆
+func (d *RotateWriter) fallback(msg []byte, err error) {
+	d.warn("日志写入文件失败, 降级输出到 stderr", err)
+	_, _ = os.Stderr.Write(msg)
+}
+
+// warn 输出降级告警：第 1 次立即告警，之后每 logFallbackInterval 次告警一次
+func (d *RotateWriter) warn(reason string, err error) {
+	n := d.errCount.Add(1)
+	if n == 1 || n%logFallbackInterval == 0 {
+		fmt.Fprintf(os.Stderr, "%s %s(第%d次), error:%v\n", d.lname, reason, n, err)
 	}
 }

@@ -25,7 +25,7 @@ type ICache interface {
 	SetCache(string, IValue)
 	GetCache(string) IValue
 	GetAllCache() map[string]IValue
-	Refresh()
+	Refresh(except ...string)
 }
 
 type IContext interface {

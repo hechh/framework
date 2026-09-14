@@ -1,11 +1,13 @@
 package taskwheel
 
 import (
+	"runtime/debug"
 	"sync/atomic"
 	"time"
 
 	"github.com/ankur-anand/taskwheel"
 	"github.com/hechh/framework/library/datetime"
+	"github.com/hechh/framework/pkg/mlog"
 	"github.com/hechh/framework/pkg/timer"
 )
 
@@ -41,26 +43,41 @@ func (d *Timer) Init(cfg *timer.Config) error {
 			if t == nil || t.Value == nil {
 				continue
 			}
-			item := t.Value
-			task := item.task
-
-			// 执行任务回调
-			task.Call()
-
-			// 如果任务仍有效，重新注册
-			if task.IsEnable() {
-				now := datetime.NowUnixMilli()
-				task.Refresh(now)
-				newID := atomic.AddUint64(&item.id, 1)
-				_, _ = d.wheel.AfterTimeout(
-					taskwheel.TimerID(newID),
-					item,
-					time.Duration(task.GetTTL())*time.Millisecond,
-				)
-			}
+			d.execTask(t.Value)
 		}
 	})
 	return nil
+}
+
+// execTask 执行单个定时任务并重新注册。
+func (d *Timer) execTask(item *taskItem) {
+	task := item.task
+
+	// 执行任务回调（panic 已内部捕获）
+	d.call(task)
+
+	// 如果任务仍有效，重新注册
+	if task.IsEnable() {
+		now := datetime.NowUnixMilli()
+		task.Refresh(now)
+		newID := atomic.AddUint64(&item.id, 1)
+		_, _ = d.wheel.AfterTimeout(
+			taskwheel.TimerID(newID),
+			item,
+			time.Duration(task.GetTTL())*time.Millisecond,
+		)
+	}
+}
+
+// call 执行任务回调并捕获 panic：回调由 taskwheel 的 tick goroutine 同步调用且无 recover，
+// 裸调 panic 会直接崩掉整个进程（并发/业务 bug 不应拖垮定时器所在的服务）。
+func (d *Timer) call(task timer.ITask) {
+	defer func() {
+		if err := recover(); err != nil {
+			mlog.Errorf("定时任务执行panic, task:%T, error:%v\n%s", task, err, string(debug.Stack()))
+		}
+	}()
+	task.Call()
 }
 
 func (d *Timer) Close() {

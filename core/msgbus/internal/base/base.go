@@ -2,31 +2,14 @@ package base
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
 )
 
 var (
-	bytes = sync.Pool{
-		New: func() any {
-			return make([]byte, 0, 512)
-		},
-	}
 	packetFunc func(*packet.Packet)
 )
-
-func GetBytes() []byte {
-	return bytes.Get().([]byte)
-}
-
-func PutBytes(val []byte) {
-	if cap(val) <= 32*1024 {
-		val = val[:0]
-		bytes.Put(val)
-	}
-}
 
 func SetPacketFunc(f func(*packet.Packet)) {
 	packetFunc = f

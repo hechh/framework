@@ -2,7 +2,6 @@ package context
 
 import (
 	"fmt"
-	"sync"
 	"sync/atomic"
 
 	"github.com/hechh/framework/core/fun"
@@ -11,14 +10,6 @@ import (
 	"github.com/hechh/framework/library/tplutil"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
-)
-
-var (
-	ctxPool = sync.Pool{
-		New: func() any {
-			return new(Context)
-		},
-	}
 )
 
 type Context struct {
@@ -38,21 +29,11 @@ func NewContext(val any, data define.ICache, opts ...func(*packet.Head)) *Contex
 	for _, opt := range opts {
 		opt(head)
 	}
-	obj := ctxPool.Get().(*Context)
-	obj.Head = head
-	obj.temps = make(map[string]define.IValue)
-	obj.cache = data
-	return obj
-}
-
-func (c *Context) Destroy() {
-	if c.Head != nil {
-		packet.PutHead(c.Head)
-		c.Head = nil
+	return &Context{
+		Head:  head,
+		temps: make(map[string]define.IValue),
+		cache: data,
 	}
-	c.temps = nil
-	c.cache = nil
-	ctxPool.Put(c)
 }
 
 func (c *Context) ReadOnly() *packet.Head {

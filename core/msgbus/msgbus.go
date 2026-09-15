@@ -163,9 +163,7 @@ func (d *MsgBus) Broadcast(head *packet.Head, msg []byte, funcs ...func(*packet.
 	}
 
 	// 序列化
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, pack)
-	defer base.PutBytes(body)
+	body, err := pack.MarshalVT()
 	if err != nil {
 		return fmt.Errorf("marshal failed: %w", err)
 	}
@@ -197,9 +195,7 @@ func (d *MsgBus) Request(head *packet.Head, msg []byte, rsp proto.Message, funcs
 	}
 
 	// 序列化
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, pack)
-	defer base.PutBytes(body)
+	body, err := pack.MarshalVT()
 	if err != nil {
 		return fmt.Errorf("marshal failed: %w", err)
 	}
@@ -229,9 +225,7 @@ func (d *MsgBus) Send(head *packet.Head, msg []byte, funcs ...func(*packet.Packe
 	}
 
 	// 序列化
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, pack)
-	defer base.PutBytes(body)
+	body, err := pack.MarshalVT()
 	if err != nil {
 		return fmt.Errorf("marshal failed: %w", err)
 	}

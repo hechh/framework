@@ -32,7 +32,6 @@ type IContext interface {
 	ILogger
 	IHead
 	ICache
-	Destroy()
 	ReadOnly() *packet.Head
 	Clone(...func(*packet.Head)) *packet.Head  // 转发
 	Derive(...func(*packet.Head)) *packet.Head // 派生

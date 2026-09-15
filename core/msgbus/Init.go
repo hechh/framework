@@ -3,15 +3,14 @@ package msgbus
 import (
 	"fmt"
 
-	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/core/fun"
 	"github.com/hechh/framework/core/handler"
 	"github.com/hechh/framework/core/msgbus/internal/base"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/library/logic"
 	"github.com/hechh/framework/library/uerror"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
-	"google.golang.org/protobuf/proto"
 )
 
 var object *MsgBus
@@ -41,13 +40,11 @@ func Publish(topic string, body []byte) error {
 }
 
 // 发送同步响应消息
-func Response(reply string, msg proto.Message) error {
+func Response(reply string, msg define.Message) error {
 	if object == nil {
 		return fmt.Errorf("MsgQueue未初始化")
 	}
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, msg)
-	defer base.PutBytes(body)
+	body, err := msg.MarshalVT()
 	if err != nil {
 		mlog.Errorf("MsgQueue.Response 参数序列化失败 error:%v, msg:%v", err, msg)
 		return err
@@ -56,13 +53,11 @@ func Response(reply string, msg proto.Message) error {
 }
 
 // 发送同步请求
-func Request(head *packet.Head, msg proto.Message, rsp proto.Message, funcs ...func(*packet.Packet) error) error {
+func Request(head *packet.Head, msg define.Message, rsp define.Message, funcs ...func(*packet.Packet) error) error {
 	if object == nil {
 		return fmt.Errorf("MsgQueue未初始化")
 	}
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, msg)
-	defer base.PutBytes(body)
+	body, err := msg.MarshalVT()
 	if err != nil {
 		mlog.Errorf("MsgQueue.Request 参数序列化失败 error:%v, msg:%v", err, msg)
 		return err
@@ -70,7 +65,7 @@ func Request(head *packet.Head, msg proto.Message, rsp proto.Message, funcs ...f
 	return object.Request(head, body, rsp, funcs...)
 }
 
-func RequestRaw(head *packet.Head, msg []byte, rsp proto.Message, funcs ...func(*packet.Packet) error) error {
+func RequestRaw(head *packet.Head, msg []byte, rsp define.Message, funcs ...func(*packet.Packet) error) error {
 	if object == nil {
 		return fmt.Errorf("MsgQueue未初始化")
 	}
@@ -78,13 +73,11 @@ func RequestRaw(head *packet.Head, msg []byte, rsp proto.Message, funcs ...func(
 }
 
 // 发送广播消息
-func Broadcast(head *packet.Head, msg proto.Message, funcs ...func(*packet.Packet) error) error {
+func Broadcast(head *packet.Head, msg define.Message, funcs ...func(*packet.Packet) error) error {
 	if object == nil {
 		return fmt.Errorf("MsgQueue未初始化")
 	}
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, msg)
-	defer base.PutBytes(body)
+	body, err := msg.MarshalVT()
 	if err != nil {
 		mlog.Errorf("MsgQueue.Broadcast 参数序列化失败 error:%v, msg:%v", err, msg)
 		return err
@@ -100,13 +93,11 @@ func BroadcastRaw(head *packet.Head, msg []byte, funcs ...func(*packet.Packet) e
 }
 
 // 发送单播消息
-func Send(head *packet.Head, msg proto.Message, funcs ...func(*packet.Packet) error) error {
+func Send(head *packet.Head, msg define.Message, funcs ...func(*packet.Packet) error) error {
 	if object == nil {
 		return fmt.Errorf("MsgQueue未初始化")
 	}
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, msg)
-	defer base.PutBytes(body)
+	body, err := msg.MarshalVT()
 	if err != nil {
 		mlog.Errorf("MsgQueue.Send 参数序列化失败 error:%v, msg:%v", err, msg)
 		return err
@@ -121,17 +112,15 @@ func SendRaw(head *packet.Head, msg []byte, funcs ...func(*packet.Packet) error)
 	return object.Send(head, msg, funcs...)
 }
 
-func SendToClient(head *packet.Head, msg proto.Message) error {
+func SendToClient(head *packet.Head, msg define.Message) error {
 	return Send(head, msg, fun.SetRspClient, fun.CacheRouting)
 }
 
-func NotifyToClient(head *packet.Head, msg proto.Message, uids ...uint64) error {
+func NotifyToClient(head *packet.Head, msg define.Message, uids ...uint64) error {
 	if object == nil {
 		return fmt.Errorf("MsgQueue未初始化")
 	}
-	body := base.GetBytes()
-	body, err := proto.MarshalOptions{}.MarshalAppend(body, msg)
-	defer base.PutBytes(body)
+	body, err := msg.MarshalVT()
 	if err != nil {
 		mlog.Errorf("MsgQueue.Send 参数序列化失败 error:%v, msg:%v", err, msg)
 		return err
@@ -142,7 +131,7 @@ func NotifyToClient(head *packet.Head, msg proto.Message, uids ...uint64) error 
 func AutoRsp(ctx define.IContext, h handler.IHandler, head *packet.Head, rsp any, reterr error) {
 	uerror.SetRspHead(rsp, reterr)
 
-	irsp, ok := rsp.(proto.Message)
+	irsp, ok := rsp.(define.Message)
 	if !ok {
 		mlog.Errorf("跨服务转发只支持protobuf协议 func=%s", h.GetActorFuncName())
 		return

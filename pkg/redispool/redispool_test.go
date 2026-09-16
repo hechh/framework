@@ -126,11 +126,11 @@ func TestInit_FreezesHashRing(t *testing.T) {
 	_ = pool.virtuals.AddNode("player_2", &fakeClient{name: "player_2"})
 }
 
-// TestSaveByCtx_PartialFailureKeepsCacheConsistent 验证部分分组写入失败时的缓存一致性。
+// TestSaveByCtx_PartialFailureKeepsCacheConsistent 验证部分分组写入失败时缓存不做部分提交。
 //
-// 修复前：Save 按连接分组独立写、失败只记日志继续，而 SaveByCtx 在 err 时提前 return
-// 不 Refresh → 常驻缓存仍是旧对象，下一个请求的 Save 会把旧值写回已写成功的分组，
-// 玩家已收到成功响应却丢奖励（"已领取标记"回滚还会导致二次领取）。
+// 语义：要么全部成功，要么全部失败。任一 Redis 分组写入失败即整个保存视为失败：
+// 常驻缓存保持原状（写成功的分组也不能提交），全部数据保留脏标记供下次整体重试。
+// 部分提交会让缓存与后续重试看到的数据不一致，容易引发丢奖励或二次领取。
 func TestSaveByCtx_PartialFailureKeepsCacheConsistent(t *testing.T) {
 	var closed int32
 	pool := newPoolWith(&closed, "global") // 全局库写入失败
@@ -159,15 +159,14 @@ func TestSaveByCtx_PartialFailureKeepsCacheConsistent(t *testing.T) {
 	if err := SaveByCtx(ctx); err == nil {
 		t.Fatalf("全局库写入失败必须返回错误")
 	}
-	// 写成功的分组必须提交到常驻缓存：否则下次 Save 会用旧缓存把新值覆盖回 Redis
-	if cache.GetCache("k_shard") != shardVal {
-		t.Fatalf("写成功的分组必须提交到常驻缓存，否则下次 Save 会把旧值写回 Redis")
+	// 任一分组失败即整体失败：常驻缓存不做部分提交，写成功的分组同样保持旧值
+	if cache.GetCache("k_shard") != oldShard {
+		t.Fatalf("部分失败必须整体失败：写成功的分组也不能提交到常驻缓存")
 	}
-	// 写失败的分组不得提交：常驻缓存必须与 Redis（旧值）保持一致
 	if cache.GetCache("k_global") != oldGlobal {
-		t.Fatalf("写失败的分组不能提交到常驻缓存，否则与 Redis 永久不一致")
+		t.Fatalf("部分失败必须整体失败：写失败的分组保持旧值")
 	}
-	if !globalVal.IsChanged() {
-		t.Fatalf("写失败的分组必须保留脏标记，供下次 Save 重试")
+	if !shardVal.IsChanged() || !globalVal.IsChanged() {
+		t.Fatalf("部分失败必须整体失败：全部数据保留脏标记，供下次整体重试")
 	}
 }

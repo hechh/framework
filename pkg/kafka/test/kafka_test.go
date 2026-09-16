@@ -88,14 +88,15 @@ func TestUnhandledTopic(t *testing.T) {
 
 // TestComponentInit 组件方式初始化并自动启动消费循环。
 func TestComponentInit(t *testing.T) {
-	c := &kafka.Component{Object: kafka.NewKafka(mockkafka.NewMock())}
-	err := c.Init(map[string]any{
-		"kafka": map[string]any{
-			"brokers":  "mock",
-			"group_id": "test-group",
-			"topics":   []string{"topic.cfg"},
+	c := &kafka.Component{
+		Object: kafka.NewKafka(mockkafka.NewMock()),
+		Config: &kafka.Config{
+			Brokers: "mock",
+			GroupId: "test-group",
+			Topics:  []string{"topic.cfg"},
 		},
-	})
+	}
+	err := c.Init()
 	assert.NoError(t, err)
 	defer c.Close()
 	assert.NotNil(t, kafka.GetObject())

@@ -7,25 +7,25 @@ import (
 )
 
 type IComponent interface {
-	Init(map[string]any) error
+	Init() error
 	Close()
-}
-
-type Application struct {
-	list []IComponent
 }
 
 func NewApplication() *Application {
 	return &Application{}
 }
 
+type Application struct {
+	list []IComponent
+}
+
 func (d *Application) Register(c IComponent) {
 	d.list = append(d.list, c)
 }
 
-func (d *Application) Init(data map[string]any) error {
+func (d *Application) Init() error {
 	for _, comp := range d.list {
-		if err := comp.Init(data); err != nil {
+		if err := comp.Init(); err != nil {
 			return err
 		}
 	}

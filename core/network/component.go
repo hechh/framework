@@ -1,9 +1,6 @@
 package network
 
 import (
-	"fmt"
-
-	"github.com/hechh/framework/core/global"
 	"github.com/hechh/framework/core/network/internal/frame"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
@@ -11,13 +8,13 @@ import (
 
 type Component struct {
 	Object  *Network
-	Node    *packet.Node
+	Addr    string
 	Decoder func([]byte) (*packet.Packet, error)
 	Encoder func(*packet.Packet) ([]byte, error)
 	Handler func(*packet.Packet) error
 }
 
-func (d *Component) Init(data map[string]any) error {
+func (d *Component) Init() error {
 	// 设置处理器
 	if d.Decoder == nil {
 		d.Decoder = frame.Decode
@@ -29,11 +26,8 @@ func (d *Component) Init(data map[string]any) error {
 	SetEncodeFunc(d.Encoder)
 	SetPacketFunc(d.Handler)
 
-	self := global.GetSelf()
-	addr := fmt.Sprintf(":%d", self.Port)
-
 	// 初始化模块
-	if err := d.Object.Init(addr); err != nil {
+	if err := d.Object.Init(d.Addr); err != nil {
 		mlog.Errorf("[network] 初始化失败，error:%v", err)
 		return err
 	}

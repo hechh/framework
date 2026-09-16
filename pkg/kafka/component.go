@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"github.com/hechh/framework/library/fileutil"
 	"github.com/hechh/framework/pkg/mlog"
 )
 
@@ -9,15 +8,11 @@ import (
 // 初始化 Kafka 并自动启动消费循环。
 type Component struct {
 	Object *Kafka
+	Config *Config
 }
 
-func (d *Component) Init(data map[string]any) error {
-	cfg := &Config{}
-	if err := fileutil.Map2Yaml(data, cfg, "kafka"); err != nil {
-		mlog.Errorf("[kafka] 配置加载失败 error:%v", err)
-		return err
-	}
-	if err := d.Object.Init(cfg); err != nil {
+func (d *Component) Init() error {
+	if err := d.Object.Init(d.Config); err != nil {
 		mlog.Errorf("[kafka] 初始化失败 error:%v", err)
 		return err
 	}

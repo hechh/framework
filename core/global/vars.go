@@ -2,6 +2,7 @@ package global
 
 import (
 	"github.com/hechh/framework/library/enum"
+	"github.com/hechh/framework/library/tplutil"
 	"github.com/hechh/framework/packet"
 )
 
@@ -12,6 +13,20 @@ var (
 	self          *packet.Node
 	nodeTypes     []int32
 )
+
+func SetCmdConvertor(values map[int32]string, names map[string]int32) {
+	cmdConvertor = enum.WrapConvertor(names, values)
+}
+
+func SetNodeConvertor(values map[int32]string, names map[string]int32) {
+	nodeConvertor = enum.WrapConvertor(names, values)
+	nodeTypes = tplutil.Map2Keys(values)
+}
+
+func SetSelf(n *packet.Node, gate enum.IEnum) {
+	gateway = gate
+	self = n
+}
 
 func GetSelf() *packet.Node {
 	return self

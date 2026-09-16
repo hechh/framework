@@ -1,25 +1,18 @@
 package dbpool
 
 import (
-	"github.com/hechh/framework/library/fileutil"
 	"github.com/hechh/framework/pkg/mlog"
 )
 
 type Component struct {
-	Object *DbPool
+	Object  *DbPool
+	Configs map[string]*Config
 }
 
 // 初始化
-func (d *Component) Init(data map[string]any) error {
-	// 加载配置
-	cfg := make(map[string]*Config)
-	if err := fileutil.Map2Yaml(data, cfg, "dbpool"); err != nil {
-		mlog.Errorf("[dbpool] 配置加载失败 error:%v", err)
-		return err
-	}
-
+func (d *Component) Init() error {
 	// 模块初始化
-	if err := d.Object.Init(cfg); err != nil {
+	if err := d.Object.Init(d.Configs); err != nil {
 		mlog.Errorf("[dbpool] 初始化失败，error=%v", err)
 		return err
 	}

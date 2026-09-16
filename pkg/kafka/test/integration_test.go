@@ -124,15 +124,16 @@ func TestIntegrationPublishConsume(t *testing.T) {
 // TestIntegrationConfigTopics 通过 Config.Topics 声明订阅（Component 模式），
 // 组件初始化后自动启动消费循环，业务侧注册处理器即可收到消息。
 func TestIntegrationConfigTopics(t *testing.T) {
-	comp := &kafka.Component{Object: kafka.NewKafka(kafkago.NewKafkaGo())}
-	err := comp.Init(map[string]any{
-		"kafka": map[string]any{
-			"brokers":           testBrokers,
-			"group_id":          uniqGroup("it-config-topics"),
-			"auto_offset_reset": "earliest",
-			"topics":            []string{"it.topic.cfg"},
+	comp := &kafka.Component{
+		Object: kafka.NewKafka(kafkago.NewKafkaGo()),
+		Config: &kafka.Config{
+			Brokers:         testBrokers,
+			GroupId:         uniqGroup("it-config-topics"),
+			AutoOffsetReset: "earliest",
+			Topics:          []string{"it.topic.cfg"},
 		},
-	})
+	}
+	err := comp.Init()
 	require.NoError(t, err)
 	defer comp.Close()
 

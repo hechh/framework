@@ -2,6 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/hechh/framework/packet";
 
+/*
 enum ComponentType {
   CT_NONE   = 0;
   DBPOOL    = 1;   // 数据库连接池
@@ -17,6 +18,7 @@ enum ComponentType {
   MSGBUS    = 11;  // 消息总线服务
   CLUSTER   = 12;  // 集群服务
 }
+*/
 
 enum DbType {
   MYSQL      = 0;

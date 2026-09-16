@@ -139,20 +139,20 @@ func TestSaveByCtx_PartialFailureKeepsCacheConsistent(t *testing.T) {
 	}
 	defer pool.Close()
 
-	shardVal := NewValue(pool.Get("player_1"), packet.GetHead(), STRING, "k_shard")
-	globalVal := NewValue(pool.Get("global"), packet.GetHead(), STRING, "k_global")
+	shardVal := NewValue(pool.Get("player_1"), &packet.Head{}, STRING, "k_shard")
+	globalVal := NewValue(pool.Get("global"), &packet.Head{}, STRING, "k_global")
 	shardVal.Change()
 	globalVal.Change()
 
 	// 常驻缓存中保存的是本次修改前的旧对象（请求开始时按 key 克隆出来放进临时缓存）
-	oldShard := NewValue(pool.Get("player_1"), packet.GetHead(), STRING, "k_shard")
-	oldGlobal := NewValue(pool.Get("global"), packet.GetHead(), STRING, "k_global")
+	oldShard := NewValue(pool.Get("player_1"), &packet.Head{}, STRING, "k_shard")
+	oldGlobal := NewValue(pool.Get("global"), &packet.Head{}, STRING, "k_global")
 
 	cache := &memCache{items: map[string]define.IValue{
 		"k_shard":  oldShard,
 		"k_global": oldGlobal,
 	}}
-	ctx := context.NewContext(packet.GetHead(), cache)
+	ctx := context.NewContext(&packet.Head{}, cache)
 	ctx.SetCache("k_shard", shardVal)
 	ctx.SetCache("k_global", globalVal)
 

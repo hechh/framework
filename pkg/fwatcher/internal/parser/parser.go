@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"sync/atomic"
 
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/pkg/mlog"
-	"google.golang.org/protobuf/proto"
 )
 
 // 配置解析接口
@@ -13,7 +13,7 @@ type IParser interface {
 	RegisterChange(...func())
 	Sheet() string
 	IsLoaded() bool
-	New([]byte) (proto.Message, error)
+	New([]byte) (define.Message, error)
 	Parse([]byte) error
 }
 
@@ -42,8 +42,8 @@ func (p *Parser[T]) Sheet() string {
 	return p.sheetName
 }
 
-func (p *Parser[T]) New(body []byte) (proto.Message, error) {
-	val := any(new(T)).(proto.Message)
+func (p *Parser[T]) New(body []byte) (define.Message, error) {
+	val := any(new(T)).(define.Message)
 	if err := json.Unmarshal(body, val); err != nil {
 		return nil, err
 	}

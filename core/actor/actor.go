@@ -42,7 +42,7 @@ func (d *Actor) Register(ac IActor, c define.ICache, opts ...queue.Option) {
 
 func (d *Actor) RegisterTimer(name string, ms time.Duration, times int32) error {
 	task := timer.NewTask(d.msgs.GetIdPointer(), ms, times, func() {
-		head := packet.GetHead(fun.ACTOR(name, d.msgs.GetId()))
+		head := fun.NewHead(fun.ACTOR(name, d.msgs.GetId()))
 		if err := d.SendMsg(head); err != nil {
 			mlog.Errorf("Actor定时器转发失败. error=%v", err)
 		}

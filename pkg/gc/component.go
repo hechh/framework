@@ -6,7 +6,7 @@ type Component struct {
 	object *Gc
 }
 
-func (d *Component) Init(data map[string]any) error {
+func (d *Component) Init() error {
 	// 初始化模块
 	d.object = &Gc{}
 	if err := d.object.Init(); err != nil {

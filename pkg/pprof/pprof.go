@@ -9,18 +9,14 @@ import (
 	"github.com/hechh/framework/pkg/mlog"
 )
 
-type Config struct {
-	PprofPort int32 `yaml:"pprof_port,omitempty"` // ip 地址
-}
-
 type Pprof struct {
 	mu     sync.Mutex
 	server *http.Server
 	port   int
 }
 
-func (p *Pprof) Init(cfg *Config) error {
-	addr := fmt.Sprintf("localhost:%d", cfg.PprofPort)
+func (p *Pprof) Init(port int32) error {
+	addr := fmt.Sprintf("localhost:%d", port)
 	p.server = &http.Server{
 		Addr:    addr,
 		Handler: http.DefaultServeMux, // 复用 DefaultServeMux（net/http/pprof 已注册）

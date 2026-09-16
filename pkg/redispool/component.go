@@ -1,25 +1,18 @@
 package redispool
 
 import (
-	"github.com/hechh/framework/library/fileutil"
 	"github.com/hechh/framework/pkg/mlog"
 )
 
 type Component struct {
-	Object *RedisPool
+	Object  *RedisPool
+	Configs map[string][]*Config
 }
 
 // 初始化
-func (d *Component) Init(data map[string]any) error {
-	// 加载配置
-	cfg := make(map[string][]*Config)
-	if err := fileutil.Map2Yaml(data, cfg, "redispool"); err != nil {
-		mlog.Errorf("[redispool] 配置加载失败 error:%v", err)
-		return err
-	}
-
+func (d *Component) Init() error {
 	// 模块初始化
-	if err := d.Object.Init(cfg["globals"], cfg["shards"]); err != nil {
+	if err := d.Object.Init(d.Configs["globals"], d.Configs["shards"]); err != nil {
 		mlog.Errorf("[redispool] 初始化失败，error=%v", err)
 		return err
 	}

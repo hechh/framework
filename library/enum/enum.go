@@ -1,7 +1,6 @@
 package enum
 
 import (
-	"github.com/hechh/framework/library/tplutil"
 	"github.com/spf13/cast"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -35,8 +34,6 @@ type IConvertor interface {
 	Has(any) bool
 	ToUint32(string) uint32
 	ToString(uint32) string
-	GetTypes() []int32
-	GetNames() []string
 }
 
 type Convertor struct {
@@ -70,12 +67,4 @@ func (d *Convertor) ToUint32(s string) uint32 {
 
 func (d *Convertor) ToString(i uint32) string {
 	return d.numbers[int32(i)]
-}
-
-func (d *Convertor) GetTypes() []int32 {
-	return tplutil.Map2Keys(d.numbers)
-}
-
-func (d *Convertor) GetNames() []string {
-	return tplutil.Map2Keys(d.names)
 }

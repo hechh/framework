@@ -24,7 +24,7 @@ func NewContext(val any, data define.ICache, opts ...func(*packet.Head)) *Contex
 	case *packet.Head:
 		head = vv
 	case uint64:
-		head = packet.GetHead(fun.UID(vv))
+		head = fun.NewHead(fun.UID(vv))
 	}
 	for _, opt := range opts {
 		opt(head)
@@ -41,7 +41,7 @@ func (c *Context) ReadOnly() *packet.Head {
 }
 
 func (c *Context) Clone(opts ...func(*packet.Head)) *packet.Head {
-	head := packet.GetHead(fun.COPY(c.Head))
+	head := fun.NewHead(fun.COPY(c.Head))
 	for _, opt := range opts {
 		opt(head)
 	}
@@ -49,7 +49,7 @@ func (c *Context) Clone(opts ...func(*packet.Head)) *packet.Head {
 }
 
 func (c *Context) Derive(opts ...func(*packet.Head)) *packet.Head {
-	head := packet.GetHead(fun.DERIVE(c.Head))
+	head := fun.NewHead(fun.DERIVE(c.Head))
 	for _, opt := range opts {
 		opt(head)
 	}

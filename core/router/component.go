@@ -8,7 +8,7 @@ type Component struct {
 	obj *Router
 }
 
-func (d *Component) Init(data map[string]any) error {
+func (d *Component) Init() error {
 	d.obj = NewRouter()
 	SetObject(d.obj)
 	mlog.Infof("[router] 初始化成功")

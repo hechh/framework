@@ -1,25 +1,17 @@
 package application
 
-import (
-	"os"
-
-	"github.com/hechh/framework/library/fileutil"
-)
+import "os"
 
 var (
-	app *Application = NewApplication()
+	app *Application = &Application{}
 )
 
 func Register(c IComponent) {
 	app.Register(c)
 }
 
-func Init(filename string) error {
-	data := make(map[string]any)
-	if err := fileutil.LoadYaml(filename, data); err != nil {
-		return err
-	}
-	return app.Init(data)
+func Init() error {
+	return app.Init()
 }
 
 func Close() {

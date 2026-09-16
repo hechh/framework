@@ -73,3 +73,11 @@ func DERIVE(src *packet.Head) func(*packet.Head) {
 		dst.ClientIp = src.ClientIp
 	}
 }
+
+func NewHead(opts ...func(*packet.Head)) *packet.Head {
+	h := &packet.Head{}
+	for _, opt := range opts {
+		opt(h)
+	}
+	return h
+}

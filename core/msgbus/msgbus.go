@@ -5,6 +5,7 @@ import (
 
 	"github.com/hechh/framework/core/global"
 	"github.com/hechh/framework/core/msgbus/internal/base"
+	"github.com/hechh/framework/define"
 	"github.com/hechh/framework/packet"
 	"github.com/hechh/framework/pkg/mlog"
 	"google.golang.org/protobuf/proto"
@@ -178,7 +179,7 @@ func (d *MsgBus) Response(reply string, body []byte) error {
 }
 
 // Request 发送同步请求
-func (d *MsgBus) Request(head *packet.Head, msg []byte, rsp proto.Message, funcs ...func(*packet.Packet) error) error {
+func (d *MsgBus) Request(head *packet.Head, msg []byte, rsp define.Message, funcs ...func(*packet.Packet) error) error {
 	head.SrcType = global.GetSelfNodeType()
 	head.SrcId = global.GetSelfNodeId()
 	pack := &packet.Packet{

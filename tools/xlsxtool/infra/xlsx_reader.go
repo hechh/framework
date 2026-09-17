@@ -15,7 +15,13 @@ import (
 // 递归遍历时跳过隐藏子目录（如 .bak 暂存），避免把非正式目录中的 xlsx 当作配置源解析，导致重复表或错误覆盖。
 // 生成目录 <XlsxPath>/json 非隐藏，但其中只有 .json，由下方 .xlsx 后缀过滤跳过。
 func ReadTables(xlsxDir string) []*domain.Table {
-	return ReadTablesOverlay(xlsxDir, "")
+	return readTables(xlsxDir, "", nil)
+}
+
+// ReadTablesEx 同 ReadTables，但额外跳过 skipDirs 中列出的子目录名（任意层级，如配置管理的 waiting 上传暂存目录）。
+// 用于“非隐藏暂存目录”场景：{XlsxPath}/waiting 中的待发布配置不得参与正式目录的转换。
+func ReadTablesEx(xlsxDir string, skipDirs ...string) []*domain.Table {
+	return readTables(xlsxDir, "", skipDirs)
 }
 
 // ReadTablesOverlay 从 baseDir 读取 xlsx 表格数据，overlayDir 中的同名 xlsx 优先采用。
@@ -27,6 +33,23 @@ func ReadTables(xlsxDir string) []*domain.Table {
 // 用于"上传暂存覆盖"场景：新上传文件先进 .bak 暂存目录，转换时以 .bak 为准，
 // 未上传（.bak 没有）的文件仍从正式目录加载。
 func ReadTablesOverlay(baseDir, overlayDir string) []*domain.Table {
+	return readTables(baseDir, overlayDir, nil)
+}
+
+// readTables 从 baseDir 读取 xlsx 表格数据，overlayDir 中的同名 xlsx 优先采用；
+// skipDirs 中的子目录名（任意层级）与隐藏目录（. 开头）一律跳过。
+func readTables(baseDir, overlayDir string, skipDirs []string) []*domain.Table {
+	skip := make(map[string]bool, len(skipDirs))
+	for _, name := range skipDirs {
+		if name != "" {
+			skip[name] = true
+		}
+	}
+	// 是否跳过该目录：隐藏目录始终跳过；skipDirs 指定的目录名同样跳过
+	skipDir := func(name string) bool {
+		return strings.HasPrefix(name, ".") || skip[name]
+	}
+
 	var tables []*domain.Table
 
 	// 1. 收集 overlayDir 中存在的 xlsx 文件名（优先采用）
@@ -37,7 +60,7 @@ func ReadTablesOverlay(baseDir, overlayDir string) []*domain.Table {
 				return err
 			}
 			if info.IsDir() {
-				if path != overlayDir && strings.HasPrefix(info.Name(), ".") {
+				if path != overlayDir && skipDir(info.Name()) {
 					return filepath.SkipDir
 				}
 				return nil
@@ -55,7 +78,7 @@ func ReadTablesOverlay(baseDir, overlayDir string) []*domain.Table {
 			return err
 		}
 		if info.IsDir() {
-			if path != baseDir && strings.HasPrefix(info.Name(), ".") {
+			if path != baseDir && skipDir(info.Name()) {
 				return filepath.SkipDir
 			}
 			return nil

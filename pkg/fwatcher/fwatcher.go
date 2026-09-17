@@ -73,12 +73,10 @@ func (d *FWatcher) Init(cfg *Config) (err error) {
 		if err != nil {
 			return err
 		}
-		/*
-			// 先清空
-			if err := d.sync.Clear(); err != nil {
-				return err
-			}
-		*/
+		// 先清空
+		if err := d.sync.Clear(); err != nil {
+			return err
+		}
 		// 同步配置：先清空 etcd 中所有 kv，再全量上传本地配置，保证 etcd 与本地一致
 		for sheet, file := range files {
 			if err := d.sync.Put(sheet, file); err != nil {
